@@ -131,7 +131,6 @@ function getLocalStackStatus(
 	}
 
 	if (containerStatus === "running" && healthStatus === undefined) {
-		// return previousStatus;
 		return undefined;
 	}
 
