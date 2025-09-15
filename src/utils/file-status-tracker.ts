@@ -28,20 +28,11 @@ export function createFileStatusTracker(
 	files: string[],
 	check: () => Promise<SetupStatus | undefined> | SetupStatus | undefined,
 ): StatusTracker {
-	// let status: SetupStatus | undefined;
-	// const emitter = createEmitter<SetupStatus | undefined>(outputChannel);
 	const status = createValueEmitter<SetupStatus | undefined>();
 
 	const updateStatus = createOnceImmediate(async () => {
 		const newStatus = await Promise.resolve(check());
 		status.setValue(newStatus);
-		// if (status !== newStatus) {
-		// 	status = newStatus;
-		// 	outputChannel.trace(
-		// 		`${outputChannelPrefix} File status changed to ${status}`,
-		// 	);
-		// 	await emitter.emit(status);
-		// }
 	});
 
 	const watcher = watch(files)
@@ -71,10 +62,6 @@ export function createFileStatusTracker(
 		},
 		onChange(callback) {
 			status.onChange(callback);
-			// emitter.on(callback);
-			// if (status) {
-			// 	callback(status);
-			// }
 		},
 		async dispose() {
 			await watcher.close();
