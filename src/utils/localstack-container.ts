@@ -36,10 +36,17 @@ export function createLocalStackContainerStatusTracker(
 
 	void timeTracker.run("container-status.getContainerStatus", async () => {
 		await getContainerStatus(containerName).then((newStatus) => {
-			if (status.value() !== undefined) {
+			outputChannel.trace(
+				`[localstack-container-status] getContainerStatus=${newStatus} currentStatus=${status.value()}`,
+			);
+			if (status.value() === undefined) {
 				status.setValue(newStatus);
 			}
 		});
+	});
+
+	status.onChange((status) => {
+		outputChannel.trace(`[localstack-container-status] container=${status}`);
 	});
 
 	return {

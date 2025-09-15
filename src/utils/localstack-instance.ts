@@ -40,12 +40,17 @@ export function createLocalStackInstanceStatusTracker(
 	};
 
 	const deriveStatus = () => {
+		outputChannel.trace(
+			`[localstack-instance-status] containerStatus=${containerStatus} healthCheckStatusTracker=${healthCheckStatusTracker.status()} previousStatus=${status.value()}`,
+		);
 		const newStatus = getLocalStackStatus(
 			containerStatus,
 			healthCheckStatusTracker.status(),
 			status.value(),
 		);
-		setStatus(newStatus);
+		if (newStatus) {
+			setStatus(newStatus);
+		}
 	};
 
 	containerStatusTracker.onChange((newContainerStatus) => {
@@ -65,7 +70,7 @@ export function createLocalStackInstanceStatusTracker(
 
 	containerStatusTracker.onChange((newContainerStatus) => {
 		outputChannel.trace(
-			`[localstack-status] container=${newContainerStatus} (localstack=${status.value()})`,
+			`[localstack-instance-status] container=${newContainerStatus} (localstack=${status.value()})`,
 		);
 
 		if (newContainerStatus === "running" && status.value() !== "running") {

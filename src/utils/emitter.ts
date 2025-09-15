@@ -32,9 +32,10 @@ export function createValueEmitter<T>(): ValueEmitter<T> {
 		},
 		onChange(callback) {
 			callbacks.push(callback);
-			if (currentValue) {
-				void Promise.resolve(callback(currentValue)).catch(() => {});
-			}
+			void Promise.resolve(callback(currentValue)).catch(() => {});
+			// if (currentValue !== undefined) {
+			// 	void Promise.resolve(callback(currentValue)).catch(() => {});
+			// }
 		},
 	};
 }
