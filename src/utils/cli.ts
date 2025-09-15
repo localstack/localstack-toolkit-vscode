@@ -10,8 +10,8 @@ import { CLI_PATHS, LOCALSTACK_DOCKER_IMAGE_NAME } from "../constants.ts";
 
 import { createValueEmitter } from "./emitter.ts";
 import { exec } from "./exec.ts";
-import { immediateOnce } from "./immediate-once.ts";
-import type { SetupStatus } from "./setup-status.ts";
+import { createOnceImmediate } from "./once-immediate.ts";
+import type { SetupStatus } from "./setup.ts";
 import { spawn } from "./spawn.ts";
 import type { SpawnOptions } from "./spawn.ts";
 
@@ -177,7 +177,7 @@ export function createCliStatusTracker(
 	const cliPath = createValueEmitter<string | undefined>();
 	const outdated = createValueEmitter<boolean | undefined>();
 
-	const track = immediateOnce(async () => {
+	const track = createOnceImmediate(async () => {
 		const newCli = await findLocalStack().catch(() => undefined);
 		outputChannel.info(`[cli]: findLocalStack = ${newCli?.cliPath}`);
 

@@ -7,22 +7,24 @@ import { createValueEmitter } from "./emitter.ts";
 import { JsonLinesStream } from "./json-lines-stream.ts";
 import type { TimeTracker } from "./time-tracker.ts";
 
-export type ContainerStatus = "running" | "stopping" | "stopped";
+export type LocalStackContainerStatus = "running" | "stopping" | "stopped";
 
-export interface ContainerStatusTracker extends Disposable {
-	status(): ContainerStatus | undefined;
-	onChange(callback: (status: ContainerStatus | undefined) => void): void;
+export interface LocalStackContainerStatusTracker extends Disposable {
+	status(): LocalStackContainerStatus | undefined;
+	onChange(
+		callback: (status: LocalStackContainerStatus | undefined) => void,
+	): void;
 }
 
 /**
  * Checks the status of a docker container in realtime.
  */
-export function createContainerStatusTracker(
+export function createLocalStackContainerStatusTracker(
 	containerName: string,
 	outputChannel: LogOutputChannel,
 	timeTracker: TimeTracker,
-): ContainerStatusTracker {
-	const status = createValueEmitter<ContainerStatus>();
+): LocalStackContainerStatusTracker {
+	const status = createValueEmitter<LocalStackContainerStatus>();
 
 	const disposable = listenToContainerStatus(
 		containerName,
@@ -65,7 +67,7 @@ const DockerEventsSchema = z.object({
 function listenToContainerStatus(
 	containerName: string,
 	outputChannel: LogOutputChannel,
-	onStatusChange: (status: ContainerStatus) => void,
+	onStatusChange: (status: LocalStackContainerStatus) => void,
 ): Disposable {
 	let dockerEvents: ReturnType<typeof spawn> | undefined;
 	let isDisposed = false;
@@ -188,7 +190,7 @@ function listenToContainerStatus(
 
 async function getContainerStatus(
 	containerName: string,
-): Promise<ContainerStatus> {
+): Promise<LocalStackContainerStatus> {
 	return new Promise((resolve) => {
 		// timeout after 1s
 		setTimeout(() => resolve("stopped"), 1_000);

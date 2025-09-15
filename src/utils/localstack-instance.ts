@@ -1,35 +1,41 @@
 import type { Disposable, LogOutputChannel } from "vscode";
 
-import type {
-	ContainerStatus,
-	ContainerStatusTracker,
-} from "./container-status.ts";
 import { createValueEmitter } from "./emitter.ts";
+import type {
+	LocalStackContainerStatus,
+	LocalStackContainerStatusTracker,
+} from "./localstack-container.ts";
 import { fetchHealth } from "./manage.ts";
 import type { TimeTracker } from "./time-tracker.ts";
 
-export type LocalStackStatus = "starting" | "running" | "stopping" | "stopped";
+export type LocalStackInstanceStatus =
+	| "starting"
+	| "running"
+	| "stopping"
+	| "stopped";
 
-export interface LocalStackStatusTracker extends Disposable {
-	status(): LocalStackStatus | undefined;
-	forceContainerStatus(status: ContainerStatus): void;
-	onChange(callback: (status: LocalStackStatus | undefined) => void): void;
+export interface LocalStackInstanceStatusTracker extends Disposable {
+	status(): LocalStackInstanceStatus | undefined;
+	forceContainerStatus(status: LocalStackContainerStatus): void;
+	onChange(
+		callback: (status: LocalStackInstanceStatus | undefined) => void,
+	): void;
 }
 
 /**
  * Checks the status of the LocalStack instance in realtime.
  */
-export function createLocalStackStatusTracker(
-	containerStatusTracker: ContainerStatusTracker,
+export function createLocalStackInstanceStatusTracker(
+	containerStatusTracker: LocalStackContainerStatusTracker,
 	outputChannel: LogOutputChannel,
 	timeTracker: TimeTracker,
-): LocalStackStatusTracker {
-	let containerStatus: ContainerStatus | undefined;
-	const status = createValueEmitter<LocalStackStatus>();
+): LocalStackInstanceStatusTracker {
+	let containerStatus: LocalStackContainerStatus | undefined;
+	const status = createValueEmitter<LocalStackInstanceStatus>();
 
 	const healthCheckStatusTracker = createHealthStatusTracker(timeTracker);
 
-	const setStatus = (newStatus: LocalStackStatus) => {
+	const setStatus = (newStatus: LocalStackInstanceStatus) => {
 		status.setValue(newStatus);
 	};
 
@@ -93,10 +99,10 @@ export function createLocalStackStatusTracker(
 }
 
 function getLocalStackStatus(
-	containerStatus: ContainerStatus | undefined,
+	containerStatus: LocalStackContainerStatus | undefined,
 	healthStatus: HealthStatus | undefined,
-	previousStatus?: LocalStackStatus,
-): LocalStackStatus {
+	previousStatus?: LocalStackInstanceStatus,
+): LocalStackInstanceStatus {
 	if (containerStatus === "running") {
 		if (healthStatus === "healthy") {
 			return "running";

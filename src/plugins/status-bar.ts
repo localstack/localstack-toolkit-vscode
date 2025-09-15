@@ -2,13 +2,13 @@ import { commands, QuickPickItemKind, ThemeColor, window } from "vscode";
 import type { QuickPickItem } from "vscode";
 
 import { createPlugin } from "../plugins.ts";
-import { immediateOnce } from "../utils/immediate-once.ts";
-import type { LocalStackStatus } from "../utils/localstack-status.ts";
-import type { SetupStatus } from "../utils/setup-status.ts";
+import type { LocalStackInstanceStatus } from "../utils/localstack-instance.ts";
+import { createOnceImmediate } from "../utils/once-immediate.ts";
+import type { SetupStatus } from "../utils/setup.ts";
 
 function getStatusText(options: {
 	cliStatus: SetupStatus;
-	localStackStatus: LocalStackStatus;
+	localStackStatus: LocalStackInstanceStatus;
 	cliOutdated: boolean | undefined;
 }) {
 	if (options.cliStatus === "ok") {
@@ -97,7 +97,7 @@ export default createPlugin(
 			}),
 		);
 
-		const renderStatusBar = immediateOnce(() => {
+		const renderStatusBar = createOnceImmediate(() => {
 			const setupStatus = setupStatusTracker.status();
 			const localStackStatus = localStackStatusTracker.status();
 			const cliStatus = cliStatusTracker.status();

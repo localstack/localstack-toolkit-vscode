@@ -4,6 +4,9 @@ import { join } from "node:path";
 import type { CancellationToken, LogOutputChannel } from "vscode";
 
 import { execLocalStack } from "./cli.ts";
+import type { CliStatusTracker } from "./cli.ts";
+import { createFileStatusTracker } from "./file-status-tracker.ts";
+import type { StatusTracker } from "./file-status-tracker.ts";
 
 /**
  * See https://github.com/localstack/localstack/blob/de861e1f656a52eaa090b061bd44fc1a7069715e/localstack-core/localstack/utils/files.py#L38-L55.
@@ -83,4 +86,52 @@ export async function activateLicenseUntilValid(
 		// Wait before trying again
 		await new Promise((resolve) => setTimeout(resolve, 1000));
 	}
+}
+
+/**
+ * Creates a status tracker that monitors the LocalStack license file for changes.
+ * When the file is changed, the provided check function is called to determine the current setup status.
+ * Emits status changes to registered listeners.
+ *
+ * @param outputChannel - Channel for logging output and trace messages.
+ * @returns A {@link StatusTracker} instance for querying status, subscribing to changes, and disposing resources.
+ */
+export function createLicenseStatusTracker(
+	cliTracker: CliStatusTracker,
+	authTracker: StatusTracker,
+	outputChannel: LogOutputChannel,
+): StatusTracker {
+	const licenseTracker = createFileStatusTracker(
+		outputChannel,
+		"[setup-status.license]",
+		[LICENSE_FILENAME],
+		async () => {
+			if (cliTracker.outdated()) {
+				return "setup_required";
+			}
+
+			const cliPath = cliTracker.cliPath();
+			if (!cliPath) {
+				return undefined;
+			}
+
+			const isLicenseValid = await checkIsLicenseValid(cliPath, outputChannel);
+
+			return isLicenseValid ? "ok" : "setup_required";
+		},
+	);
+
+	authTracker.onChange(() => {
+		licenseTracker.check();
+	});
+
+	cliTracker.onCliPathChange(() => {
+		licenseTracker.check();
+	});
+
+	cliTracker.onOutdatedChange(() => {
+		licenseTracker.check();
+	});
+
+	return licenseTracker;
 }

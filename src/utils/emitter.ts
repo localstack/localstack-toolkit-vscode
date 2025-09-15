@@ -1,4 +1,4 @@
-import { immediateOnce } from "./immediate-once.ts";
+import { createOnceImmediate } from "./once-immediate.ts";
 
 export type Callback<T> = (value: T) => Promise<void> | void;
 
@@ -12,7 +12,7 @@ export function createValueEmitter<T>(): ValueEmitter<T> {
 	let currentValue: T;
 	const callbacks: Callback<T>[] = [];
 
-	const emit = immediateOnce(async () => {
+	const emit = createOnceImmediate(async () => {
 		for (const callback of callbacks) {
 			try {
 				await callback(currentValue);

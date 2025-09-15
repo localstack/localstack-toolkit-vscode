@@ -15,7 +15,7 @@ import {
 	checkIsLicenseValid,
 	activateLicenseUntilValid,
 } from "../utils/license.ts";
-import { minDelay } from "../utils/promises.ts";
+import { minDelay } from "../utils/min-delay.ts";
 import { updateDockerImage } from "../utils/setup.ts";
 import { get_setup_ended } from "../utils/telemetry.ts";
 

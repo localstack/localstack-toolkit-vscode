@@ -2,9 +2,9 @@ import ms from "ms";
 import type { ExtensionContext, LogOutputChannel, StatusBarItem } from "vscode";
 
 import type { CliStatusTracker } from "./utils/cli.ts";
-import type { ContainerStatusTracker } from "./utils/container-status.ts";
-import type { LocalStackStatusTracker } from "./utils/localstack-status.ts";
-import type { SetupStatusTracker } from "./utils/setup-status.ts";
+import type { LocalStackContainerStatusTracker } from "./utils/localstack-container.ts";
+import type { LocalStackInstanceStatusTracker } from "./utils/localstack-instance.ts";
+import type { SetupStatusTracker } from "./utils/setup.ts";
 import type { Telemetry } from "./utils/telemetry.ts";
 import type { TimeTracker } from "./utils/time-tracker.ts";
 
@@ -15,8 +15,8 @@ export interface PluginOptions {
 	outputChannel: LogOutputChannel;
 	statusBarItem: StatusBarItem;
 	cliStatusTracker: CliStatusTracker;
-	containerStatusTracker: ContainerStatusTracker;
-	localStackStatusTracker: LocalStackStatusTracker;
+	containerStatusTracker: LocalStackContainerStatusTracker;
+	localStackStatusTracker: LocalStackInstanceStatusTracker;
 	setupStatusTracker: SetupStatusTracker;
 	telemetry: Telemetry;
 	timeTracker: TimeTracker;

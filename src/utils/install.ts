@@ -13,7 +13,7 @@ import {
 } from "../constants.ts";
 
 import { exec } from "./exec.ts";
-import { minDelay } from "./promises.ts";
+import { minDelay } from "./min-delay.ts";
 import {
 	spawnElevatedDarwin,
 	spawnElevatedLinux,
