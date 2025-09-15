@@ -27,13 +27,11 @@ export interface LocalStackInstanceStatusTracker extends Disposable {
  */
 export function createLocalStackInstanceStatusTracker(
 	containerStatusTracker: LocalStackContainerStatusTracker,
+	healthCheckStatusTracker: HealthStatusTracker,
 	outputChannel: LogOutputChannel,
-	timeTracker: TimeTracker,
 ): LocalStackInstanceStatusTracker {
 	let containerStatus: LocalStackContainerStatus | undefined;
 	const status = createValueEmitter<LocalStackInstanceStatus>();
-
-	const healthCheckStatusTracker = createHealthStatusTracker(timeTracker);
 
 	const setStatus = (newStatus: LocalStackInstanceStatus) => {
 		status.setValue(newStatus);
@@ -141,16 +139,16 @@ function getLocalStackStatus(
 	return "stopped";
 }
 
-type HealthStatus = "healthy" | "unhealthy";
+export type HealthStatus = "healthy" | "unhealthy";
 
-interface HealthStatusTracker extends Disposable {
+export interface HealthStatusTracker extends Disposable {
 	status(): HealthStatus | undefined;
 	start(): void;
 	stop(): void;
 	onChange(callback: (status: HealthStatus | undefined) => void): void;
 }
 
-function createHealthStatusTracker(
+export function createHealthStatusTracker(
 	timeTracker: TimeTracker,
 ): HealthStatusTracker {
 	const status = createValueEmitter<HealthStatus | undefined>();

@@ -10,7 +10,10 @@ import statusBar from "./plugins/status-bar.ts";
 import { PluginManager } from "./plugins.ts";
 import { createCliStatusTracker } from "./utils/cli.ts";
 import { createLocalStackContainerStatusTracker } from "./utils/localstack-container.ts";
-import { createLocalStackInstanceStatusTracker } from "./utils/localstack-instance.ts";
+import {
+	createHealthStatusTracker,
+	createLocalStackInstanceStatusTracker,
+} from "./utils/localstack-instance.ts";
 import { getOrCreateExtensionSessionId } from "./utils/manage.ts";
 import { createSetupStatusTracker } from "./utils/setup.ts";
 import { createTelemetry } from "./utils/telemetry.ts";
@@ -57,10 +60,11 @@ export async function activate(context: ExtensionContext) {
 		);
 		context.subscriptions.push(containerStatusTracker);
 
+		const healthCheckStatusTracker = createHealthStatusTracker(timeTracker);
 		const localStackStatusTracker = createLocalStackInstanceStatusTracker(
 			containerStatusTracker,
+			healthCheckStatusTracker,
 			outputChannel,
-			timeTracker,
 		);
 		context.subscriptions.push(localStackStatusTracker);
 
