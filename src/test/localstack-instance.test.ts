@@ -2,7 +2,6 @@ import * as assert from "node:assert";
 import { setImmediate } from "node:timers/promises";
 
 import { window } from "vscode";
-import type { LogOutputChannel } from "vscode";
 
 import { createValueEmitter } from "../utils/emitter.ts";
 import type {
@@ -58,7 +57,7 @@ function createFixtures() {
 }
 
 suite("LocalStack Instance Test Suite", () => {
-	test("Derives LocalStack instance status correctly", async () => {
+	test("Derives instance status correctly", async () => {
 		const { containerStatus, healthStatus, tracker } = createFixtures();
 
 		///////////////////////////////////////////////////////////////////////////
@@ -78,5 +77,34 @@ suite("LocalStack Instance Test Suite", () => {
 		healthStatus.setValue("healthy");
 		await setImmediate();
 		assert.strictEqual(tracker.status(), "running");
+	});
+
+	test("Forcing container status derives instance status correctly", async () => {
+		const { containerStatus, healthStatus, tracker } = createFixtures();
+
+		///////////////////////////////////////////////////////////////////////////
+		tracker.forceContainerStatus("running");
+		await setImmediate();
+		assert.strictEqual(tracker.status(), "starting");
+
+		///////////////////////////////////////////////////////////////////////////
+		containerStatus.setValue("running");
+		await setImmediate();
+		assert.strictEqual(tracker.status(), "starting");
+
+		///////////////////////////////////////////////////////////////////////////
+		healthStatus.setValue("healthy");
+		await setImmediate();
+		assert.strictEqual(tracker.status(), "running");
+
+		///////////////////////////////////////////////////////////////////////////
+		tracker.forceContainerStatus("stopping");
+		await setImmediate();
+		assert.strictEqual(tracker.status(), "stopping");
+
+		///////////////////////////////////////////////////////////////////////////
+		containerStatus.setValue("stopped");
+		await setImmediate();
+		assert.strictEqual(tracker.status(), "stopped");
 	});
 });
