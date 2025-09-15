@@ -20,11 +20,11 @@ import { updateDockerImage } from "../utils/setup.ts";
 import { get_setup_ended } from "../utils/telemetry.ts";
 
 async function getValidCliPath() {
-	const cli = await findLocalStack()
+	const cli = await findLocalStack();
 	if (!cli.cliPath || !cli.executable || !cli.found || !cli.upToDate) {
-		return
+		return;
 	}
-	return cli.cliPath
+	return cli.cliPath;
 }
 
 export default createPlugin(
@@ -52,8 +52,6 @@ export default createPlugin(
 							origin: origin_trigger,
 						},
 					});
-
-					const cliPath = cliStatusTracker.cliPath();
 
 					void window.withProgress(
 						{
@@ -238,7 +236,8 @@ export default createPlugin(
 							// we must find it manually. This may occur when installing the
 							// CLI as part of the setup process: the CLI status tracker will
 							// detect the CLI path the next tick.
-							const cliPath = cliStatusTracker.cliPath() ?? await getValidCliPath();
+							const cliPath =
+								cliStatusTracker.cliPath() ?? (await getValidCliPath());
 							if (!cliPath) {
 								void window.showErrorMessage(
 									"Could not access the LocalStack CLI.",

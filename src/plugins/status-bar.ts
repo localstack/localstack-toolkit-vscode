@@ -3,6 +3,24 @@ import type { QuickPickItem } from "vscode";
 
 import { createPlugin } from "../plugins.ts";
 import { immediateOnce } from "../utils/immediate-once.ts";
+import type { LocalStackStatus } from "../utils/localstack-status.ts";
+import type { SetupStatus } from "../utils/setup-status.ts";
+
+function getStatusText(options: {
+	cliStatus: SetupStatus;
+	localStackStatus: LocalStackStatus;
+	cliOutdated: boolean | undefined;
+}) {
+	if (options.cliStatus === "ok") {
+		return options.localStackStatus;
+	}
+
+	if (options.cliOutdated) {
+		return "CLI outdated";
+	}
+
+	return "CLI not installed";
+}
 
 export default createPlugin(
 	"status-bar",
@@ -83,6 +101,7 @@ export default createPlugin(
 			const setupStatus = setupStatusTracker.status();
 			const localStackStatus = localStackStatusTracker.status();
 			const cliStatus = cliStatusTracker.status();
+			const cliOutdated = cliStatusTracker.outdated();
 			outputChannel.trace(
 				`[status-bar] setupStatus=${setupStatus} localStackStatus=${localStackStatus} cliStatus=${cliStatus}`,
 			);
@@ -111,8 +130,11 @@ export default createPlugin(
 						? "$(sync~spin)"
 						: "$(localstack-logo)";
 
-			const statusText =
-				cliStatus === "ok" ? `${localStackStatus}` : "not installed";
+			const statusText = getStatusText({
+				cliOutdated,
+				cliStatus,
+				localStackStatus,
+			});
 			statusBarItem.text = `${icon} LocalStack: ${statusText}`;
 
 			statusBarItem.tooltip = "Show LocalStack commands";

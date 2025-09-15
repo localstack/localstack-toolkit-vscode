@@ -278,6 +278,10 @@ function createLicenseStatusTracker(
 		"[setup-status.license]",
 		[LICENSE_FILENAME],
 		async () => {
+			if (cliTracker.outdated()) {
+				return "setup_required";
+			}
+
 			const cliPath = cliTracker.cliPath();
 			if (!cliPath) {
 				return undefined;
@@ -294,6 +298,10 @@ function createLicenseStatusTracker(
 	});
 
 	cliTracker.onCliPathChange(() => {
+		licenseTracker.check();
+	});
+
+	cliTracker.onOutdatedChange(() => {
 		licenseTracker.check();
 	});
 

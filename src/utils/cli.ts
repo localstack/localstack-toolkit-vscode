@@ -166,6 +166,8 @@ export interface CliStatusTracker extends Disposable {
 	onStatusChange(callback: (status: SetupStatus | undefined) => void): void;
 	cliPath(): string | undefined;
 	onCliPathChange(callback: (cliPath: string | undefined) => void): void;
+	outdated(): boolean | undefined;
+	onOutdatedChange(callback: (outdated: boolean | undefined) => void): void;
 }
 
 export function createCliStatusTracker(
@@ -173,6 +175,7 @@ export function createCliStatusTracker(
 ): CliStatusTracker {
 	const status = createValueEmitter<SetupStatus>();
 	const cliPath = createValueEmitter<string | undefined>();
+	const outdated = createValueEmitter<boolean | undefined>();
 
 	const track = immediateOnce(async () => {
 		const newCli = await findLocalStack().catch(() => undefined);
@@ -183,7 +186,11 @@ export function createCliStatusTracker(
 				? "ok"
 				: "setup_required",
 		);
-		cliPath.setValue(newCli?.cliPath);
+		// cliPath.setValue(newCli?.cliPath);
+		cliPath.setValue(newCli?.upToDate ? newCli?.cliPath : undefined);
+		outdated.setValue(
+			newCli?.upToDate !== undefined ? !newCli.upToDate : undefined,
+		);
 	});
 
 	const watcher = watch(
@@ -223,6 +230,12 @@ export function createCliStatusTracker(
 		},
 		onStatusChange(callback) {
 			status.onChange(callback);
+		},
+		outdated() {
+			return outdated.value();
+		},
+		onOutdatedChange(callback) {
+			outdated.onChange(callback);
 		},
 		async dispose() {
 			await watcher.close();
