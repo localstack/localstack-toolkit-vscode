@@ -81,7 +81,7 @@ export type SetupStatus = "ok" | "setup_required";
 
 export interface SetupStatusTracker extends Disposable {
 	status(): SetupStatus | undefined;
-	onChange(callback: (status: SetupStatus) => void): void;
+	onChange(callback: (status: SetupStatus | undefined) => void): void;
 }
 /**
  * Checks the status of the LocalStack installation.
