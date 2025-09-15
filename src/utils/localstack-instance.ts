@@ -61,7 +61,7 @@ export function createLocalStackInstanceStatusTracker(
 	});
 
 	status.onChange((newStatus) => {
-		outputChannel.trace(`[localstack-status] localstack=${newStatus}`);
+		outputChannel.trace(`[localstack-instances-status] status=${newStatus}`);
 
 		if (newStatus === "running") {
 			healthCheckStatusTracker.stop();
@@ -89,9 +89,11 @@ export function createLocalStackInstanceStatusTracker(
 			return status.value();
 		},
 		forceContainerStatus(newContainerStatus) {
-			if (containerStatus !== newContainerStatus) {
-				containerStatus = newContainerStatus;
-				deriveStatus();
+			containerStatus = newContainerStatus;
+			if (newContainerStatus === "running") {
+				status.setValue("starting");
+			} else if (newContainerStatus === "stopping") {
+				status.setValue("stopping");
 			}
 		},
 		onChange(callback) {
@@ -107,24 +109,37 @@ function getLocalStackStatus(
 	containerStatus: LocalStackContainerStatus | undefined,
 	healthStatus: HealthStatus | undefined,
 	previousStatus?: LocalStackInstanceStatus,
-): LocalStackInstanceStatus {
-	if (containerStatus === "running") {
-		if (healthStatus === "healthy") {
-			return "running";
-		} else {
-			// When the LS container is running, and the health check fails:
-			// - If the previous status was "running", we are likely stopping LS
-			// - If the previous status was "stopping", we are still stopping LS
-			if (previousStatus === "running" || previousStatus === "stopping") {
-				return "stopping";
-			}
-			return "starting";
-		}
-	} else if (containerStatus === "stopping") {
-		return "stopping";
-	} else {
-		return "stopped";
+): LocalStackInstanceStatus | undefined {
+	// There's no LS container status yet, so can't derive LS instance status.
+	if (containerStatus === undefined) {
+		return undefined;
 	}
+
+	if (containerStatus === "running" && healthStatus === "healthy") {
+		return "running";
+	}
+
+	if (containerStatus === "running" && healthStatus === "unhealthy") {
+		// When the LS container is running, and the health check fails:
+		// - If the previous status was "running", we are likely stopping LS
+		// - If the previous status was "stopping", we are still stopping LS
+		if (previousStatus === "running" || previousStatus === "stopping") {
+			return "stopping";
+		}
+
+		return "starting";
+	}
+
+	if (containerStatus === "running" && healthStatus === undefined) {
+		// return previousStatus;
+		return undefined;
+	}
+
+	if (containerStatus === "stopping") {
+		return "stopping";
+	}
+
+	return "stopped";
 }
 
 type HealthStatus = "healthy" | "unhealthy";

@@ -1,15 +1,15 @@
 import { createOnceImmediate } from "./once-immediate.ts";
 
-export type Callback<T> = (value: T) => Promise<void> | void;
+export type Callback<T> = (value: T | undefined) => Promise<void> | void;
 
 export interface ValueEmitter<T> {
 	value(): T | undefined;
-	setValue(value: T): void;
+	setValue(value: T | undefined): void;
 	onChange(callback: Callback<T>): void;
 }
 
 export function createValueEmitter<T>(): ValueEmitter<T> {
-	let currentValue: T;
+	let currentValue: T | undefined;
 	const callbacks: Callback<T>[] = [];
 
 	const emit = createOnceImmediate(async () => {
