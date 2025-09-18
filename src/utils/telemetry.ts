@@ -220,7 +220,7 @@ export function get_setup_ended(
 	authentication_status: "COMPLETED" | "SKIPPED" | "CANCELLED",
 	license_setup_status: "COMPLETED" | "SKIPPED" | "CANCELLED",
 	aws_profile_status: "COMPLETED" | "SKIPPED" | "CANCELLED",
-	overall_status: "CANCELLED" | "COMPLETED",
+	overall_status: "CANCELLED" | "COMPLETED" | "FAILED",
 	origin: "manual_trigger" | "extension_startup",
 	auth_token: string = "",
 ): Events {

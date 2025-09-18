@@ -239,9 +239,34 @@ export default createPlugin(
 							const cliPath =
 								cliStatusTracker.cliPath() ?? (await getValidCliPath());
 							if (!cliPath) {
-								void window.showErrorMessage(
-									"Could not access the LocalStack CLI.",
+								telemetry.track(
+									get_setup_ended(
+										cliStatus,
+										authenticationStatus,
+										"CANCELLED",
+										"CANCELLED",
+										"FAILED",
+										origin_trigger,
+										await readAuthToken(),
+									),
 								);
+								void window
+									.showErrorMessage(
+										"Could not access the LocalStack CLI.",
+										{
+											title: "Restart Setup",
+											command: "localstack.setup",
+										},
+										{
+											title: "View Logs",
+											command: "localstack.viewLogs",
+										},
+									)
+									.then((selection) => {
+										if (selection) {
+											void commands.executeCommand(selection.command);
+										}
+									});
 								return;
 							}
 
