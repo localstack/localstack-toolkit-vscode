@@ -1,27 +1,38 @@
-import type { LogOutputChannel } from "vscode";
+import { createOnceImmediate } from "./once-immediate.ts";
 
-export type Callback<T> = (value: T) => Promise<void> | void;
+export type Callback<T> = (value: T | undefined) => Promise<void> | void;
 
-export interface Emitter<T> {
-	on(callback: Callback<T>): void;
-	emit(value: T): Promise<void>;
+export interface ValueEmitter<T> {
+	value(): T | undefined;
+	setValue(value: T | undefined): void;
+	onChange(callback: Callback<T>): void;
 }
 
-export function createEmitter<T>(outputChannel: LogOutputChannel): Emitter<T> {
+export function createValueEmitter<T>(): ValueEmitter<T> {
+	let currentValue: T | undefined;
 	const callbacks: Callback<T>[] = [];
 
+	const emit = createOnceImmediate(async () => {
+		for (const callback of callbacks) {
+			try {
+				await callback(currentValue);
+			} catch {}
+		}
+	});
+
 	return {
-		on(callback) {
-			callbacks.push(callback);
+		value() {
+			return currentValue;
 		},
-		async emit(value) {
-			for (const callback of callbacks) {
-				try {
-					await callback(value);
-				} catch (error) {
-					outputChannel.error(error instanceof Error ? error : String(error));
-				}
+		setValue(value) {
+			if (currentValue !== value) {
+				currentValue = value;
+				emit();
 			}
+		},
+		onChange(callback) {
+			callbacks.push(callback);
+			void Promise.resolve(callback(currentValue)).catch(() => {});
 		},
 	};
 }

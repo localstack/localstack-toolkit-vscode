@@ -8,10 +8,14 @@ import manage from "./plugins/manage.ts";
 import setup from "./plugins/setup.ts";
 import statusBar from "./plugins/status-bar.ts";
 import { PluginManager } from "./plugins.ts";
-import { createContainerStatusTracker } from "./utils/container-status.ts";
-import { createLocalStackStatusTracker } from "./utils/localstack-status.ts";
+import { createCliStatusTracker } from "./utils/cli.ts";
+import { createLocalStackContainerStatusTracker } from "./utils/localstack-container.ts";
+import {
+	createHealthStatusTracker,
+	createLocalStackInstanceStatusTracker,
+} from "./utils/localstack-instance.ts";
 import { getOrCreateExtensionSessionId } from "./utils/manage.ts";
-import { createSetupStatusTracker } from "./utils/setup-status.ts";
+import { createSetupStatusTracker } from "./utils/setup.ts";
 import { createTelemetry } from "./utils/telemetry.ts";
 import { createTimeTracker } from "./utils/time-tracker.ts";
 
@@ -28,6 +32,9 @@ export async function activate(context: ExtensionContext) {
 		log: true,
 	});
 	context.subscriptions.push(outputChannel);
+
+	const cliStatusTracker = createCliStatusTracker(outputChannel);
+	context.subscriptions.push(cliStatusTracker);
 
 	const timeTracker = createTimeTracker({ outputChannel });
 
@@ -46,45 +53,37 @@ export async function activate(context: ExtensionContext) {
 		statusBarItem.text = "$(loading~spin) LocalStack";
 		statusBarItem.show();
 
-		const containerStatusTracker = await createContainerStatusTracker(
+		const containerStatusTracker = createLocalStackContainerStatusTracker(
 			"localstack-main",
 			outputChannel,
 			timeTracker,
 		);
 		context.subscriptions.push(containerStatusTracker);
 
-		const localStackStatusTracker = createLocalStackStatusTracker(
+		const healthCheckStatusTracker = createHealthStatusTracker(timeTracker);
+		const localStackStatusTracker = createLocalStackInstanceStatusTracker(
 			containerStatusTracker,
+			healthCheckStatusTracker,
 			outputChannel,
-			timeTracker,
 		);
 		context.subscriptions.push(localStackStatusTracker);
 
-		outputChannel.trace(`[setup-status]: Starting...`);
-		const startStatusTracker = Date.now();
-		const setupStatusTracker = await createSetupStatusTracker(
-			outputChannel,
-			timeTracker,
+		const setupStatusTracker = await timeTracker.run(
+			"setup-status",
+			async () => {
+				return await createSetupStatusTracker(
+					outputChannel,
+					timeTracker,
+					cliStatusTracker,
+				);
+			},
 		);
 		context.subscriptions.push(setupStatusTracker);
-		const endStatusTracker = Date.now();
-		outputChannel.trace(
-			`[setup-status]: Completed in ${ms(
-				endStatusTracker - startStatusTracker,
-				{ long: true },
-			)}`,
-		);
 
-		const startTelemetry = Date.now();
-		outputChannel.trace(`[telemetry]: Starting...`);
-		const sessionId = await getOrCreateExtensionSessionId(context);
-		const telemetry = createTelemetry(outputChannel, sessionId);
-		const endTelemetry = Date.now();
-		outputChannel.trace(
-			`[telemetry]: Completed in ${ms(endTelemetry - startTelemetry, {
-				long: true,
-			})}`,
-		);
+		const telemetry = await timeTracker.run("telemetry", async () => {
+			const sessionId = await getOrCreateExtensionSessionId(context);
+			return createTelemetry(outputChannel, sessionId);
+		});
 
 		return {
 			statusBarItem,
@@ -100,6 +99,7 @@ export async function activate(context: ExtensionContext) {
 			context,
 			outputChannel,
 			statusBarItem,
+			cliStatusTracker,
 			containerStatusTracker,
 			localStackStatusTracker,
 			setupStatusTracker,
