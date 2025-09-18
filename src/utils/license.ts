@@ -112,7 +112,7 @@ export function createLicenseStatusTracker(
 
 			const cliPath = cliTracker.cliPath();
 			if (!cliPath) {
-				return undefined;
+				return "waiting_for_dependencies";
 			}
 
 			const isLicenseValid = await checkIsLicenseValid(cliPath, outputChannel);

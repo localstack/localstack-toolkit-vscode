@@ -77,7 +77,7 @@ async function pullDockerImage(
 	}
 }
 
-export type SetupStatus = "ok" | "setup_required";
+export type SetupStatus = "ok" | "setup_required" | "waiting_for_dependencies";
 
 export interface SetupStatusTracker extends Disposable {
 	status(): SetupStatus | undefined;
