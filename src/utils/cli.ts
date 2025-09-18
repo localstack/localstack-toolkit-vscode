@@ -186,7 +186,7 @@ export function createCliStatusTracker(
 				? "ok"
 				: "setup_required",
 		);
-		cliPath.setValue(newCli?.upToDate ? newCli?.cliPath : undefined);
+		cliPath.setValue(status.value() === "ok" ? newCli?.cliPath : undefined);
 		outdated.setValue(
 			newCli?.upToDate !== undefined ? !newCli.upToDate : undefined,
 		);
