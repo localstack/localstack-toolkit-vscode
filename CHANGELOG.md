@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.3.0 (2025-09-18)
+
+- feat: Detect outdated LocalStack versions
+- chore: Refactor LocalStack CLI detection to an event-based status tracker
+
 ## 1.2.3 (2025-09-12)
 
 - fix: Show LocalStack Setup Wizard pop-up only when setup is required
