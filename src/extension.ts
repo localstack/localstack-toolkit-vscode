@@ -69,17 +69,17 @@ export async function activate(context: ExtensionContext) {
 		context.subscriptions.push(localStackStatusTracker);
 
 		outputChannel.trace(`[setup-status]: Starting...`);
-		const startStatusTracker = Date.now();
+		const setupStatusTrackerStartTime = Date.now();
 		const setupStatusTracker = await createSetupStatusTracker(
 			outputChannel,
 			timeTracker,
 			cliStatusTracker,
 		);
 		context.subscriptions.push(setupStatusTracker);
-		const endStatusTracker = Date.now();
+		const setupStatusTrackerEndTime = Date.now();
 		outputChannel.trace(
 			`[setup-status]: Completed in ${ms(
-				endStatusTracker - startStatusTracker,
+				setupStatusTrackerEndTime - setupStatusTrackerStartTime,
 				{ long: true },
 			)}`,
 		);
