@@ -37,7 +37,7 @@ export function createLocalStackContainerStatusTracker(
 	void timeTracker.run("container-status.getContainerStatus", async () => {
 		await getContainerStatus(containerName).then((newStatus) => {
 			outputChannel.trace(
-				`[localstack-container-status] getContainerStatus=${newStatus} currentStatus=${status.value()}`,
+				`[localstack-container-status] getContainerStatus=${newStatus} previousStatus=${status.value()}`,
 			);
 			if (status.value() === undefined) {
 				status.setValue(newStatus);
