@@ -68,32 +68,22 @@ export async function activate(context: ExtensionContext) {
 		);
 		context.subscriptions.push(localStackStatusTracker);
 
-		outputChannel.trace(`[setup-status]: Starting...`);
-		const setupStatusTrackerStartTime = Date.now();
-		const setupStatusTracker = await createSetupStatusTracker(
-			outputChannel,
-			timeTracker,
-			cliStatusTracker,
+		const setupStatusTracker = await timeTracker.run(
+			"setup-status",
+			async () => {
+				return await createSetupStatusTracker(
+					outputChannel,
+					timeTracker,
+					cliStatusTracker,
+				);
+			},
 		);
 		context.subscriptions.push(setupStatusTracker);
-		const setupStatusTrackerEndTime = Date.now();
-		outputChannel.trace(
-			`[setup-status]: Completed in ${ms(
-				setupStatusTrackerEndTime - setupStatusTrackerStartTime,
-				{ long: true },
-			)}`,
-		);
 
-		const startTelemetry = Date.now();
-		outputChannel.trace(`[telemetry]: Starting...`);
-		const sessionId = await getOrCreateExtensionSessionId(context);
-		const telemetry = createTelemetry(outputChannel, sessionId);
-		const endTelemetry = Date.now();
-		outputChannel.trace(
-			`[telemetry]: Completed in ${ms(endTelemetry - startTelemetry, {
-				long: true,
-			})}`,
-		);
+		const telemetry = await timeTracker.run("telemetry", async () => {
+			const sessionId = await getOrCreateExtensionSessionId(context);
+			return createTelemetry(outputChannel, sessionId);
+		});
 
 		return {
 			statusBarItem,
