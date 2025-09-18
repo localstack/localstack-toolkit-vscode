@@ -6,7 +6,7 @@ import type { LocalStackInstanceStatus } from "../utils/localstack-instance.ts";
 import { createOnceImmediate } from "../utils/once-immediate.ts";
 import type { SetupStatus } from "../utils/setup.ts";
 
-function getStatusText(options: {
+function getOverallStatusText(options: {
 	cliStatus: SetupStatus;
 	localStackStatus: LocalStackInstanceStatus;
 	cliOutdated: boolean | undefined;
@@ -130,7 +130,7 @@ export default createPlugin(
 						? "$(sync~spin)"
 						: "$(localstack-logo)";
 
-			const statusText = getStatusText({
+			const statusText = getOverallStatusText({
 				cliOutdated,
 				cliStatus,
 				localStackStatus,
