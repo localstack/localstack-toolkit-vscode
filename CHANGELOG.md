@@ -2,7 +2,7 @@
 
 ## 1.3.0 (2025-09-18)
 
-- feat: Detect outdated LocalStack versions
+- feat: Detect outdated LocalStack CLI versions
 - chore: Refactor LocalStack CLI detection to an event-based status tracker
 
 ## 1.2.3 (2025-09-12)
