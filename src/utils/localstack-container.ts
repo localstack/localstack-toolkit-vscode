@@ -99,7 +99,7 @@ function listenToContainerStatus(
 				"--filter",
 				"event=die",
 				"--format",
-				"json",
+				"{{json .}}",
 			]);
 
 			dockerEvents.on("error", (error) => {
