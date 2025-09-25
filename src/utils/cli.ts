@@ -173,7 +173,7 @@ export interface CliStatusTracker extends Disposable {
 export function createCliStatusTracker(
 	outputChannel: LogOutputChannel,
 ): CliStatusTracker {
-	const status = createValueEmitter<SetupStatus>();
+	const setupStatus = createValueEmitter<SetupStatus>();
 	const cliPath = createValueEmitter<string | undefined>();
 	const outdated = createValueEmitter<boolean | undefined>();
 
@@ -181,12 +181,14 @@ export function createCliStatusTracker(
 		const newCli = await findLocalStack().catch(() => undefined);
 		outputChannel.info(`[cli]: findLocalStack = ${newCli?.cliPath}`);
 
-		status.setValue(
+		setupStatus.setValue(
 			newCli?.found && newCli.executable && newCli.upToDate
 				? "ok"
 				: "setup_required",
 		);
-		cliPath.setValue(status.value() === "ok" ? newCli?.cliPath : undefined);
+		cliPath.setValue(
+			setupStatus.value() === "ok" ? newCli?.cliPath : undefined,
+		);
 		outdated.setValue(
 			newCli?.upToDate !== undefined ? !newCli.upToDate : undefined,
 		);
@@ -225,10 +227,10 @@ export function createCliStatusTracker(
 			cliPath.onChange(callback);
 		},
 		status() {
-			return status.value();
+			return setupStatus.value();
 		},
 		onStatusChange(callback) {
-			status.onChange(callback);
+			setupStatus.onChange(callback);
 		},
 		outdated() {
 			return outdated.value();
