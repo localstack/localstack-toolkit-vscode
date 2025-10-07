@@ -59,7 +59,7 @@ export function createLocalStackInstanceStatusTracker(
 	});
 
 	status.onChange((newStatus) => {
-		outputChannel.trace(`[localstack-instance-status] status=${newStatus}`);
+		outputChannel.trace(`[localstack-instances-status] status=${newStatus}`);
 
 		if (newStatus === "running") {
 			healthCheckStatusTracker.stop();

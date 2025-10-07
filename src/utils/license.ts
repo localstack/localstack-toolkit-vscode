@@ -7,7 +7,6 @@ import { execLocalStack } from "./cli.ts";
 import type { CliStatusTracker } from "./cli.ts";
 import { createFileStatusTracker } from "./file-status-tracker.ts";
 import type { StatusTracker } from "./file-status-tracker.ts";
-import { minDelay } from "./min-delay.ts";
 
 /**
  * See https://github.com/localstack/localstack/blob/de861e1f656a52eaa090b061bd44fc1a7069715e/localstack-core/localstack/utils/files.py#L38-L55.
@@ -116,11 +115,7 @@ export function createLicenseStatusTracker(
 				return "waiting_for_dependencies";
 			}
 
-			const isLicenseValid = await minDelay(
-				activateLicense(cliPath, outputChannel).then(() =>
-					checkIsLicenseValid(cliPath, outputChannel),
-				),
-			);
+			const isLicenseValid = await checkIsLicenseValid(cliPath, outputChannel);
 
 			return isLicenseValid ? "ok" : "setup_required";
 		},
