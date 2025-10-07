@@ -7,7 +7,6 @@ import {
 	saveAuthToken,
 	readAuthToken,
 } from "../utils/authenticate.ts";
-import { findLocalStack } from "../utils/cli.ts";
 import { configureAwsProfiles } from "../utils/configure-aws.ts";
 import { runInstallProcess } from "../utils/install.ts";
 import {
@@ -15,17 +14,9 @@ import {
 	checkIsLicenseValid,
 	activateLicenseUntilValid,
 } from "../utils/license.ts";
-import { minDelay } from "../utils/min-delay.ts";
+import { minDelay } from "../utils/promises.ts";
 import { updateDockerImage } from "../utils/setup.ts";
 import { get_setup_ended } from "../utils/telemetry.ts";
-
-async function getValidCliPath() {
-	const cli = await findLocalStack();
-	if (!cli.cliPath || !cli.executable || !cli.found || !cli.upToDate) {
-		return;
-	}
-	return cli.cliPath;
-}
 
 export default createPlugin(
 	"setup",
@@ -34,7 +25,6 @@ export default createPlugin(
 		outputChannel,
 		setupStatusTracker,
 		localStackStatusTracker,
-		cliStatusTracker,
 		telemetry,
 	}) => {
 		context.subscriptions.push(
@@ -53,7 +43,7 @@ export default createPlugin(
 						},
 					});
 
-					void window.withProgress(
+					window.withProgress(
 						{
 							location: ProgressLocation.Notification,
 							title: "Setup LocalStack",
@@ -65,14 +55,13 @@ export default createPlugin(
 							let authenticationStatus: "COMPLETED" | "SKIPPED" = "COMPLETED";
 							{
 								const installationStartedAt = new Date().toISOString();
-								const { cancelled, skipped } = await runInstallProcess({
-									cliPath: cliStatusTracker.cliPath(),
+								const { cancelled, skipped } = await runInstallProcess(
 									progress,
 									cancellationToken,
 									outputChannel,
 									telemetry,
-									origin: origin_trigger,
-								});
+									origin_trigger,
+								);
 								cliStatus = skipped === true ? "SKIPPED" : "COMPLETED";
 								if (cancelled || cancellationToken.isCancellationRequested) {
 									telemetry.track({
@@ -232,52 +221,14 @@ export default createPlugin(
 							/////////////////////////////////////////////////////////////////////
 							progress.report({ message: "Checking LocalStack license..." });
 
-							// If the CLI status tracker doesn't have a valid CLI path yet,
-							// we must find it manually. This may occur when installing the
-							// CLI as part of the setup process: the CLI status tracker will
-							// detect the CLI path the next tick.
-							const cliPath =
-								cliStatusTracker.cliPath() ?? (await getValidCliPath());
-							if (!cliPath) {
-								telemetry.track(
-									get_setup_ended(
-										cliStatus,
-										authenticationStatus,
-										"CANCELLED",
-										"CANCELLED",
-										"FAILED",
-										origin_trigger,
-										await readAuthToken(),
-									),
-								);
-								void window
-									.showErrorMessage(
-										"Could not access the LocalStack CLI.",
-										{
-											title: "Restart Setup",
-											command: "localstack.setup",
-										},
-										{
-											title: "View Logs",
-											command: "localstack.viewLogs",
-										},
-									)
-									.then((selection) => {
-										if (selection) {
-											void commands.executeCommand(selection.command);
-										}
-									});
-								return;
-							}
-
 							// If an auth token has just been obtained or LocalStack has never been started,
 							// then there will be no license info to be reported by `localstack license info`.
 							// Also, an expired license could be cached.
 							// Activating the license pre-emptively to know its state during the setup process.
 							const licenseCheckStartedAt = new Date().toISOString();
 							const licenseIsValid = await minDelay(
-								activateLicense(cliPath, outputChannel).then(() =>
-									checkIsLicenseValid(cliPath, outputChannel),
+								activateLicense(outputChannel).then(() =>
+									checkIsLicenseValid(outputChannel),
 								),
 							);
 							if (!licenseIsValid) {
@@ -289,7 +240,6 @@ export default createPlugin(
 								await commands.executeCommand("localstack.openLicensePage");
 
 								await activateLicenseUntilValid(
-									cliPath,
 									outputChannel,
 									cancellationToken,
 								);

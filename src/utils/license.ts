@@ -4,9 +4,6 @@ import { join } from "node:path";
 import type { CancellationToken, LogOutputChannel } from "vscode";
 
 import { execLocalStack } from "./cli.ts";
-import type { CliStatusTracker } from "./cli.ts";
-import { createFileStatusTracker } from "./file-status-tracker.ts";
-import type { StatusTracker } from "./file-status-tracker.ts";
 
 /**
  * See https://github.com/localstack/localstack/blob/de861e1f656a52eaa090b061bd44fc1a7069715e/localstack-core/localstack/utils/files.py#L38-L55.
@@ -36,18 +33,11 @@ export const LICENSE_FILENAME = join(
 
 const LICENSE_VALIDITY_MARKER = "license validity: valid";
 
-export async function checkIsLicenseValid(
-	cliPath: string,
-	outputChannel: LogOutputChannel,
-) {
+export async function checkIsLicenseValid(outputChannel: LogOutputChannel) {
 	try {
-		const licenseInfoResponse = await execLocalStack(
-			cliPath,
-			["license", "info"],
-			{
-				outputChannel,
-			},
-		);
+		const licenseInfoResponse = await execLocalStack(["license", "info"], {
+			outputChannel,
+		});
 		return licenseInfoResponse.stdout.includes(LICENSE_VALIDITY_MARKER);
 	} catch (error) {
 		outputChannel.error(error instanceof Error ? error : String(error));
@@ -56,12 +46,9 @@ export async function checkIsLicenseValid(
 	}
 }
 
-export async function activateLicense(
-	cliPath: string,
-	outputChannel: LogOutputChannel,
-) {
+export async function activateLicense(outputChannel: LogOutputChannel) {
 	try {
-		await execLocalStack(cliPath, ["license", "activate"], {
+		await execLocalStack(["license", "activate"], {
 			outputChannel,
 		});
 	} catch (error) {
@@ -70,7 +57,6 @@ export async function activateLicense(
 }
 
 export async function activateLicenseUntilValid(
-	cliPath: string,
 	outputChannel: LogOutputChannel,
 	cancellationToken: CancellationToken,
 ): Promise<void> {
@@ -78,60 +64,12 @@ export async function activateLicenseUntilValid(
 		if (cancellationToken.isCancellationRequested) {
 			break;
 		}
-		const licenseIsValid = await checkIsLicenseValid(cliPath, outputChannel);
+		const licenseIsValid = await checkIsLicenseValid(outputChannel);
 		if (licenseIsValid) {
 			break;
 		}
-		await activateLicense(cliPath, outputChannel);
+		await activateLicense(outputChannel);
 		// Wait before trying again
 		await new Promise((resolve) => setTimeout(resolve, 1000));
 	}
-}
-
-/**
- * Creates a status tracker that monitors the LocalStack license file for changes.
- * When the file is changed, the provided check function is called to determine the current setup status.
- * Emits status changes to registered listeners.
- *
- * @param outputChannel - Channel for logging output and trace messages.
- * @returns A {@link StatusTracker} instance for querying status, subscribing to changes, and disposing resources.
- */
-export function createLicenseStatusTracker(
-	cliTracker: CliStatusTracker,
-	authTracker: StatusTracker,
-	outputChannel: LogOutputChannel,
-): StatusTracker {
-	const licenseTracker = createFileStatusTracker(
-		outputChannel,
-		"[setup-status.license]",
-		[LICENSE_FILENAME],
-		async () => {
-			if (cliTracker.outdated()) {
-				return "setup_required";
-			}
-
-			const cliPath = cliTracker.cliPath();
-			if (!cliPath) {
-				return "waiting_for_dependencies";
-			}
-
-			const isLicenseValid = await checkIsLicenseValid(cliPath, outputChannel);
-
-			return isLicenseValid ? "ok" : "setup_required";
-		},
-	);
-
-	authTracker.onChange(() => {
-		licenseTracker.check();
-	});
-
-	cliTracker.onCliPathChange(() => {
-		licenseTracker.check();
-	});
-
-	cliTracker.onOutdatedChange(() => {
-		licenseTracker.check();
-	});
-
-	return licenseTracker;
 }

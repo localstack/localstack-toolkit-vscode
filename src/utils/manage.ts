@@ -38,7 +38,6 @@ async function fetchLocalStackSessionId(): Promise<string> {
 }
 
 export async function startLocalStack(
-	cliPath: string,
 	outputChannel: LogOutputChannel,
 	telemetry: Telemetry,
 ): Promise<void> {
@@ -50,7 +49,6 @@ export async function startLocalStack(
 	const authToken = await readAuthToken();
 	try {
 		await spawnLocalStack(
-			cliPath,
 			[
 				"start",
 				// DO NOT REMOVE!
@@ -91,7 +89,7 @@ export async function startLocalStack(
 			},
 		});
 	} catch (error) {
-		const isLicenseValid = await checkIsLicenseValid(cliPath, outputChannel);
+		const isLicenseValid = await checkIsLicenseValid(outputChannel);
 		if (isLicenseValid === false) {
 			void showErrorMessage("No valid LocalStack license found.", {
 				title: "Go to License settings",
@@ -118,7 +116,6 @@ export async function startLocalStack(
 }
 
 export async function stopLocalStack(
-	cliPath: string,
 	outputChannel: LogOutputChannel,
 	telemetry: Telemetry,
 ) {
@@ -129,7 +126,7 @@ export async function stopLocalStack(
 		// get session id before killing container
 		const emulatorSessionId = await fetchLocalStackSessionId();
 
-		await spawnLocalStack(cliPath, ["stop"], {
+		await spawnLocalStack(["stop"], {
 			outputChannel,
 		});
 

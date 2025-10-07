@@ -2,32 +2,12 @@ import { commands, QuickPickItemKind, ThemeColor, window } from "vscode";
 import type { QuickPickItem } from "vscode";
 
 import { createPlugin } from "../plugins.ts";
-import type { LocalStackInstanceStatus } from "../utils/localstack-instance.ts";
-import { createOnceImmediate } from "../utils/once-immediate.ts";
-import type { SetupStatus } from "../utils/setup.ts";
-
-function getOverallStatusText(options: {
-	cliStatus: SetupStatus;
-	localStackStatus: LocalStackInstanceStatus;
-	cliOutdated: boolean | undefined;
-}) {
-	if (options.cliStatus === "ok") {
-		return options.localStackStatus;
-	}
-
-	if (options.cliOutdated) {
-		return "CLI outdated";
-	}
-
-	return "CLI not installed";
-}
 
 export default createPlugin(
 	"status-bar",
 	({
 		context,
 		statusBarItem,
-		cliStatusTracker,
 		localStackStatusTracker,
 		setupStatusTracker,
 		outputChannel,
@@ -35,10 +15,10 @@ export default createPlugin(
 		context.subscriptions.push(
 			commands.registerCommand("localstack.showCommands", async () => {
 				const shouldShowLocalStackStart = () =>
-					cliStatusTracker.status() === "ok" &&
+					setupStatusTracker.statuses().isInstalled &&
 					localStackStatusTracker.status() === "stopped";
 				const shouldShowLocalStackStop = () =>
-					cliStatusTracker.status() === "ok" &&
+					setupStatusTracker.statuses().isInstalled &&
 					localStackStatusTracker.status() === "running";
 				const shouldShowRunSetupWizard = () =>
 					setupStatusTracker.status() === "setup_required";
@@ -97,57 +77,63 @@ export default createPlugin(
 			}),
 		);
 
-		const renderStatusBar = createOnceImmediate(() => {
-			const setupStatus = setupStatusTracker.status();
-			const localStackStatus = localStackStatusTracker.status();
-			const cliStatus = cliStatusTracker.status();
-			const cliOutdated = cliStatusTracker.outdated();
-			outputChannel.trace(
-				`[status-bar] setupStatus=${setupStatus} localStackStatus=${localStackStatus} cliStatus=${cliStatus}`,
-			);
+		context.subscriptions.push(
+			commands.registerCommand("localstack.refreshStatusBar", () => {
+				const setupStatus = setupStatusTracker.status();
+				const localStackStatus = localStackStatusTracker.status();
+				const localStackInstalled = setupStatusTracker.statuses().isInstalled;
 
-			// Skip rendering the status bar if any of the status checks is not ready.
-			if (
-				setupStatus === undefined ||
-				localStackStatus === undefined ||
-				cliStatus === undefined
-			) {
-				return;
+				statusBarItem.command = "localstack.showCommands";
+				statusBarItem.backgroundColor =
+					setupStatus === "setup_required"
+						? new ThemeColor("statusBarItem.errorBackground")
+						: undefined;
+
+				const shouldSpin =
+					localStackStatus === "starting" || localStackStatus === "stopping";
+				const icon =
+					setupStatus === "setup_required"
+						? "$(error)"
+						: shouldSpin
+							? "$(sync~spin)"
+							: "$(localstack-logo)";
+
+				const statusText = localStackInstalled
+					? `${localStackStatus}`
+					: "not installed";
+				statusBarItem.text = `${icon} LocalStack: ${statusText}`;
+
+				statusBarItem.tooltip = "Show LocalStack commands";
+				statusBarItem.show();
+			}),
+		);
+
+		let refreshStatusBarImmediateId: NodeJS.Immediate | undefined;
+		const refreshStatusBarImmediate = () => {
+			if (!refreshStatusBarImmediateId) {
+				refreshStatusBarImmediateId = setImmediate(() => {
+					void commands.executeCommand("localstack.refreshStatusBar");
+					refreshStatusBarImmediateId = undefined;
+				});
 			}
+		};
 
-			statusBarItem.command = "localstack.showCommands";
-			statusBarItem.backgroundColor =
-				setupStatus === "setup_required"
-					? new ThemeColor("statusBarItem.errorBackground")
-					: undefined;
-
-			const shouldSpin =
-				localStackStatus === "starting" || localStackStatus === "stopping";
-			const icon =
-				setupStatus === "setup_required"
-					? "$(error)"
-					: shouldSpin
-						? "$(sync~spin)"
-						: "$(localstack-logo)";
-
-			const statusText = getOverallStatusText({
-				cliOutdated,
-				cliStatus,
-				localStackStatus,
-			});
-			statusBarItem.text = `${icon} LocalStack: ${statusText}`;
-
-			statusBarItem.tooltip = "Show LocalStack commands";
+		context.subscriptions.push({
+			dispose() {
+				clearImmediate(refreshStatusBarImmediateId);
+			},
 		});
+
+		refreshStatusBarImmediate();
 
 		localStackStatusTracker.onChange(() => {
 			outputChannel.trace("[status-bar]: localStackStatusTracker changed");
-			renderStatusBar();
+			refreshStatusBarImmediate();
 		});
 
 		setupStatusTracker.onChange(() => {
 			outputChannel.trace("[status-bar]: setupStatusTracker changed");
-			renderStatusBar();
+			refreshStatusBarImmediate();
 		});
 	},
 );

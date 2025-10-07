@@ -12,8 +12,9 @@ import {
 	LOCAL_CLI_INSTALLATION_DIRNAME,
 } from "../constants.ts";
 
+import { execLocalStack } from "./cli.ts";
 import { exec } from "./exec.ts";
-import { minDelay } from "./min-delay.ts";
+import { minDelay } from "./promises.ts";
 import {
 	spawnElevatedDarwin,
 	spawnElevatedLinux,
@@ -22,33 +23,33 @@ import {
 import { spawn } from "./spawn.ts";
 import type { Telemetry } from "./telemetry.ts";
 
-export interface RunInstallProcessOptions {
-	progress: Progress<{ message: string }>;
-	cancellationToken: CancellationToken;
-	outputChannel: LogOutputChannel;
-	telemetry: Telemetry;
-	origin?: "extension_startup" | "manual_trigger";
-	cliPath: string | undefined;
+export async function checkLocalstackInstalled(
+	outputChannel: LogOutputChannel,
+): Promise<boolean> {
+	try {
+		await execLocalStack(["--version"], { outputChannel });
+		return true;
+	} catch (error) {
+		return false;
+	}
 }
 
 export async function runInstallProcess(
-	options: RunInstallProcessOptions,
+	progress: Progress<{ message: string }>,
+	cancellationToken: CancellationToken,
+	outputChannel: LogOutputChannel,
+	telemetry: Telemetry,
+	origin?: "extension_startup" | "manual_trigger",
 ): Promise<{ cancelled: boolean; skipped?: boolean }> {
-	const {
-		progress,
-		cancellationToken,
-		outputChannel,
-		telemetry,
-		origin,
-		cliPath,
-	} = options;
 	/////////////////////////////////////////////////////////////////////
 	const origin_trigger = origin ? origin : "manual_trigger";
 	progress.report({
 		message: "Verifying CLI installation...",
 	});
 	const startedAt = new Date().toISOString();
-	const isLocalStackInstalled = cliPath !== undefined;
+	const isLocalStackInstalled = await minDelay(
+		checkLocalstackInstalled(outputChannel),
+	);
 	if (cancellationToken.isCancellationRequested) {
 		return { cancelled: true };
 	}
