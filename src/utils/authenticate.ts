@@ -10,8 +10,6 @@ import type {
 import { env, Uri, window } from "vscode";
 
 import { assertIsError } from "./assert.ts";
-import { createFileStatusTracker } from "./file-status-tracker.ts";
-import type { StatusTracker } from "./file-status-tracker.ts";
 
 /**
  * Registers a {@link UriHandler} that waits for an authentication token from the browser,
@@ -161,24 +159,4 @@ export async function readAuthToken(): Promise<string> {
  */
 export async function checkIsAuthenticated() {
 	return (await readAuthToken()) !== "";
-}
-
-/**
- * Creates a status tracker that monitors the LocalStack authentication file for changes.
- * When the file is changed, the provided check function is called to determine the current setup status.
- * Emits status changes to registered listeners.
- *
- * @param outputChannel - Channel for logging output and trace messages.
- * @param outputChannel
- * @returns A {@link StatusTracker} instance for querying status, subscribing to changes, and disposing resources.
- */
-export function createLocalStackAuthenticationStatusTracker(
-	outputChannel: LogOutputChannel,
-): StatusTracker {
-	return createFileStatusTracker(
-		outputChannel,
-		"[setup-status.localstack-authentication]",
-		[LOCALSTACK_AUTH_FILENAME],
-		async () => ((await checkIsAuthenticated()) ? "ok" : "setup_required"),
-	);
 }

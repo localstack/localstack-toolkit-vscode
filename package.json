@@ -56,6 +56,12 @@
 				"category": "LocalStack"
 			},
 			{
+				"command": "localstack.refreshStatusBar",
+				"title": "Refresh Status Bar",
+				"category": "LocalStack",
+				"enablement": "false"
+			},
+			{
 				"command": "localstack.showCommands",
 				"title": "Show Commands",
 				"category": "LocalStack",

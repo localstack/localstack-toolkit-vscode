@@ -3,58 +3,56 @@ import { exec, spawn } from "node:child_process";
 import type { Disposable, LogOutputChannel } from "vscode";
 import * as z from "zod/v4-mini";
 
-import { createValueEmitter } from "./emitter.ts";
+import { createEmitter } from "./emitter.ts";
 import { JsonLinesStream } from "./json-lines-stream.ts";
 import type { TimeTracker } from "./time-tracker.ts";
 
-export type LocalStackContainerStatus = "running" | "stopping" | "stopped";
+export type ContainerStatus = "running" | "stopping" | "stopped";
 
-export interface LocalStackContainerStatusTracker extends Disposable {
-	status(): LocalStackContainerStatus | undefined;
-	onChange(
-		callback: (status: LocalStackContainerStatus | undefined) => void,
-	): void;
+export interface ContainerStatusTracker extends Disposable {
+	status(): ContainerStatus;
+	onChange(callback: (status: ContainerStatus) => void): void;
 }
 
 /**
  * Checks the status of a docker container in realtime.
  */
-export function createLocalStackContainerStatusTracker(
+export async function createContainerStatusTracker(
 	containerName: string,
 	outputChannel: LogOutputChannel,
 	timeTracker: TimeTracker,
-): LocalStackContainerStatusTracker {
-	const status = createValueEmitter<LocalStackContainerStatus>();
+): Promise<ContainerStatusTracker> {
+	let status: ContainerStatus | undefined;
+	const emitter = createEmitter<ContainerStatus>(outputChannel);
 
 	const disposable = listenToContainerStatus(
 		containerName,
 		outputChannel,
 		(newStatus) => {
-			status.setValue(newStatus);
+			if (status !== newStatus) {
+				status = newStatus;
+				void emitter.emit(status);
+			}
 		},
 	);
 
-	void timeTracker.run("container-status.getContainerStatus", async () => {
+	await timeTracker.run("container-status.getContainerStatus", async () => {
 		await getContainerStatus(containerName).then((newStatus) => {
-			outputChannel.trace(
-				`[localstack-container-status] getContainerStatus=${newStatus} previousStatus=${status.value()}`,
-			);
-			if (status.value() === undefined) {
-				status.setValue(newStatus);
-			}
+			status ??= newStatus;
+			void emitter.emit(status);
 		});
-	});
-
-	status.onChange((status) => {
-		outputChannel.trace(`[localstack-container-status] container=${status}`);
 	});
 
 	return {
 		status() {
-			return status.value();
+			// biome-ignore lint/style/noNonNullAssertion: false positive
+			return status!;
 		},
 		onChange(callback) {
-			status.onChange(callback);
+			emitter.on(callback);
+			if (status) {
+				callback(status);
+			}
 		},
 		dispose() {
 			disposable.dispose();
@@ -74,7 +72,7 @@ const DockerEventsSchema = z.object({
 function listenToContainerStatus(
 	containerName: string,
 	outputChannel: LogOutputChannel,
-	onStatusChange: (status: LocalStackContainerStatus) => void,
+	onStatusChange: (status: ContainerStatus) => void,
 ): Disposable {
 	let dockerEvents: ReturnType<typeof spawn> | undefined;
 	let isDisposed = false;
@@ -197,7 +195,7 @@ function listenToContainerStatus(
 
 async function getContainerStatus(
 	containerName: string,
-): Promise<LocalStackContainerStatus> {
+): Promise<ContainerStatus> {
 	return new Promise((resolve) => {
 		// timeout after 1s
 		setTimeout(() => resolve("stopped"), 1_000);

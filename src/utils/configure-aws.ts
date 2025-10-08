@@ -7,8 +7,6 @@ import { window } from "vscode";
 import type { LogOutputChannel } from "vscode";
 
 import { readAuthToken } from "./authenticate.ts";
-import { createFileStatusTracker } from "./file-status-tracker.ts";
-import type { StatusTracker } from "./file-status-tracker.ts";
 import { parseIni, serializeIni, updateIniSection } from "./ini-parser.ts";
 import type { IniFile, IniSection } from "./ini-parser.ts";
 import type { Telemetry } from "./telemetry.ts";
@@ -502,23 +500,4 @@ export async function checkIsProfileConfigured(): Promise<boolean> {
 	} catch (error) {
 		return false;
 	}
-}
-
-/**
- * Creates a status tracker that monitors the AWS profile files for changes.
- * When the file is changed, the provided check function is called to determine the current setup status.
- * Emits status changes to registered listeners.
- *
- * @param outputChannel - Channel for logging output and trace messages.
- * @returns A {@link StatusTracker} instance for querying status, subscribing to changes, and disposing resources.
- */
-export function createAwsProfileStatusTracker(
-	outputChannel: LogOutputChannel,
-): StatusTracker {
-	return createFileStatusTracker(
-		outputChannel,
-		"[setup-status.aws-profile]",
-		[AWS_CONFIG_FILENAME, AWS_CREDENTIALS_FILENAME],
-		async () => ((await checkIsProfileConfigured()) ? "ok" : "setup_required"),
-	);
 }
