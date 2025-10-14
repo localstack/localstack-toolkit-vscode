@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.2.4 (2025-10-13)
+
+- chore: Update dependencies
+
 ## 1.2.3 (2025-09-12)
 
 - fix: Show LocalStack Setup Wizard pop-up only when setup is required
