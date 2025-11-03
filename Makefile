@@ -1,11 +1,31 @@
-.PHONY: vsix publish
+.PHONY: publish-ovsx publish-marketplace lint test
 
-vsix:
-	@echo "Packaging VS Code extension into VSIX file..."
-	LOCALSTACK_WEB_AUTH_REDIRECT=https://app.localstack.cloud/redirect?name=VSCode NODE_ENV=production ANALYTICS_API_URL=https://analytics.localstack.cloud/v1/events npx vsce package
-	@hash=$$(git rev-parse --short HEAD); \
-		mv localstack-1.0.0.vsix localstack-1.0.0-$$hash.vsix
+# VERSION can be set via environment variable or defaults to the version in package.json
+VERSION ?= $(shell node -p "require('./package.json').version")
 
-publish:
-	@echo "Publishing VS Code extension..."
-	LOCALSTACK_WEB_AUTH_REDIRECT=https://app.localstack.cloud/redirect?name=VSCode NODE_ENV=production ANALYTICS_API_URL=https://analytics.localstack.cloud/v1/events npx vsce publish
+lint:
+	@echo "Running format check..."
+	npx biome ci .
+	@echo "Running linter..."
+	npx eslint
+
+test:
+	@echo "Running type check..."
+	npx tsc
+	@echo "Compiling extension..."
+	npx vsce package
+	@echo "Running tests..."
+	xvfb-run -a npx vscode-test
+
+publish-marketplace:
+	@echo "Publishing VS Code extension to VS Marketplace..."
+	@echo "Verifying PAT..."
+	npx vsce verify-pat localstack -p $(VSCE_PAT)
+	npx vsce publish $(VERSION) -p $(VSCE_PAT) --no-update-package-json
+
+publish-ovsx:
+	@echo "Publishing VS Code extension to Open VSX..."
+	@echo "Verifying PAT..."
+	npx ovsx verify-pat localstack -p $(OVSX_PAT)
+	npx ovsx publish --packageVersion $(VERSION) -p $(OVSX_PAT)
+

@@ -1,0 +1,36 @@
+name: Publish to Open VSX
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    name: Publish to Open VSX
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Set version from branch name
+        uses: ./.github/actions/set-version
+
+      - name: Publish to Open VSX
+        run: make publish-ovsx
+        env:
+          VERSION: ${{ env.VERSION }}
+          OVSX_PAT: ${{ secrets.OVSX_PAT }}
+          LOCALSTACK_WEB_AUTH_REDIRECT: https://app.localstack.cloud/redirect?name=VSCode
+          NODE_ENV: production
+          ANALYTICS_API_URL: https://analytics.localstack.cloud/v1/events
