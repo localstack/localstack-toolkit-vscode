@@ -1,0 +1,82 @@
+name: Publish Extension
+
+on:
+  workflow_dispatch:
+    inputs:
+      publish_vs_marketplace:
+        description: 'Publish to VS Marketplace'
+        required: true
+        type: boolean
+        default: false
+      publish_open_vsx:
+        description: 'Publish to Open VSX'
+        required: true
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    name: Build and Publish
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: make lint
+
+      - name: Test
+        run: make test
+        env:
+          LOCALSTACK_WEB_AUTH_REDIRECT: https://app.localstack.cloud/redirect?name=VSCode
+          NODE_ENV: ci
+
+      - name: Set version from branch name
+        run: |
+          BRANCH_NAME="${GITHUB_REF#refs/heads/}"
+          # Validate branch name is a valid version (only alphanumeric, dots, and hyphens)
+          if ! echo "$BRANCH_NAME" | grep -Eq '^[a-zA-Z0-9.-]+$'; then
+            echo "Error: Branch name '$BRANCH_NAME' is not a valid version format"
+            echo "Version must contain only letters, numbers, dots, and hyphens"
+            exit 1
+          fi
+          echo "VERSION=$BRANCH_NAME" >> $GITHUB_ENV
+          echo "Using version: $BRANCH_NAME"
+
+      - name: Build VSIX package
+        run: make vsix
+        env:
+          LOCALSTACK_WEB_AUTH_REDIRECT: https://app.localstack.cloud/redirect?name=VSCode
+          NODE_ENV: production
+          ANALYTICS_API_URL: https://analytics.localstack.cloud/v1/events
+
+      - name: Publish to VS Marketplace
+        if: ${{ inputs.publish_vs_marketplace }}
+        run: make publish-marketplace
+        env:
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}
+
+      - name: Publish to Open VSX
+        if: ${{ inputs.publish_open_vsx }}
+        run: make publish-ovsx
+        env:
+          OVSX_PAT: ${{ secrets.OVSX_PAT }}
+
+      - name: Upload VSIX artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: localstack-${{ env.VERSION }}.vsix
+          path: localstack-${{ env.VERSION }}.vsix
+          retention-days: 7
