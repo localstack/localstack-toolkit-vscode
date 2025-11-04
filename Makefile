@@ -25,7 +25,7 @@ vsix:
 publish-marketplace:
 	@echo "Publishing VS Code extension to VS Marketplace..."
 	@echo "Verifying PAT..."
-	npx vsce show localstack -p $(VSCE_PAT)
+	npx vsce verify-pat localstack -p $(VSCE_PAT)
 	# npx vsce publish localstack-$(VERSION).vsix -p $(VSCE_PAT)
 
 publish-ovsx:
