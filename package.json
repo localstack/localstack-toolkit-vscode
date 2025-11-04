@@ -49,6 +49,23 @@
 				}
 			}
 		},
+		"viewsContainers": {
+			"activitybar": [
+				{
+					"id": "localstackActivityBar",
+					"title": "LocalStack",
+					"icon": "resources/icons/localstack.svg"
+				}
+			]
+		},
+		"views": {
+			"localstackActivityBar": [
+				{
+					"id": "localstackTreeView",
+					"name": "Items"
+				}
+			]
+		},
 		"commands": [
 			{
 				"command": "localstack.setup",

@@ -1,6 +1,18 @@
 import ms from "ms";
-import { StatusBarAlignment, window } from "vscode";
-import type { ExtensionContext } from "vscode";
+import {
+	EventEmitter,
+	StatusBarAlignment,
+	ThemeIcon,
+	TreeItem,
+	TreeItemCollapsibleState,
+	window,
+} from "vscode";
+import type {
+	ExtensionContext,
+	ProviderResult,
+	TreeDataProvider,
+	Event,
+} from "vscode";
 
 import configureAws from "./plugins/configure-aws.ts";
 import logs from "./plugins/logs.ts";
@@ -107,8 +119,99 @@ export async function activate(context: ExtensionContext) {
 			timeTracker,
 		});
 	});
+
+	const provider = new ExampleTreeDataProvider();
+
+	// Register the provider under the view ID defined in package.json
+	const treeView = window.createTreeView("localstackTreeView", {
+		treeDataProvider: provider,
+		showCollapseAll: false,
+	});
 }
 
 export async function deactivate() {
 	await plugins.deactivate();
+}
+
+class ExampleTreeDataProvider implements TreeDataProvider<TreeItem> {
+	private readonly _onDidChangeTreeData = new EventEmitter<
+		ExampleTreeItem | undefined | void
+	>();
+
+	readonly onDidChangeTreeData: Event<ExampleTreeItem | undefined | void> =
+		this._onDidChangeTreeData.event;
+
+	// Toggle to show one or two items for demonstration
+	private showTwoItems = true;
+
+	/**
+	 * Triggers a refresh of the tree view.
+	 */
+	refresh(): void {
+		this.showTwoItems = !this.showTwoItems;
+		this._onDidChangeTreeData.fire();
+	}
+
+	/**
+	 * Returns children of a given element or root.
+	 * Root returns 1–2 items; no nested children in this minimal example.
+	 */
+	getChildren(element?: ExampleTreeItem): ProviderResult<TreeItem[]> {
+		if (element) {
+			// No nested children in this example
+			return [];
+		}
+
+		const items: TreeItem[] = [];
+		const one = new ExampleTreeItem("Item One", "one");
+		items.push(one);
+
+		if (this.showTwoItems) {
+			const two = new ExampleTreeItem("Item Two", "two");
+			items.push(two);
+		}
+
+		const instanceEndpoint = new TreeItem(
+			"Instance endpoint",
+			TreeItemCollapsibleState.None,
+		);
+		instanceEndpoint.tooltip = "tooltip";
+		instanceEndpoint.description = "https://localhost.localstack.cloud:4566";
+		instanceEndpoint.iconPath = new ThemeIcon("globe");
+		items.push(instanceEndpoint);
+
+		return items;
+	}
+
+	/**
+	 * Returns a TreeItem to render in the view.
+	 */
+	getTreeItem(element: ExampleTreeItem): TreeItem {
+		return element;
+	}
+}
+
+/**
+ * A clickable TreeItem that runs the example.openItem command when selected.
+ */
+class ExampleTreeItem extends TreeItem {
+	constructor(
+		label: string,
+		readonly id: string,
+	) {
+		super(label);
+		this.id = id;
+		this.tooltip = `Click to open "${label}"`;
+		this.description = id;
+		this.iconPath = new ThemeIcon("localstack-logo");
+		this.command = {
+			command: "example.openItem",
+			title: "Open Item",
+			arguments: [this],
+		};
+		// No collapsible state, these are leaf nodes
+		this.collapsibleState = TreeItemCollapsibleState.None;
+		// Optional: contextValue enables context-menu targeting in contributes.menus
+		this.contextValue = "exampleItem";
+	}
 }
