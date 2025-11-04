@@ -1,7 +1,6 @@
 name: Publish to Visual Studio Marketplace
 
 on:
-  push:
   workflow_dispatch:
 
 permissions:
