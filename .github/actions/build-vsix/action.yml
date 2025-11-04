@@ -1,0 +1,19 @@
+name: 'Build VSIX Package'
+description: 'Builds the VS Code extension VSIX package'
+
+inputs:
+  version:
+    description: 'Version to build'
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Build VSIX package
+      shell: bash
+      run: make vsix
+      env:
+        VERSION: ${{ inputs.version }}
+        LOCALSTACK_WEB_AUTH_REDIRECT: https://app.localstack.cloud/redirect?name=VSCode
+        NODE_ENV: production
+        ANALYTICS_API_URL: https://analytics.localstack.cloud/v1/events

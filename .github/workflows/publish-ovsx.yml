@@ -27,12 +27,13 @@ jobs:
       - name: Set version from branch name
         uses: ./.github/actions/set-version
 
-      - name: Download VSIX artifact
-        uses: actions/download-artifact@v4
+      - name: Build VSIX package
+        uses: ./.github/actions/build-vsix
         with:
-          name: vsix-${{ env.VERSION }}
+          version: ${{ env.VERSION }}
 
       - name: Publish to Open VSX
         run: make publish-ovsx
         env:
+          VERSION: ${{ env.VERSION }}
           OVSX_PAT: ${{ secrets.OVSX_PAT }}
