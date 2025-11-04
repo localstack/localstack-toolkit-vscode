@@ -47,12 +47,6 @@ jobs:
       - name: Set version from branch name
         run: |
           BRANCH_NAME="${GITHUB_REF#refs/heads/}"
-          # Validate branch name is a valid version (only alphanumeric, dots, and hyphens)
-          if ! echo "$BRANCH_NAME" | grep -Eq '^[a-zA-Z0-9.-]+$'; then
-            echo "Error: Branch name '$BRANCH_NAME' is not a valid version format"
-            echo "Version must contain only letters, numbers, dots, and hyphens"
-            exit 1
-          fi
           echo "VERSION=$BRANCH_NAME" >> $GITHUB_ENV
           echo "Using version: $BRANCH_NAME"
 
