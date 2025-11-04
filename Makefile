@@ -26,7 +26,7 @@ publish-marketplace:
 	@echo "Publishing VS Code extension to VS Marketplace..."
 	@echo "Verifying PAT..."
 	npx vsce verify-pat localstack -p $(VSCE_PAT)
-	npx vsce publish localstack-$(VERSION).vsix -p $(VSCE_PAT)
+	npx vsce publish --pre-release $(VERSION) -p $(VSCE_PAT) --no-update-package-json
 
 publish-ovsx:
 	@echo "Publishing VS Code extension to Open VSX..."
