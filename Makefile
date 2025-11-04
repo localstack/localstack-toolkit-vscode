@@ -26,10 +26,10 @@ publish-marketplace:
 	@echo "Publishing VS Code extension to VS Marketplace..."
 	@echo "Verifying PAT..."
 	npx vsce verify-pat localstack -p $(VSCE_PAT)
-	# npx vsce publish localstack-$(VERSION).vsix -p $(VSCE_PAT)
+	npx vsce publish localstack-$(VERSION).vsix -p $(VSCE_PAT)
 
 publish-ovsx:
 	@echo "Publishing VS Code extension to Open VSX..."
 	@echo "Verifying PAT..."
 	npx ovsx verify-pat localstack -p $(OVSX_PAT)
-	# npx ovsx publish localstack-$(VERSION).vsix -p $(OVSX_PAT)
+	npx ovsx publish localstack-$(VERSION).vsix -p $(OVSX_PAT)
