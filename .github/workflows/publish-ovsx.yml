@@ -1,12 +1,8 @@
 name: Publish to Open VSX
 
 on:
+  push:
   workflow_dispatch:
-    inputs:
-      version:
-        description: 'Version to publish (must match a build artifact)'
-        required: true
-        type: string
 
 permissions:
   contents: read
@@ -28,13 +24,15 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Set version from branch name
+        uses: ./.github/actions/set-version
+
       - name: Download VSIX artifact
         uses: actions/download-artifact@v4
         with:
-          name: vsix-${{ inputs.version }}
+          name: vsix-${{ env.VERSION }}
 
       - name: Publish to Open VSX
         run: make publish-ovsx
         env:
-          VERSION: ${{ inputs.version }}
           OVSX_PAT: ${{ secrets.OVSX_PAT }}

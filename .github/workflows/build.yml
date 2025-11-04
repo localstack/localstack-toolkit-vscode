@@ -67,10 +67,7 @@ jobs:
         run: npm ci
 
       - name: Set version from branch name
-        run: |
-          BRANCH_NAME="${GITHUB_REF#refs/heads/}"
-          echo "VERSION=$BRANCH_NAME" >> $GITHUB_ENV
-          echo "Using version: $BRANCH_NAME"
+        uses: ./.github/actions/set-version
 
       - name: Build VSIX package
         run: make vsix

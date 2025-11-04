@@ -1,0 +1,17 @@
+name: 'Set Version from Branch'
+description: 'Sets VERSION environment variable from the current branch name'
+
+runs:
+  using: composite
+  steps:
+    - name: Set version from branch name
+      shell: bash
+      run: |
+        # Use GITHUB_HEAD_REF for PRs, GITHUB_REF_NAME for direct pushes
+        if [ -n "$GITHUB_HEAD_REF" ]; then
+          BRANCH_NAME="$GITHUB_HEAD_REF"
+        else
+          BRANCH_NAME="$GITHUB_REF_NAME"
+        fi
+        echo "VERSION=$BRANCH_NAME" >> $GITHUB_ENV
+        echo "Using version: $BRANCH_NAME"
