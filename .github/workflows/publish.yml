@@ -1,6 +1,7 @@
 name: Publish Extension
 
 on:
+  push:
   workflow_dispatch:
     inputs:
       publish_vs_marketplace:
