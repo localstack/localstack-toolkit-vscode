@@ -24,7 +24,7 @@ async function fetchLocalStackSessionId(): Promise<string> {
 		try {
 			const response = await fetch("http://127.0.0.1:4566/_localstack/info");
 			if (response.ok) {
-				const json = await response.json();
+				const json: unknown = await response.json();
 				if (typeof json === "object" && json !== null && "session_id" in json) {
 					return typeof json.session_id === "string" ? json.session_id : "";
 				}
