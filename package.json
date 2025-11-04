@@ -49,6 +49,24 @@
 				}
 			}
 		},
+		"viewsContainers": {
+			"activitybar": [
+				{
+					"id": "localstackActivityBar",
+					"title": "LocalStack",
+					"icon": "resources/icons/localstack.svg"
+				}
+			]
+		},
+		"views": {
+			"localstackActivityBar": [
+				{
+					"id": "localstack.instances",
+					"name": "LocalStack",
+					"icon": "resources/icons/localstack.svg"
+				}
+			]
+		},
 		"commands": [
 			{
 				"command": "localstack.setup",
@@ -91,6 +109,11 @@
 				"command": "localstack.configureAwsProfiles",
 				"title": "Configure AWS Profile \"localstack\"",
 				"category": "LocalStack"
+			},
+			{
+				"command": "localstack.openAppInspector",
+				"title": "Open App Inspector",
+				"category": "LocalStack"
 			}
 		],
 		"icons": {
@@ -105,28 +128,36 @@
 	},
 	"scripts": {
 		"vscode:prepublish": "npm run package",
-		"compile": "node --env-file=.env.local --env-file-if-exists=.env build/extension.mjs",
-		"watch": "npm-run-all -p watch:esbuild watch:localstack-web-mock-server",
-		"watch:esbuild": "node --watch --env-file=.env.local --env-file-if-exists=.env build/extension.mjs --watch",
-		"watch:tsc": "tsc --watch",
-		"watch:localstack-web-mock-server": "node --watch --env-file=.env.local --env-file-if-exists=.env build/localstack-web-mock-server.mjs",
-		"package": "node build/extension.mjs --production",
+		"compile": "npm-run-all -p compile:extension compile:appinspector-webview",
+		"compile:appinspector-webview": "vite build",
+		"compile:extension": "node --env-file=.env.local --env-file-if-exists=.env build/extension.mjs",
+		"compile:font": "node build/icon-font.mjs",
+		"dev": "npm-run-all -p dev:extension dev:localstack-web-mock-server dev:appinspector-webview",
+		"dev:appinspector-webview": "vite build --watch --no-clear-screen",
+		"dev:extension": "node --watch --env-file=.env.local --env-file-if-exists=.env build/extension.mjs --dev",
+		"dev:tsc": "tsc --watch",
+		"dev:localstack-web-mock-server": "node --watch --env-file=.env.local --env-file-if-exists=.env build/localstack-web-mock-server.mjs",
+		"package": "npm run compile",
 		"pretest": "npm run compile",
 		"check-types": "tsc",
 		"lint": "eslint",
 		"format": "biome check",
-		"test": "vscode-test",
-		"compile:font": "node build/icon-font.mjs"
+		"test": "vscode-test"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "^2.4.11",
 		"@eslint/compat": "^2.0.5",
 		"@eslint/js": "^9.39.4",
+		"@localstack/appinspector-ui": "^1.0.74",
+		"@localstack/integrations": "^1.2.2",
 		"@types/fs-extra": "^11.0.4",
 		"@types/mocha": "^10.0.10",
 		"@types/ms": "^2.1.0",
 		"@types/node": "20.x",
+		"@types/react": "^17.0.89",
+		"@types/react-dom": "^17.0.26",
 		"@types/vscode": "^1.83.0",
+		"@vitejs/plugin-react": "^5.1.0",
 		"@vscode/test-cli": "^0.0.12",
 		"@vscode/test-electron": "^2.5.2",
 		"@vscode/vsce": "^3.7.1",
@@ -138,9 +169,13 @@
 		"ms": "^2.1.3",
 		"npm-run-all": "^4.1.5",
 		"p-min-delay": "^4.2.0",
+		"react": "^17.0.2",
+		"react-dom": "^17.0.2",
+		"react-router-dom": "^6.30.1",
 		"typescript": "^5.9.3",
 		"typescript-eslint": "^8.58.2",
 		"uuid": "^13.0.0",
+		"vite": "^7.2.1",
 		"zod": "^4.3.6"
 	}
 }

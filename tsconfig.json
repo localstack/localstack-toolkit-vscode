@@ -2,17 +2,18 @@
 	"compilerOptions": {
 		"module": "preserve",
 		"target": "esnext",
-		"lib": ["ESNext"],
+		"lib": ["ESNext", "DOM"],
 		"moduleResolution": "bundler",
 		"sourceMap": true,
 		"strict": true /* enable all strict type-checking options */,
 		"allowImportingTsExtensions": true,
 		"noEmit": true,
-		"allowJs": true
+		"allowJs": true,
+		"jsx": "react-jsx"
 		/* Additional Checks */
 		// "noImplicitReturns": true, /* Report error when not all code paths in function return a value. */
 		// "noFallthroughCasesInSwitch": true, /* Report errors for fallthrough cases in switch statement. */
 		// "noUnusedParameters": true,  /* Report errors on unused parameters. */
 	},
-	"include": ["**/*.ts", "**/*.mjs", "**/.*.mjs"]
+	"include": ["**/*.ts", "**/*.tsx", "**/*.mjs", "**/.*.mjs"]
 }
