@@ -19,7 +19,7 @@ test:
 
 vsix:
 	@echo "Packaging VS Code extension into VSIX file (version: $(VERSION))..."
-	npx vsce package $(VERSION)
+	npx vsce package $(VERSION) --no-update-package-json
 	@echo "Created: localstack-$(VERSION).vsix"
 
 publish-marketplace:
