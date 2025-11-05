@@ -1,0 +1,34 @@
+name: 'Set Version from Branch'
+description: 'Sets VERSION environment variable from the current branch name'
+
+runs:
+  using: composite
+  steps:
+    - name: Set version from branch name
+      shell: bash
+      run: |
+        # GITHUB_HEAD_REF contains the source branch for PRs (e.g., "v1.2.5"), but is empty for pushes
+        # GITHUB_REF_NAME contains the merge ref for PRs (e.g., "1/merge"), but the branch name for pushes
+        # Prefer GITHUB_HEAD_REF when available to get the actual branch name
+        if [ -n "$GITHUB_HEAD_REF" ]; then
+          BRANCH_NAME="$GITHUB_HEAD_REF"
+        else
+          BRANCH_NAME="$GITHUB_REF_NAME"
+        fi
+        # Strip leading 'v' if present
+        VERSION="${BRANCH_NAME#v}"
+
+        # Get version from package.json
+        PACKAGE_VERSION=$(node -p "require('./package.json').version")
+
+        # Verify versions match
+        if [ "$VERSION" != "$PACKAGE_VERSION" ]; then
+          echo "Error: Version mismatch!"
+          echo "  Branch version: $VERSION"
+          echo "  package.json version: $PACKAGE_VERSION"
+          echo "Please ensure the branch name matches the version in package.json"
+          exit 1
+        fi
+
+        echo "VERSION=$VERSION" >> $GITHUB_ENV
+        echo "Using version: $VERSION (from branch: $BRANCH_NAME)"

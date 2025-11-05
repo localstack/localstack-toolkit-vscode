@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.2.5 (2025-11-05) (pre-release)
+
+- chore: Testing publishing from Github action
+
 ## 1.2.4 (2025-10-13)
 
 - chore: Update dependencies
