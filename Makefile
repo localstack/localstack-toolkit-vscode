@@ -15,7 +15,7 @@ test:
 	@echo "Compiling extension..."
 	npx vsce package
 	@echo "Running tests..."
-	xvfb-run -a npx vscode-test
+	npx vscode-test
 
 publish-marketplace:
 	@echo "Publishing VS Code extension to VS Marketplace..."
