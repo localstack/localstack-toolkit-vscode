@@ -12,7 +12,12 @@ import {
 	TreeItemCollapsibleState,
 	Uri,
 } from "vscode";
-import type { ProviderResult, TreeDataProvider, Event } from "vscode";
+import type {
+	ProviderResult,
+	TreeDataProvider,
+	Event,
+	WebviewPanel,
+} from "vscode";
 
 import { createPlugin } from "../plugins.ts";
 import type {
@@ -23,10 +28,16 @@ import type {
 export default createPlugin(
 	"app-inspector-webview",
 	({ context, outputChannel, localStackStatusTracker }) => {
+		let appInspectorPanel: WebviewPanel | undefined;
 		context.subscriptions.push(
 			commands.registerCommand("localstack.openAppInspector", async () => {
+				if (appInspectorPanel) {
+					appInspectorPanel.reveal();
+					return;
+				}
+
 				const panel = window.createWebviewPanel(
-					"webviewOpener",
+					"localStackAppInspector",
 					`App Inspector`,
 					ViewColumn.Active,
 					{
@@ -34,12 +45,11 @@ export default createPlugin(
 						retainContextWhenHidden: true,
 					},
 				);
+				appInspectorPanel = panel;
 
-				panel.iconPath = Uri.joinPath(
-					context.extensionUri,
-					// "resources/icons/codicon-plug.svg",
-					"resources/icons/codicon-combine.svg",
-				);
+				panel.onDidDispose(() => {
+					appInspectorPanel = undefined;
+				});
 
 				const appInspectorDist = path.resolve(
 					import.meta.dirname,
@@ -71,7 +81,7 @@ export default createPlugin(
 			}),
 		);
 
-		const provider = new ExampleTreeDataProvider({
+		const provider = new InstancesTreeDataProvider({
 			localStackStatusTracker,
 		});
 
@@ -82,51 +92,49 @@ export default createPlugin(
 	},
 );
 
-class ExampleTreeItem extends TreeItem {
-	children?: ExampleTreeItem[];
+class InstancesTreeItem extends TreeItem {
+	children?: InstancesTreeItem[];
 }
 
-interface ExampleTreeDataProviderOptions {
+interface InstancesTreeDataProviderOptions {
 	localStackStatusTracker: LocalStackStatusTracker;
 }
 
-class ExampleTreeDataProvider implements TreeDataProvider<ExampleTreeItem> {
+class InstancesTreeDataProvider implements TreeDataProvider<InstancesTreeItem> {
 	readonly #onDidChangeTreeData = new EventEmitter<
 		// biome-ignore lint/suspicious/noConfusingVoidType: void is required by Event
-		ExampleTreeItem | undefined | void
+		InstancesTreeItem | undefined | void
 	>();
 
 	// biome-ignore lint/suspicious/noConfusingVoidType: void is required by Event
-	readonly onDidChangeTreeData: Event<ExampleTreeItem | undefined | void> =
+	readonly onDidChangeTreeData: Event<InstancesTreeItem | undefined | void> =
 		this.#onDidChangeTreeData.event;
 
-	#rootItems: ExampleTreeItem[] = [];
+	#rootItems: InstancesTreeItem[] = [];
 
-	constructor(options: ExampleTreeDataProviderOptions) {
-		const appInspectorItem = new ExampleTreeItem(
+	constructor(options: InstancesTreeDataProviderOptions) {
+		const appInspectorItem = new InstancesTreeItem(
 			"App Inspector",
 			TreeItemCollapsibleState.None,
 		);
-		appInspectorItem.description = "Click to open ↗";
-		appInspectorItem.iconPath = new ThemeIcon("combine");
+		appInspectorItem.description = "Click to open";
 		appInspectorItem.command = {
 			title: "Open App Inspector",
 			command: "localstack.openAppInspector",
 		};
 
-		const instanceItem = new ExampleTreeItem(
-			"localhost.localstack.cloud",
+		const instanceItem = new InstancesTreeItem(
+			"localhost.localstack.cloud:4566",
 			TreeItemCollapsibleState.Expanded,
 		);
 		instanceItem.children = [
 			(() => {
-				const item = new ExampleTreeItem(
+				const item = new InstancesTreeItem(
 					"Status",
 					TreeItemCollapsibleState.None,
 				);
 				options.localStackStatusTracker.onChange((status) => {
 					item.description = status;
-					item.iconPath = getLocalStackStatusThemeIcon(status);
 					this.#onDidChangeTreeData.fire(item);
 				});
 
@@ -143,7 +151,9 @@ class ExampleTreeDataProvider implements TreeDataProvider<ExampleTreeItem> {
 		});
 	}
 
-	getChildren(element?: ExampleTreeItem): ProviderResult<ExampleTreeItem[]> {
+	getChildren(
+		element?: InstancesTreeItem,
+	): ProviderResult<InstancesTreeItem[]> {
 		if (element) {
 			return element.children;
 		}
@@ -151,7 +161,7 @@ class ExampleTreeDataProvider implements TreeDataProvider<ExampleTreeItem> {
 		return this.#rootItems;
 	}
 
-	getTreeItem(element: ExampleTreeItem): TreeItem {
+	getTreeItem(element: InstancesTreeItem): TreeItem {
 		return element;
 	}
 }

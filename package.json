@@ -62,7 +62,7 @@
 			"localstackActivityBar": [
 				{
 					"id": "localstack.instances",
-					"name": "Instances",
+					"name": "LocalStack",
 					"icon": "resources/icons/localstack.svg"
 				}
 			]
