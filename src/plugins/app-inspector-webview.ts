@@ -37,7 +37,8 @@ export default createPlugin(
 
 				panel.iconPath = Uri.joinPath(
 					context.extensionUri,
-					"resources/icons/codicon-plug.svg",
+					// "resources/icons/codicon-plug.svg",
+					"resources/icons/codicon-combine.svg",
 				);
 
 				const appInspectorDist = path.resolve(
@@ -107,7 +108,7 @@ class ExampleTreeDataProvider implements TreeDataProvider<ExampleTreeItem> {
 			TreeItemCollapsibleState.None,
 		);
 		appInspectorItem.description = "Click to open ↗";
-		appInspectorItem.iconPath = new ThemeIcon("plug");
+		appInspectorItem.iconPath = new ThemeIcon("combine");
 		appInspectorItem.command = {
 			title: "Open App Inspector",
 			command: "localstack.openAppInspector",
