@@ -10,5 +10,6 @@ export default defineConfig({
 	root: path.join(import.meta.dirname, "src/app-inspector"),
 	build: {
 		outDir: "../../resources/app-inspector/dist",
+		emptyOutDir: true,
 	},
 });

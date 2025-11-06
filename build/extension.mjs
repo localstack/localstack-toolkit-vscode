@@ -1,7 +1,7 @@
 import esbuild from "esbuild";
 
 const production = process.argv.includes("--production");
-const watch = process.argv.includes("--watch");
+const dev = process.argv.includes("--dev");
 
 /**
  * @type {import('esbuild').Plugin}
@@ -10,8 +10,7 @@ const esbuildProblemMatcherPlugin = {
 	name: "esbuild-problem-matcher",
 	setup(build) {
 		build.onStart(() => {
-			console.clear();
-			console.log("[watch] build started");
+			console.log("[dev] build started");
 		});
 		build.onEnd((result) => {
 			result.errors.forEach(({ text, location }) => {
@@ -20,7 +19,7 @@ const esbuildProblemMatcherPlugin = {
 					`    ${location.file}:${location.line}:${location.column}:`,
 				);
 			});
-			console.log("[watch] build finished");
+			console.log("[dev] build finished");
 		});
 	},
 };
@@ -54,7 +53,7 @@ async function main() {
 			esbuildProblemMatcherPlugin,
 		],
 	});
-	if (watch) {
+	if (dev) {
 		await ctx.watch();
 	} else {
 		await ctx.rebuild();
