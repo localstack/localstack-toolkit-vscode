@@ -137,7 +137,7 @@
 		"dev:extension": "node --watch --env-file=.env.local --env-file-if-exists=.env build/extension.mjs --dev",
 		"dev:tsc": "tsc --watch",
 		"dev:localstack-web-mock-server": "node --watch --env-file=.env.local --env-file-if-exists=.env build/localstack-web-mock-server.mjs",
-		"package": "node build/extension.mjs --production",
+		"package": "npm run compile",
 		"pretest": "npm run compile",
 		"check-types": "tsc",
 		"lint": "eslint",
