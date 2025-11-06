@@ -91,9 +91,11 @@ interface ExampleTreeDataProviderOptions {
 
 class ExampleTreeDataProvider implements TreeDataProvider<ExampleTreeItem> {
 	readonly #onDidChangeTreeData = new EventEmitter<
+		// biome-ignore lint/suspicious/noConfusingVoidType: void is required by Event
 		ExampleTreeItem | undefined | void
 	>();
 
+	// biome-ignore lint/suspicious/noConfusingVoidType: void is required by Event
 	readonly onDidChangeTreeData: Event<ExampleTreeItem | undefined | void> =
 		this.#onDidChangeTreeData.event;
 
