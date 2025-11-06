@@ -146,6 +146,7 @@
 		"@eslint/compat": "^1.3.2",
 		"@eslint/js": "^9.35.0",
 		"@localstack/appinspector-ui": "^1.0.6",
+		"@localstack/integrations": "^1.2.1",
 		"@types/fs-extra": "^11.0.4",
 		"@types/mocha": "^10.0.10",
 		"@types/ms": "^2.1.0",
@@ -153,6 +154,7 @@
 		"@types/react": "^17.0.89",
 		"@types/react-dom": "^17.0.26",
 		"@types/vscode": "^1.83.0",
+		"@vitejs/plugin-react": "^5.1.0",
 		"@vscode/test-cli": "^0.0.11",
 		"@vscode/test-electron": "^2.5.2",
 		"@vscode/vsce": "^3.6.0",
@@ -169,6 +171,7 @@
 		"typescript": "^5.9.2",
 		"typescript-eslint": "^8.43.0",
 		"uuid": "^13.0.0",
+		"vite": "^7.2.1",
 		"zod": "^4.1.5"
 	}
 }
