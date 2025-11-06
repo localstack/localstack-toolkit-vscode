@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.2.6 (2025-11-06)
+
+- chore: Publishing from Github action
+
 ## 1.2.5 (2025-11-05) (pre-release)
 
 - chore: Testing publishing from Github action
