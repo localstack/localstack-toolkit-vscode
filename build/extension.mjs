@@ -47,6 +47,7 @@ async function main() {
 			"process.env.NODE_ENV": JSON.stringify(
 				process.env.NODE_ENV ?? "development",
 			),
+			"import.meta.dirname": "__dirname",
 		},
 		plugins: [
 			/* add to the end of plugins array */

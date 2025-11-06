@@ -1,10 +1,17 @@
+import { readFile } from "node:fs/promises";
+import path from "node:path";
+
 import ms from "ms";
 import {
+	commands,
 	EventEmitter,
 	StatusBarAlignment,
+	ThemeColor,
 	ThemeIcon,
 	TreeItem,
 	TreeItemCollapsibleState,
+	Uri,
+	ViewColumn,
 	window,
 } from "vscode";
 import type {
@@ -22,6 +29,7 @@ import statusBar from "./plugins/status-bar.ts";
 import { PluginManager } from "./plugins.ts";
 import { createContainerStatusTracker } from "./utils/container-status.ts";
 import { createLocalStackStatusTracker } from "./utils/localstack-status.ts";
+import type { LocalStackStatusTracker } from "./utils/localstack-status.ts";
 import { getOrCreateExtensionSessionId } from "./utils/manage.ts";
 import { createSetupStatusTracker } from "./utils/setup-status.ts";
 import { createTelemetry } from "./utils/telemetry.ts";
@@ -120,10 +128,70 @@ export async function activate(context: ExtensionContext) {
 		});
 	});
 
-	const provider = new ExampleTreeDataProvider();
+	context.subscriptions.push(
+		commands.registerCommand("localstack.openAppInspector", async () => {
+			const panel = window.createWebviewPanel(
+				"webviewOpener",
+				`App Inspector`,
+				ViewColumn.Active,
+				{
+					enableScripts: true,
+					retainContextWhenHidden: true,
+				},
+			);
+
+			// panel.webview.asWebviewUri
+
+			const appInspectorDist = path.resolve(
+				import.meta.dirname,
+				"../resources/app-inspector/dist",
+			);
+			outputChannel.debug(`appInspectorDist=${appInspectorDist}`);
+			const html = await readFile(
+				path.join(appInspectorDist, "index.html"),
+				"utf-8",
+			);
+			outputChannel.debug(`html=${html}`);
+			// webview.asWebviewUri(vscode.Uri.joinPath(dist, entry.file))
+			panel.webview.html = html.replaceAll(
+				/"(\/.*?\.(?:js|css))"/g,
+				(_, asset: string) => {
+					return JSON.stringify(
+						panel.webview
+							.asWebviewUri(
+								Uri.joinPath(
+									context.extensionUri,
+									"resources/app-inspector/dist",
+									asset,
+								),
+							)
+							.toString(),
+					);
+				},
+			);
+			outputChannel.debug(`html=${panel.webview.html}`);
+
+			panel.onDidDispose(() => {
+				// Clean up resources if needed
+			});
+		}),
+	);
+
+	const provider = new ExampleTreeDataProvider({
+		localStackStatusTracker,
+	});
+
+	// const interval = setInterval(() => {
+	// 	provider.refresh();
+	// }, 1000);
+	// context.subscriptions.push({
+	// 	dispose() {
+	// 		clearInterval(interval);
+	// 	},
+	// });
 
 	// Register the provider under the view ID defined in package.json
-	const treeView = window.createTreeView("localstackTreeView", {
+	const instancesTreeView = window.createTreeView("localstack.instances", {
 		treeDataProvider: provider,
 		showCollapseAll: false,
 	});
@@ -133,54 +201,222 @@ export async function deactivate() {
 	await plugins.deactivate();
 }
 
-class ExampleTreeDataProvider implements TreeDataProvider<TreeItem> {
-	private readonly _onDidChangeTreeData = new EventEmitter<
+class ExampleTreeItem extends TreeItem {
+	children?: ExampleTreeItem[];
+}
+
+interface ExampleTreeDataProviderOptions {
+	localStackStatusTracker: LocalStackStatusTracker;
+}
+
+class ExampleTreeDataProvider implements TreeDataProvider<ExampleTreeItem> {
+	readonly #onDidChangeTreeData = new EventEmitter<
 		ExampleTreeItem | undefined | void
 	>();
 
 	readonly onDidChangeTreeData: Event<ExampleTreeItem | undefined | void> =
-		this._onDidChangeTreeData.event;
+		this.#onDidChangeTreeData.event;
 
-	// Toggle to show one or two items for demonstration
-	private showTwoItems = true;
+	#rootItems: ExampleTreeItem[] = [];
 
-	/**
-	 * Triggers a refresh of the tree view.
-	 */
-	refresh(): void {
-		this.showTwoItems = !this.showTwoItems;
-		this._onDidChangeTreeData.fire();
+	constructor(options: ExampleTreeDataProviderOptions) {
+		// const one = new ExampleTreeItem("Item One", "one");
+		// items.push(one);
+
+		// if (this.showTwoItems) {
+		// 	const two = new ExampleTreeItem("Item Two", "two");
+		// 	items.push(two);
+		// }
+
+		const appInspectorItem = new ExampleTreeItem(
+			"App Inspector",
+			TreeItemCollapsibleState.None,
+		);
+		// appInspectorItem.tooltip = "App Inspector →";
+		appInspectorItem.description = "Click to open ↗";
+		// appInspectorItem.iconPath = new ThemeIcon("search");
+		// appInspectorItem.iconPath = new ThemeIcon("book");
+		// appInspectorItem.iconPath = new ThemeIcon("plug");
+		appInspectorItem.command = {
+			title: "Open App Inspector",
+			command: "localstack.openAppInspector",
+		};
+
+		// const endpointItem = new ExampleTreeItem(
+		// 	"Endpoint",
+		// 	TreeItemCollapsibleState.None,
+		// );
+		// endpointItem.description = "https://localhost.localstack.cloud:4566";
+		// endpointItem.tooltip = "Click to copy";
+		// // endpointItem.iconPath = new ThemeIcon("globe");
+
+		const instanceItem = new ExampleTreeItem(
+			"localhost.localstack.cloud",
+			TreeItemCollapsibleState.Expanded,
+		);
+		// instanceEndpointItem.description = "stopped";
+		instanceItem.iconPath =
+			options.localStackStatusTracker.status() === "running"
+				? new ThemeIcon("circle-filled")
+				: new ThemeIcon("circle-outline", new ThemeColor("disabledForeground"));
+		instanceItem.children = [
+			// (() => {
+			// 	const item = new ExampleTreeItem(
+			// 		"LocalStack is not running",
+			// 		TreeItemCollapsibleState.None,
+			// 	);
+			// 	// item.description = "Running";
+			// 	// item.tooltip = "Click to copy";
+			// 	// item.iconPath = new ThemeIcon(
+			// 	// 	"error",
+			// 	// 	new ThemeColor("errorForeground"),
+			// 	// );
+
+			// 	return item;
+			// })(),
+			(() => {
+				const item = new ExampleTreeItem(
+					"Status",
+					TreeItemCollapsibleState.None,
+				);
+				// item.description = options.localStackStatusTracker.status();
+				// item.tooltip = "Click to copy";
+				// item.iconPath = new ThemeIcon("globe");
+				options.localStackStatusTracker.onChange((status) => {
+					item.description = status;
+					// 	item.iconPath =
+					// 		status === "running"
+					// 			? new ThemeIcon("circle-filled")
+					// 			: new ThemeIcon(
+					// 					"circle-outline",
+					// 					new ThemeColor("disabledForeground"),
+					// 				);
+					this.#onDidChangeTreeData.fire(item);
+				});
+
+				return item;
+			})(),
+			// endpointItem,
+			appInspectorItem,
+		];
+
+		// instanceEndpointItem.tooltip = "tooltip";
+		// instanceEndpointItem.description =
+		// 	"localhost.localstack.cloud";
+		// instanceEndpointItem.iconPath = new ThemeIcon("globe");
+
+		this.#rootItems.push(instanceItem);
+
+		options.localStackStatusTracker.onChange((status) => {
+			instanceItem.iconPath =
+				status === "running"
+					? new ThemeIcon("circle-filled")
+					: new ThemeIcon(
+							"circle-outline",
+							new ThemeColor("disabledForeground"),
+						);
+			this.#onDidChangeTreeData.fire(instanceItem);
+		});
+
+		// this.#interval = setInterval(() => {
+		// 	const status: "running" | "stopped" =
+		// 		Math.random() * 100 > 50 ? "running" : "stopped";
+		// 	instanceEndpointItem.iconPath =
+		// 		status === "running"
+		// 			? new ThemeIcon("circle-filled")
+		// 			: new ThemeIcon(
+		// 					"circle-outline",
+		// 					new ThemeColor("disabledForeground"),
+		// 				);
+		// 	this.#_onDidChangeTreeData.fire(instanceEndpointItem);
+		// }, 1000);
 	}
+
+	// /**
+	//  * Triggers a refresh of the tree view.
+	//  */
+	// refresh(): void {
+	// 	this.#_onDidChangeTreeData.fire();
+	// }
 
 	/**
 	 * Returns children of a given element or root.
 	 * Root returns 1–2 items; no nested children in this minimal example.
 	 */
-	getChildren(element?: ExampleTreeItem): ProviderResult<TreeItem[]> {
+	getChildren(element?: ExampleTreeItem): ProviderResult<ExampleTreeItem[]> {
 		if (element) {
-			// No nested children in this example
-			return [];
+			return element.children;
 		}
 
-		const items: TreeItem[] = [];
-		const one = new ExampleTreeItem("Item One", "one");
-		items.push(one);
+		return this.#rootItems;
+		// const appInspectorItem = new ExampleTreeItem(
+		// 	"App Inspector ↗",
+		// 	TreeItemCollapsibleState.None,
+		// );
+		// // appInspectorItem.tooltip = "App Inspector →";
+		// // appInspectorItem.description = "Click to open";
+		// // appInspectorItem.iconPath = new ThemeIcon("search");
+		// // appInspectorItem.iconPath = new ThemeIcon("book");
+		// // appInspectorItem.iconPath = new ThemeIcon("plug");
+		// appInspectorItem.command = {
+		// 	title: "Open App Inspector",
+		// 	command: "localstack.openAppInspector",
+		// };
 
-		if (this.showTwoItems) {
-			const two = new ExampleTreeItem("Item Two", "two");
-			items.push(two);
-		}
+		// // const endpointItem = new ExampleTreeItem(
+		// // 	"Endpoint",
+		// // 	TreeItemCollapsibleState.None,
+		// // );
+		// // endpointItem.description = "https://localhost.localstack.cloud:4566";
+		// // endpointItem.tooltip = "Click to copy";
+		// // // endpointItem.iconPath = new ThemeIcon("globe");
 
-		const instanceEndpoint = new TreeItem(
-			"Instance endpoint",
-			TreeItemCollapsibleState.None,
-		);
-		instanceEndpoint.tooltip = "tooltip";
-		instanceEndpoint.description = "https://localhost.localstack.cloud:4566";
-		instanceEndpoint.iconPath = new ThemeIcon("globe");
-		items.push(instanceEndpoint);
+		// const status: "running" | "stopped" =
+		// 	Math.random() * 100 > 50 ? "running" : "stopped";
 
-		return items;
+		// const instanceEndpointItem = new ExampleTreeItem(
+		// 	"localhost.localstack.cloud",
+		// 	TreeItemCollapsibleState.Expanded,
+		// );
+		// // instanceEndpointItem.description = "stopped";
+		// instanceEndpointItem.iconPath =
+		// 	status === "running"
+		// 		? new ThemeIcon("circle-filled")
+		// 		: new ThemeIcon("circle-outline", new ThemeColor("disabledForeground"));
+		// instanceEndpointItem.children = [
+		// 	(() => {
+		// 		const item = new ExampleTreeItem(
+		// 			"LocalStack is not running",
+		// 			TreeItemCollapsibleState.None,
+		// 		);
+		// 		// item.description = "Running";
+		// 		// item.tooltip = "Click to copy";
+		// 		// item.iconPath = new ThemeIcon(
+		// 		// 	"error",
+		// 		// 	new ThemeColor("errorForeground"),
+		// 		// );
+
+		// 		return item;
+		// 	})(),
+		// 	// (() => {
+		// 	// 	const item = new ExampleTreeItem(
+		// 	// 		"Status",
+		// 	// 		TreeItemCollapsibleState.None,
+		// 	// 	);
+		// 	// 	item.description = "Running";
+		// 	// 	// item.tooltip = "Click to copy";
+		// 	// 	item.iconPath = new ThemeIcon("globe");
+		// 	// 	return item;
+		// 	// })(),
+		// 	// endpointItem,
+		// 	// appInspectorItem,
+		// ];
+		// // instanceEndpointItem.tooltip = "tooltip";
+		// // instanceEndpointItem.description =
+		// // 	"localhost.localstack.cloud";
+		// // instanceEndpointItem.iconPath = new ThemeIcon("globe");
+
+		// return [instanceEndpointItem];
 	}
 
 	/**
@@ -188,30 +424,5 @@ class ExampleTreeDataProvider implements TreeDataProvider<TreeItem> {
 	 */
 	getTreeItem(element: ExampleTreeItem): TreeItem {
 		return element;
-	}
-}
-
-/**
- * A clickable TreeItem that runs the example.openItem command when selected.
- */
-class ExampleTreeItem extends TreeItem {
-	constructor(
-		label: string,
-		readonly id: string,
-	) {
-		super(label);
-		this.id = id;
-		this.tooltip = `Click to open "${label}"`;
-		this.description = id;
-		this.iconPath = new ThemeIcon("localstack-logo");
-		this.command = {
-			command: "example.openItem",
-			title: "Open Item",
-			arguments: [this],
-		};
-		// No collapsible state, these are leaf nodes
-		this.collapsibleState = TreeItemCollapsibleState.None;
-		// Optional: contextValue enables context-menu targeting in contributes.menus
-		this.contextValue = "exampleItem";
 	}
 }
