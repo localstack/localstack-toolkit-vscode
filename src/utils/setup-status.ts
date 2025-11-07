@@ -13,7 +13,11 @@ import {
 } from "./configure-aws.ts";
 import { createEmitter } from "./emitter.ts";
 import { immediateOnce } from "./immediate-once.ts";
-import { checkIsLicenseValid, LICENSE_FILENAME } from "./license.ts";
+import {
+	checkIsLicenseValid,
+	activateLicense,
+	LICENSE_FILENAME,
+} from "./license.ts";
 import type { UnwrapPromise } from "./promises.ts";
 import { checkSetupStatus } from "./setup.ts";
 import type { TimeTracker } from "./time-tracker.ts";
@@ -277,6 +281,10 @@ function createLicenseStatusTracker(
 		"[setup-status.license]",
 		[LOCALSTACK_AUTH_FILENAME, LICENSE_FILENAME], //TODO rewrite to depend on change in localStackAuthenticationTracker
 		async () =>
-			(await checkIsLicenseValid(outputChannel)) ? "ok" : "setup_required",
+			(await activateLicense(outputChannel).then(() =>
+				checkIsLicenseValid(outputChannel),
+			))
+				? "ok"
+				: "setup_required",
 	);
 }
