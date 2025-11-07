@@ -19,7 +19,6 @@ import {
 	LICENSE_FILENAME,
 } from "./license.ts";
 import type { UnwrapPromise } from "./promises.ts";
-import { minDelay } from "./promises.ts";
 import { checkSetupStatus } from "./setup.ts";
 import type { TimeTracker } from "./time-tracker.ts";
 
@@ -282,10 +281,8 @@ function createLicenseStatusTracker(
 		"[setup-status.license]",
 		[LOCALSTACK_AUTH_FILENAME, LICENSE_FILENAME], //TODO rewrite to depend on change in localStackAuthenticationTracker
 		async () =>
-			(await minDelay(
-				activateLicense(outputChannel).then(() =>
-					checkIsLicenseValid(outputChannel),
-				),
+			(await activateLicense(outputChannel).then(() =>
+				checkIsLicenseValid(outputChannel),
 			))
 				? "ok"
 				: "setup_required",
