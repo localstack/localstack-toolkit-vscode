@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.2.7 (2025-11-11)
+
+- fix: Handle license check accordingly
+
 ## 1.2.6 (2025-11-06)
 
 - chore: Publishing from Github action
