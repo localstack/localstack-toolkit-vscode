@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.2.8 (2025-11-19)
+
+- chore: Bump glob to tackle CVE
+
 ## 1.2.7 (2025-11-11)
 
 - fix: Handle license check accordingly
