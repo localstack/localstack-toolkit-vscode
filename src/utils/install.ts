@@ -475,6 +475,13 @@ fi
 				`Could not detect your shell profile. To use localstack CLI from terminal ensure ~/.local/bin is in your PATH.`,
 			);
 		}
+
+		// Update PATH for the current VSCode process so LocalStack is immediately available
+		const localBinPath = path.join(homeDir, ".local", "bin");
+		const currentPath = process.env.PATH || "";
+		if (!currentPath.split(":").includes(localBinPath)) {
+			process.env.PATH = `${localBinPath}:${currentPath}`;
+		}
 	} catch (err) {
 		window.showInformationMessage(
 			`Could not update your shell profile. To use localstack CLI from terminal ensure ~/.local/bin is in your PATH.`,
@@ -515,8 +522,9 @@ async function installLocalWindows(temporaryDirname: string) {
 	await move(`${temporaryDirname}/localstack`, LOCAL_CLI_INSTALLATION_DIRNAME);
 	await exec(`setx PATH "%PATH%;${LOCAL_CLI_INSTALLATION_DIRNAME}"`);
 
-	// // Update PATH for current process (setx only updates for new processes, including vscode)
-	// process.env.PATH = `${process.env.PATH};${CLI_INSTALLATION_DIRNAME}`;
+	// Update PATH for the current VSCode process so LocalStack is immediately available
+	// (setx only updates for new processes, including future VSCode instances)
+	process.env.PATH = `${process.env.PATH};${LOCAL_CLI_INSTALLATION_DIRNAME}`;
 
 	window.showInformationMessage("LocalStack CLI installed for current user.");
 }
@@ -551,17 +559,23 @@ async function installGlobalLinux(
 ) {
 	// Use elevated privileges to install globally on linux
 
-	const { cancelled } = await spawnElevatedLinux({
-		//TODO consider loading script from a file
-		script: `rm -rf /usr/local/localstack && mv ${temporaryDirname}/localstack /usr/local/localstack && ln -sf /usr/local/localstack/localstack /usr/local/bin/localstack`,
-		outputChannel,
-		outputLabel: "install",
-		cancellationToken,
-	});
-	if (cancelled) {
-		//TODO check if progress can be used instead of window
-		window.showErrorMessage("The installation was cancelled by the user");
-		return { cancelled: true };
+	try {
+		const { cancelled } = await spawnElevatedLinux({
+			//TODO consider loading script from a file
+			script: `rm -rf /usr/local/localstack && mv ${temporaryDirname}/localstack /usr/local/localstack && ln -sf /usr/local/localstack/localstack /usr/local/bin/localstack`,
+			outputChannel,
+			outputLabel: "install",
+			cancellationToken,
+		});
+		if (cancelled) {
+			//TODO check if progress can be used instead of window
+			window.showErrorMessage("The installation was cancelled by the user");
+			return { cancelled: true };
+		}
+	} catch (error) {
+		const message = error instanceof Error ? error.message : String(error);
+		window.showErrorMessage(`Installation failed: ${message}`);
+		throw error;
 	}
 }
 
