@@ -79,6 +79,20 @@ async function tryPkexec(
 async function spawnWithSudoPassword(
 	options: SpawnElevatedLinuxOptions,
 ): Promise<{ cancelled: boolean }> {
+	// Security note: This approach is less secure than pkexec because:
+	// - Password flows through VS Code → Node.js → child process stdin (more attack surface)
+	// - Password briefly exists in application memory (vulnerable to memory dumps)
+	// - Potential attack vector: A malicious VS Code extension could theoretically intercept
+	//   the password by hooking into Node.js I/O streams or reading process memory
+	//   (though VS Code's extension sandbox provides some isolation)
+	//
+	// However, this is acceptable because:
+	// - We only use this when pkexec is unavailable (systems without desktop environment)
+	// - Password is masked in input, never logged, and passed via stdin only
+	// - Password is not stored/cached and is disposed immediately
+	// - This is a one-time installation operation, not continuous privileged access
+	//
+	// Alternative: complete installation failure on systems without polkit agents
 	const password = await vscode.window.showInputBox({
 		prompt: "Enter your sudo password",
 		password: true,
@@ -108,6 +122,11 @@ async function spawnWithSudoPassword(
 		});
 
 		// Write password to stdin and close it
+		// Note: We use stdin rather than command-line arguments because:
+		// - Command-line args are visible in process listings (eg ps aux)
+		// - stdin prevents the password from appearing in logs or shell history
+		// - stdin data is not visible to other users on the system
+		// However, the password still exists briefly in our process memory and the pipe buffer
 		child.stdin.write(`${password}\n`);
 		child.stdin.end();
 

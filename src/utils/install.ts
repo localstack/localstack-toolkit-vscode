@@ -522,10 +522,6 @@ async function installLocalWindows(temporaryDirname: string) {
 	await move(`${temporaryDirname}/localstack`, LOCAL_CLI_INSTALLATION_DIRNAME);
 	await exec(`setx PATH "%PATH%;${LOCAL_CLI_INSTALLATION_DIRNAME}"`);
 
-	// Update PATH for the current VSCode process so LocalStack is immediately available
-	// (setx only updates for new processes, including future VSCode instances)
-	process.env.PATH = `${process.env.PATH};${LOCAL_CLI_INSTALLATION_DIRNAME}`;
-
 	window.showInformationMessage("LocalStack CLI installed for current user.");
 }
 
