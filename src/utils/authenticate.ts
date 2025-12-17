@@ -124,7 +124,7 @@ export async function saveAuthToken(
 	}
 }
 
-function isAuthTokenPresent(authObject: unknown) {
+export function isAuthTokenPresent(authObject: unknown) {
 	return (
 		typeof authObject === "object" &&
 		authObject !== null &&
