@@ -13,7 +13,7 @@ suite("Authenticate Test Suite", () => {
         assert.strictEqual(isAuthTokenPresent(null), false);
     });
 
-    test("returns false for non-object", () => {
+    test("returns false forq non-object", () => {
         assert.strictEqual(isAuthTokenPresent("string"), false);
         assert.strictEqual(isAuthTokenPresent(123), false);
         assert.strictEqual(isAuthTokenPresent(undefined), false);
