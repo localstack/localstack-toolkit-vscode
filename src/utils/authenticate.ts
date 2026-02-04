@@ -69,6 +69,7 @@ async function redirectToLocalStack(): Promise<{ cancelled: boolean }> {
 	// TODO: Gather environment variables in a safer way - e.g. during extension activation
 	// biome-ignore lint/style/noNonNullAssertion: false positive
 	const url = new URL(process.env.LOCALSTACK_WEB_AUTH_REDIRECT!);
+	url.searchParams.set("editor", env.uriScheme);
 	url.searchParams.set("windowId", redirectSearchParams.get("windowId") ?? "");
 
 	const selection = await window.showInformationMessage(
