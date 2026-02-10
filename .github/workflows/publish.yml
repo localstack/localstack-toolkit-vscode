@@ -41,7 +41,7 @@ jobs:
         env:
           VERSION: ${{ env.VERSION }}
           VSCE_PAT: ${{ secrets.VSCE_PAT }}
-          LOCALSTACK_WEB_AUTH_REDIRECT: https://app.localstack.cloud/redirect?name=VSCode
+          LOCALSTACK_WEB_AUTH_REDIRECT: https://app.localstack.cloud/redirect
           NODE_ENV: production
           ANALYTICS_API_URL: https://analytics.localstack.cloud/v1/events
 
@@ -70,6 +70,6 @@ jobs:
         env:
           VERSION: ${{ env.VERSION }}
           OVSX_PAT: ${{ secrets.OVSX_PAT }}
-          LOCALSTACK_WEB_AUTH_REDIRECT: https://app.localstack.cloud/redirect?name=VSCode
+          LOCALSTACK_WEB_AUTH_REDIRECT: https://app.localstack.cloud/redirect
           NODE_ENV: production
           ANALYTICS_API_URL: https://analytics.localstack.cloud/v1/events
