@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.3.0 (2026-02-11)
+
+- fix: localstack installation on ubuntu/i3 (#77)
+- feat: support more vscode-flavored editors (#81)
+
 ## 1.2.8 (2025-11-19)
 
 - chore: Bump glob to tackle CVE

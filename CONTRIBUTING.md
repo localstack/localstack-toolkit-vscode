@@ -42,3 +42,14 @@ To install the generated VSIX file in Visual Studio Code:
 2. Click the three-dot menu in the top right.
 3. Select **Install from VSIX...**.
 4. Choose the `.vsix` file.
+
+## Releasing a new version
+
+To release a new version of the extension, you need to:
+
+1. Create a branch using the new version as the name (e.g. `v1.3.0`)
+2. Update the version in `package.json` and run `npm install`
+3. Update the `CHANGELOG.md` file
+4. Push the branch to GitHub
+5. Create a pull request in GitHub
+6. While the pull request is open, execute the `Publish Extension` workflow targetting the new branch
