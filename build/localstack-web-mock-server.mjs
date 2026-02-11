@@ -13,9 +13,10 @@ const server = createServer((req, res) => {
 	// Parse the request URL
 	const url = new URL(req.url, `http://${req.headers.host}`);
 	const windowId = url.searchParams.get("windowId");
+	const name = url.searchParams.get("name");
 
 	// Build the redirect URL
-	const redirectURL = new URL("vscode://localstack.localstack");
+	const redirectURL = new URL(`${name}://localstack.localstack`);
 	redirectURL.searchParams.set("windowId", windowId ?? "");
 	redirectURL.searchParams.set("token", process.env.LOCALSTACK_AUTH_TOKEN);
 

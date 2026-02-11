@@ -49,7 +49,7 @@ jobs:
       - name: Compile
         run: npx vsce package
         env:
-          LOCALSTACK_WEB_AUTH_REDIRECT: https://app.localstack.cloud/redirect?name=VSCode
+          LOCALSTACK_WEB_AUTH_REDIRECT: https://app.localstack.cloud/redirect
           NODE_ENV: ci
 
       - name: Test
