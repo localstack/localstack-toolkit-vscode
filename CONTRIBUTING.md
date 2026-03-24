@@ -26,7 +26,7 @@ To update the extension after making code changes, you need to regenerate the VS
 Run the following command in your project directory:
 
 ```sh
-make vsix
+npx vsce package
 ```
 
 This will build a new `.vsix` file in the directory (localstack-x.x.1.vsix).
