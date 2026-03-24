@@ -65,7 +65,6 @@ jobs:
       - name: Type check
         run: npx tsc
 
-
   test:
     name: Test
     runs-on: ubuntu-latest
