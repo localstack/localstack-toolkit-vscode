@@ -2,7 +2,7 @@ name: Release
 
 on:
   schedule:
-    - cron: '0 8 * * *'  # Every day at 08:00 UTC
+    - cron: '0 8 * * 1'  # Every Monday at 08:00 UTC
   workflow_dispatch:
 
 concurrency:
