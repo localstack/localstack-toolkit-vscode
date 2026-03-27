@@ -1,5 +1,25 @@
 # Changelog
 
+All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
+
+## [1.4.0](https://github.com/localstack/localstack-toolkit-vscode/compare/v1.2.3...v1.4.0) (2026-03-27)
+
+
+### Features
+
+* improve cli detection ([#60](https://github.com/localstack/localstack-toolkit-vscode/issues/60)) ([aa0520a](https://github.com/localstack/localstack-toolkit-vscode/commit/aa0520a2171c73c92e15cf87d435b20df8a334d8))
+* support more vscode-flavored editors ([#81](https://github.com/localstack/localstack-toolkit-vscode/issues/81)) ([2cb6d20](https://github.com/localstack/localstack-toolkit-vscode/commit/2cb6d2018ad767b17357133bcb72c2905e44737e)), closes [#79](https://github.com/localstack/localstack-toolkit-vscode/issues/79)
+
+
+### Bug Fixes
+
+* license check in status tracker ([#63](https://github.com/localstack/localstack-toolkit-vscode/issues/63)) ([90fc99b](https://github.com/localstack/localstack-toolkit-vscode/commit/90fc99b158e1b33fba34fcd6753e55bdd8bad399))
+* license check in status tracker ([#73](https://github.com/localstack/localstack-toolkit-vscode/issues/73)) ([9c18ee2](https://github.com/localstack/localstack-toolkit-vscode/commit/9c18ee28e873810da849c9b3b3b39d6374c0e8d6))
+* localstack installation on ubuntu/i3 ([#77](https://github.com/localstack/localstack-toolkit-vscode/issues/77)) ([71577ac](https://github.com/localstack/localstack-toolkit-vscode/commit/71577ac8fa0dd3df18700d846eae8f982b55c0c6))
+* Revert "feat: improve cli detection" ([#65](https://github.com/localstack/localstack-toolkit-vscode/issues/65)) ([ee64584](https://github.com/localstack/localstack-toolkit-vscode/commit/ee6458493428c2a0832d257b17a40d4254fda35f)), closes [localstack/localstack-toolkit-vscode#60](https://github.com/localstack/localstack-toolkit-vscode/issues/60) [#60](https://github.com/localstack/localstack-toolkit-vscode/issues/60) [#64](https://github.com/localstack/localstack-toolkit-vscode/issues/64) [#60](https://github.com/localstack/localstack-toolkit-vscode/issues/60)
+* revert "fix: license check in status tracker" ([#64](https://github.com/localstack/localstack-toolkit-vscode/issues/64)) ([dfef829](https://github.com/localstack/localstack-toolkit-vscode/commit/dfef829c2223dd3161578baa09aad030a56baabf)), closes [localstack/localstack-toolkit-vscode#63](https://github.com/localstack/localstack-toolkit-vscode/issues/63) [#60](https://github.com/localstack/localstack-toolkit-vscode/issues/60)
+* void unhandled promise return values in configure-aws ([#105](https://github.com/localstack/localstack-toolkit-vscode/issues/105)) ([2dc3847](https://github.com/localstack/localstack-toolkit-vscode/commit/2dc3847b006dbb2f55b2865af5817169ed61b106))
+
 ## 1.3.0 (2026-02-11)
 
 - fix: localstack installation on ubuntu/i3 (#77)
