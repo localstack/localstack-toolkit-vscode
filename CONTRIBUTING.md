@@ -26,7 +26,7 @@ To update the extension after making code changes, you need to regenerate the VS
 Run the following command in your project directory:
 
 ```sh
-make vsix
+npx vsce package
 ```
 
 This will build a new `.vsix` file in the directory (localstack-x.x.1.vsix).
@@ -43,13 +43,10 @@ To install the generated VSIX file in Visual Studio Code:
 3. Select **Install from VSIX...**.
 4. Choose the `.vsix` file.
 
-## Releasing a new version
+## Releasing and publishing
 
-To release a new version of the extension, you need to:
+Releasing and publishing is controlled by workflows.
 
-1. Create a branch using the new version as the name (e.g. `v1.3.0`)
-2. Update the version in `package.json` and run `npm install`
-3. Update the `CHANGELOG.md` file
-4. Push the branch to GitHub
-5. Create a pull request in GitHub
-6. While the pull request is open, execute the `Publish Extension` workflow targetting the new branch
+The release workflow will run once a day, bump the version automatically and push the corresponding git version tag. If necessary, it can be triggered manually.
+
+The publish workflow will run for every git version tag, and will generate a GitHub release and publish the extension to the VS Marketplace and the Open VSX Registry.

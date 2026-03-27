@@ -1,0 +1,50 @@
+name: Release
+
+on:
+  schedule:
+    - cron: '0 8 * * 1'  # Every Monday at 08:00 UTC
+  workflow_dispatch:
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Bump version, update changelog, and tag
+        run: |
+          BEFORE=$(node -p "require('./package.json').version")
+          npx --yes commit-and-tag-version
+          AFTER=$(node -p "require('./package.json').version")
+
+          if [ "$BEFORE" != "$AFTER" ]; then
+            git push --follow-tags origin main
+          else
+            echo "No releasable commits — skipping push"
+          fi
