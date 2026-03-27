@@ -201,7 +201,7 @@ async function configureAwsConfigProfile(
 		return true;
 	} catch (error) {
 		const errorMessage = error instanceof Error ? error.message : String(error);
-		window.showErrorMessage(
+		void window.showErrorMessage(
 			`Failed to configure the AWS profile named "localstack" in [${awsConfigFilenameReadable}]: ${errorMessage}`,
 		);
 	}
@@ -259,7 +259,7 @@ async function configureCredentialsProfile(
 		return true;
 	} catch (error) {
 		const errorMessage = error instanceof Error ? error.message : String(error);
-		window.showErrorMessage(
+		void window.showErrorMessage(
 			`Failed to configure the AWS profile named "localstack" in [${awsCredentialsFilenameReadable}]: ${errorMessage}`,
 		);
 	}
@@ -340,7 +340,7 @@ export async function configureAwsProfiles(options: {
 		if (!configNeedsOverride && !credentialsNeedsOverride) {
 			// if everything in place, show user that no changes were made and return
 			if (options?.notifyNoChangesMade) {
-				window.showInformationMessage(
+				void window.showInformationMessage(
 					'The AWS profile named "localstack" was already present, so no changes were made.',
 				);
 			}
@@ -410,7 +410,7 @@ export async function configureAwsProfiles(options: {
 					overrideDecision,
 				),
 			]);
-			window.showInformationMessage(
+			void window.showInformationMessage(
 				'Successfully added the AWS profile named "localstack" to "~/.aws/config" and "~/.aws/credentials".',
 			);
 			options.telemetry?.track({
@@ -434,7 +434,7 @@ export async function configureAwsProfiles(options: {
 				overrideDecision,
 				options.outputChannel,
 			);
-			window.showInformationMessage(
+			void window.showInformationMessage(
 				'Successfully added the AWS profile named "localstack" to "~/.aws/config".',
 			);
 			options.telemetry?.track({
@@ -457,7 +457,7 @@ export async function configureAwsProfiles(options: {
 				credentialsSection,
 				overrideDecision,
 			);
-			window.showInformationMessage(
+			void window.showInformationMessage(
 				'Successfully added the AWS profile named "localstack" to "~/.aws/credentials".',
 			);
 			options.telemetry?.track({
@@ -487,10 +487,8 @@ export async function checkIsProfileConfigured(): Promise<boolean> {
 				),
 			]);
 
-		const [configNeedsOverride, credentialsNeedsOverride] = await Promise.all([
-			checkIfConfigNeedsOverride(configSection),
-			checkIfCredentialsNeedsOverride(credentialsSection),
-		]);
+		const configNeedsOverride = await checkIfConfigNeedsOverride(configSection)
+		const credentialsNeedsOverride = checkIfCredentialsNeedsOverride(credentialsSection)
 
 		if (configNeedsOverride || credentialsNeedsOverride) {
 			return false;
