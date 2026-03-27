@@ -487,8 +487,9 @@ export async function checkIsProfileConfigured(): Promise<boolean> {
 				),
 			]);
 
-		const configNeedsOverride = await checkIfConfigNeedsOverride(configSection)
-		const credentialsNeedsOverride = checkIfCredentialsNeedsOverride(credentialsSection)
+		const configNeedsOverride = await checkIfConfigNeedsOverride(configSection);
+		const credentialsNeedsOverride =
+			checkIfCredentialsNeedsOverride(credentialsSection);
 
 		if (configNeedsOverride || credentialsNeedsOverride) {
 			return false;
