@@ -7,6 +7,9 @@ updates:
     ignore:
       - dependency-name: "@types/vscode"
       - dependency-name: "@types/node"
+      - dependency-name: "*"
+        update-types:
+          - "version-update:semver-major"
     groups:
       minor-patch:
         update-types:
