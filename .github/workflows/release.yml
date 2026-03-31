@@ -8,7 +8,7 @@ permissions:
   issues: write
   pull-requests: write
 
-name: release
+name: Release
 
 jobs:
   test:
@@ -36,6 +36,7 @@ jobs:
         run: xvfb-run -a npx vscode-test
 
   release:
+    name: Release
     runs-on: ubuntu-latest
     needs: test
     outputs:
