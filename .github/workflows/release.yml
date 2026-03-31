@@ -1,3 +1,5 @@
+name: Release
+
 on:
   push:
     branches:
@@ -8,7 +10,9 @@ permissions:
   issues: write
   pull-requests: write
 
-name: Release
+concurrency:
+  group: release
+  cancel-in-progress: false
 
 jobs:
   test:
