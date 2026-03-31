@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.4.2](https://github.com/localstack/localstack-toolkit-vscode/compare/v1.4.1...v1.4.2) (2026-03-31)
+
+
+### Bug Fixes
+
+* release workflow publishing ([#109](https://github.com/localstack/localstack-toolkit-vscode/issues/109)) ([370d6c0](https://github.com/localstack/localstack-toolkit-vscode/commit/370d6c073020d6ecfe8c01f50f42f322b4d61bcd))
+
 ## [1.4.1](https://github.com/localstack/localstack-toolkit-vscode/compare/v1.4.0...v1.4.1) (2026-03-31)
 
 - chore: use release-please (#106)
