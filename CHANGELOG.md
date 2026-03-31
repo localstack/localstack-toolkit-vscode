@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.4.1](https://github.com/localstack/localstack-toolkit-vscode/compare/v1.4.0...v1.4.1) (2026-03-31)
+
+- chore: use release-please (#106)
+
 ## 1.3.0 (2026-02-11)
 
 - fix: localstack installation on ubuntu/i3 (#77)
