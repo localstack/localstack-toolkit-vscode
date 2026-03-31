@@ -3,13 +3,12 @@ updates:
   - package-ecosystem: "npm"
     directory: "/"
     schedule:
-      interval: "weekly"
+      interval: "daily"
     ignore:
       - dependency-name: "@types/vscode"
       - dependency-name: "@types/node"
     groups:
-      dev-dependencies:
-        dependency-type: "development"
+      minor-patch:
         update-types:
           - "minor"
           - "patch"

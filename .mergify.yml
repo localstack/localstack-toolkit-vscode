@@ -1,0 +1,28 @@
+pull_request_rules:
+  - name: Auto-merge dependabot minor/patch
+    conditions:
+      - author = dependabot[bot]
+      - check-success = Format
+      - check-success = Lint
+      - check-success = Type Check
+      - check-success = Test
+    actions:
+      approve:
+        message: Auto-approving dependabot update
+      merge:
+        method: squash
+
+  - name: Auto-merge release-please on Mondays
+    conditions:
+      - author = github-actions[bot]
+      - label = "autorelease: pending"
+      - check-success = Format
+      - check-success = Lint
+      - check-success = Type Check
+      - check-success = Test
+      - current-day-of-week = Monday
+    actions:
+      approve:
+        message: Auto-approving scheduled release
+      merge:
+        method: merge
