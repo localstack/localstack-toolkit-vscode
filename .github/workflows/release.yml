@@ -94,11 +94,6 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
 
-      - name: Publish to VS Marketplace
-        run: npx @vscode/vsce publish --packagePath *.vsix
-        env:
-          VSCE_PAT: ${{ secrets.VSCE_PAT }}
-
       - name: Upload Release Artifact
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
