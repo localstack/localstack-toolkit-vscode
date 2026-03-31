@@ -90,6 +90,9 @@ jobs:
     needs: [build, release]
     if: ${{ needs.release.outputs.release_created == 'true' }}
     steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
       - name: Download VSIX
         uses: actions/download-artifact@v4
         with:
