@@ -14,13 +14,13 @@ jobs:
     name: Enable auto-merge on release PRs
     runs-on: ubuntu-latest
     steps:
-      - name: Enable auto-merge on localstack-bot PRs
+      - name: Enable auto-merge on release PRs
         env:
           GH_TOKEN: ${{ secrets.LOCALSTACK_BOT_TOKEN }}
           GH_REPO: ${{ github.repository }}
         run: |
           gh pr list \
-            --author "localstack-bot[bot]" \
+            --label "autorelease: pending" \
             --state open \
             --json number \
             --jq '.[].number' | \
