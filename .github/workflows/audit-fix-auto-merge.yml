@@ -1,0 +1,26 @@
+name: Audit fix Auto-merge
+
+on:
+  pull_request:
+    branches: ["main"]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  auto-merge:
+    name: Auto-merge audit fix pull requests
+    runs-on: ubuntu-latest
+    if: "contains(github.event.pull_request.labels.*.name, 'audit: fix')"
+    steps:
+      - name: Approve
+        run: gh pr review "$PR_URL" --approve --comment --body "Auto-approve audit fix pull requests"
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GH_TOKEN: ${{ secrets.LOCALSTACK_BOT_TOKEN }}
+      - name: Enable auto-merge
+        run: gh pr merge "$PR_URL" --auto --squash
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GH_TOKEN: ${{ secrets.LOCALSTACK_BOT_TOKEN }}
