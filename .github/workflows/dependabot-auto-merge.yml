@@ -19,11 +19,15 @@ jobs:
     runs-on: ubuntu-latest
     if: github.actor == 'dependabot[bot]'
     steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
       - name: Approve
         run: gh pr review "$PR_NUMBER" --approve
         env:
           PR_NUMBER: ${{ github.event.number }}
           GH_TOKEN: ${{ secrets.LOCALSTACK_BOT_TOKEN }}
+
       - name: Enable auto-merge
         run: gh pr merge "$PR_NUMBER" --auto --squash
         env:
