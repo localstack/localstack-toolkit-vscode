@@ -30,7 +30,7 @@ jobs:
 
       - name: Create pull request
         env:
-          GH_TOKEN: ${{ secrets.LOCALSTACK_BOT_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GH_REPO: ${{ github.repository }}
         run: |
           if git diff --quiet; then
@@ -39,8 +39,8 @@ jobs:
           fi
 
           BRANCH="npm-audit-fix-$(date +%Y%m%d)"
-          git config user.name "localstack-bot"
-          git config user.email "localstack-bot@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
           git checkout -b "$BRANCH"
           git add package.json package-lock.json
           git commit -m "chore(deps): npm audit fix"
