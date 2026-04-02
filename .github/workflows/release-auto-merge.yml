@@ -26,5 +26,6 @@ jobs:
             --jq '.[].number' | \
           while read -r pr; do
             echo "Enabling auto-merge on PR #$pr"
+            gh pr review "$pr" --approve --comment --body "Auto-approve weekly releases"
             gh pr merge "$pr" --auto --squash
           done
