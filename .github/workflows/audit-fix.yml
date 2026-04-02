@@ -26,7 +26,7 @@ jobs:
         run: npm ci
 
       - name: Run npm audit fix
-        run: npm audit fix --force
+        run: npm audit fix || npm audit fix --force || true
 
       - name: Create pull request
         env:
@@ -48,7 +48,7 @@ jobs:
 
           gh pr create \
             --title "chore(deps): npm audit fix" \
-            --body "Automated security fixes via \`npm audit fix --force\`." \
+            --body "Automated security fixes via \`npm audit fix\`." \
             --label "audit: fix" \
             --base main \
             --head "$BRANCH"
