@@ -1,4 +1,4 @@
-name: Audit Fix Auto-merge
+name: Audit fix Auto-merge
 
 on:
   pull_request:
