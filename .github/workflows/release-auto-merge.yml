@@ -11,10 +11,10 @@ permissions:
 
 jobs:
   auto-merge:
-    name: Enable auto-merge on release PRs
+    name: Auto-merge release pull requests
     runs-on: ubuntu-latest
     steps:
-      - name: Enable auto-merge on release PRs
+      - name: Find release pull request, approve and enable auto-merge
         env:
           GH_TOKEN: ${{ secrets.LOCALSTACK_BOT_TOKEN }}
           GH_REPO: ${{ github.repository }}

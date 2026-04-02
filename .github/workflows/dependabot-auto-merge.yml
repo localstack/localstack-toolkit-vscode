@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   auto-merge:
-    name: Auto-merge
+    name: Auto-merge dependabot pull requests
     runs-on: ubuntu-latest
     if: github.actor == 'dependabot[bot]'
     steps:
