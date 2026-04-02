@@ -26,7 +26,9 @@ jobs:
         run: npm ci
 
       - name: Run npm audit fix
-        run: npm audit fix || npm audit fix --force || true
+        run: |
+          npm audit 2>&1 > audit-report.txt || true
+          npm audit fix || npm audit fix --force || true
 
       - name: Create pull request
         env:
@@ -38,7 +40,7 @@ jobs:
             exit 0
           fi
 
-          BRANCH="npm-audit-fix-$(date +%Y%m%d)"
+          BRANCH="npm-audit-fix-$(date +%Y%m%d-%H%M%S)"
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git checkout -b "$BRANCH"
@@ -46,9 +48,19 @@ jobs:
           git commit -m "chore(deps): npm audit fix"
           git push origin "$BRANCH"
 
+          cat > pr-body.md << 'BODYEOF'
+          Automated security fixes via `npm audit fix`.
+
+          ## Audit Report
+
+          ```
+          BODYEOF
+          cat audit-report.txt >> pr-body.md
+          echo '```' >> pr-body.md
+
           gh pr create \
             --title "chore(deps): npm audit fix" \
-            --body "Automated security fixes via \`npm audit fix\`." \
+            --body-file pr-body.md \
             --label "audit: fix" \
             --base main \
             --head "$BRANCH"
