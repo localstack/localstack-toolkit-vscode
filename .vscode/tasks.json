@@ -2,10 +2,11 @@
 	"version": "2.0.0",
 	"tasks": [
 		{
-			"label": "watch",
+			"label": "dev",
 			"dependsOn": [
-				"npm: watch:localstack-web-mock-server",
-				"npm: watch:esbuild"
+				"npm: dev:localstack-web-mock-server",
+				"npm: dev:extension",
+				"npm: dev:appinspector-webview"
 			],
 			"presentation": {
 				"reveal": "never"
@@ -17,7 +18,7 @@
 		},
 		{
 			"type": "npm",
-			"script": "watch:esbuild",
+			"script": "dev:extension",
 			"group": "build",
 			"problemMatcher": {
 				"severity": "error",
@@ -40,23 +41,23 @@
 				"background": {
 					"activeOnStart": true,
 					"beginsPattern": {
-						"regexp": "\\[watch\\] build started"
+						"regexp": "\\[dev\\] build started"
 					},
 					"endsPattern": {
-						"regexp": "\\[watch\\] build finished"
+						"regexp": "\\[dev\\] build finished"
 					}
 				}
 			},
 			"isBackground": true,
-			"label": "npm: watch:esbuild",
+			"label": "npm: dev:extension",
 			"presentation": {
-				"group": "watch",
+				"group": "dev",
 				"reveal": "never"
 			}
 		},
 		{
 			"type": "npm",
-			"script": "watch:localstack-web-mock-server",
+			"script": "dev:localstack-web-mock-server",
 			"group": "build",
 			"isBackground": true,
 			"problemMatcher": {
@@ -86,9 +87,48 @@
 					}
 				}
 			},
-			"label": "npm: watch:localstack-web-mock-server",
+			"label": "npm: dev:localstack-web-mock-server",
 			"presentation": {
-				"group": "watch",
+				"group": "dev",
+				"reveal": "never"
+			}
+		},
+		{
+			"type": "npm",
+			"script": "dev:appinspector-webview",
+			"group": "build",
+			"problemMatcher": {
+				"severity": "error",
+				"applyTo": "closedDocuments",
+				"source": "vite",
+				"fileLocation": "relative",
+				"pattern": [
+					{
+						"regexp": "^[✘▲] \\[([A-Z]+)\\] (.+)",
+						"severity": 1,
+						"message": 2
+					},
+					{
+						"regexp": "^(?:\\t| {4})(?!\\s)([^:]+)(?::([0-9]+))?(?::([0-9]+))?:$",
+						"file": 1,
+						"line": 2,
+						"column": 3
+					}
+				],
+				"background": {
+					// "activeOnStart": true,
+					"beginsPattern": {
+						"regexp": "build started..."
+					},
+					"endsPattern": {
+						"regexp": "built in"
+					}
+				}
+			},
+			"isBackground": true,
+			"label": "npm: dev:appinspector-webview",
+			"presentation": {
+				"group": "dev",
 				"reveal": "never"
 			}
 		}
