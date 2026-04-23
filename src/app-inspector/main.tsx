@@ -1,3 +1,4 @@
+import type { DeploymentContainer } from "@localstack/appinspector-ui";
 import {
 	AppInspectorContextProvider,
 	pages,
@@ -14,7 +15,25 @@ import {
 	Routes,
 } from "react-router-dom";
 
+/* Passed by the VS Code extension when App Inspector is launched. */
+declare global {
+	interface Window {
+		__APP_INSPECTOR_CONTEXT__: {
+			source: "vscode";
+			ideVersion: string;
+			extensionVersion: string;
+		} | null;
+	}
+}
+
 const APPINSPECTOR_ROUTE_PREFIX = "/appinspector";
+
+const deploymentContainer: DeploymentContainer =
+	window.__APP_INSPECTOR_CONTEXT__ ?? {
+		source: "vscode",
+		ideVersion: "unknown",
+		extensionVersion: "unknown",
+	};
 
 render(
 	<StrictMode>
@@ -29,6 +48,7 @@ render(
 			>
 				<LocalStackThemeProvider useExtensionLayout={false}>
 					<AppInspectorContextProvider
+						deploymentContainer={deploymentContainer}
 						linkComponent={(props) => (
 							<Link to={props.to}>{props.children}</Link>
 						)}

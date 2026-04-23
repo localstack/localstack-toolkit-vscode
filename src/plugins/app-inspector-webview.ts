@@ -11,6 +11,8 @@ import {
 	TreeItem,
 	TreeItemCollapsibleState,
 	Uri,
+	extensions,
+	version as vscodeVersion,
 } from "vscode";
 import type {
 	ProviderResult,
@@ -61,9 +63,15 @@ export default createPlugin(
 					"utf-8",
 				);
 				outputChannel.debug(`html=${html}`);
-				panel.webview.html = html.replaceAll(
-					/"(\/.*?\.(?:js|css))"/g,
-					(_, asset: string) => {
+				const extensionVersion =
+					(
+						extensions.getExtension("localstack.localstack")?.packageJSON as {
+							version?: string;
+						}
+					)?.version ?? "unknown";
+
+				panel.webview.html = html
+					.replaceAll(/"(\/.*?\.(?:js|css))"/g, (_, asset: string) => {
 						return JSON.stringify(
 							panel.webview
 								.asWebviewUri(
@@ -75,8 +83,15 @@ export default createPlugin(
 								)
 								.toString(),
 						);
-					},
-				);
+					})
+					.replace(
+						"window.__APP_INSPECTOR_CONTEXT__ = null;",
+						`window.__APP_INSPECTOR_CONTEXT__ = ${JSON.stringify({
+							source: "vscode",
+							ideVersion: vscodeVersion,
+							extensionVersion,
+						})};`,
+					);
 				outputChannel.debug(`html=${panel.webview.html}`);
 			}),
 		);
