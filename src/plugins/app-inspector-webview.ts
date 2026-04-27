@@ -29,7 +29,7 @@ import type {
 
 export default createPlugin(
 	"app-inspector-webview",
-	({ context, outputChannel, localStackStatusTracker }) => {
+	({ context, localStackStatusTracker }) => {
 		let appInspectorPanel: WebviewPanel | undefined;
 		context.subscriptions.push(
 			commands.registerCommand("localstack.openAppInspector", async () => {
@@ -57,12 +57,10 @@ export default createPlugin(
 					import.meta.dirname,
 					"../resources/app-inspector/dist",
 				);
-				outputChannel.debug(`appInspectorDist=${appInspectorDist}`);
 				const html = await readFile(
 					path.join(appInspectorDist, "index.html"),
 					"utf-8",
 				);
-				outputChannel.debug(`html=${html}`);
 				const extensionVersion =
 					(
 						extensions.getExtension("localstack.localstack")?.packageJSON as {
@@ -92,7 +90,6 @@ export default createPlugin(
 							extensionVersion,
 						})};`,
 					);
-				outputChannel.debug(`html=${panel.webview.html}`);
 			}),
 		);
 
