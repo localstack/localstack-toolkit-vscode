@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.5.0](https://github.com/localstack/localstack-toolkit-vscode/compare/v1.4.2...v1.5.0) (2026-04-29)
+
+
+### Features
+
+* integrate appinspector UI ([#72](https://github.com/localstack/localstack-toolkit-vscode/issues/72)) ([d1b39f2](https://github.com/localstack/localstack-toolkit-vscode/commit/d1b39f260dfe6d398baecaf1a4c40bce8763e4d5))
+
 ## [1.4.2](https://github.com/localstack/localstack-toolkit-vscode/compare/v1.4.1...v1.4.2) (2026-03-31)
 
 
