@@ -2,6 +2,7 @@ import ms from "ms";
 import { StatusBarAlignment, window } from "vscode";
 import type { ExtensionContext } from "vscode";
 
+import appInspectorWebview from "./plugins/app-inspector-webview.ts";
 import configureAws from "./plugins/configure-aws.ts";
 import logs from "./plugins/logs.ts";
 import manage from "./plugins/manage.ts";
@@ -21,6 +22,7 @@ const plugins = new PluginManager([
 	manage,
 	statusBar,
 	logs,
+	appInspectorWebview,
 ]);
 
 export async function activate(context: ExtensionContext) {

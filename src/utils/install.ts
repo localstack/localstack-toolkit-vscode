@@ -242,7 +242,7 @@ async function fetchLatestCLIRelease(): Promise<ReleaseSchema> {
 	if (!res.ok) {
 		throw new Error(`Failed to fetch release: ${res.status} ${res.statusText}`);
 	}
-	const data = await res.json();
+	const data: unknown = await res.json();
 	const parsed = ReleaseSchema.safeParse(data);
 	if (!parsed.success) {
 		console.error(z.treeifyError(parsed.error));
