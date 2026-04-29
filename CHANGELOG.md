@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.5.0](https://github.com/localstack/localstack-toolkit-vscode/compare/v1.4.2...v1.5.0) (2026-04-29)
+
+
+### Features
+
+* feat: add [App Inspector](https://blog.localstack.cloud/introducing-app-inspector)
+
 ## [1.4.2](https://github.com/localstack/localstack-toolkit-vscode/compare/v1.4.1...v1.4.2) (2026-03-31)
 
 
