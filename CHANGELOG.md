@@ -5,7 +5,7 @@
 
 ### Features
 
-* feat: add [App Inspector](https://blog.localstack.cloud/introducing-app-inspector) ([#72](https://github.com/localstack/localstack-toolkit-vscode/issues/72)) ([d1b39f2](https://github.com/localstack/localstack-toolkit-vscode/commit/d1b39f260dfe6d398baecaf1a4c40bce8763e4d5))
+* feat: add [App Inspector](https://blog.localstack.cloud/introducing-app-inspector)
 
 ## [1.4.2](https://github.com/localstack/localstack-toolkit-vscode/compare/v1.4.1...v1.4.2) (2026-03-31)
 
