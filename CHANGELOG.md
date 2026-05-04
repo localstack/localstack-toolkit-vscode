@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.6.0](https://github.com/localstack/localstack-toolkit-vscode/compare/v1.5.0...v1.6.0) (2026-05-04)
+
+
+### Features
+
+* sync App Inspector theme with VS Code color theme ([#152](https://github.com/localstack/localstack-toolkit-vscode/issues/152)) ([9dd7882](https://github.com/localstack/localstack-toolkit-vscode/commit/9dd78826b84973c4bb60895eb2a54b73bf9ab959))
+
 ## [1.5.0](https://github.com/localstack/localstack-toolkit-vscode/compare/v1.4.2...v1.5.0) (2026-04-29)
 
 
