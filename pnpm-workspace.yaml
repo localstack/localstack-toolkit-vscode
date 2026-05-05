@@ -1,0 +1,6 @@
+minimumReleaseAge: 4320 # 3 days
+trustPolicy: no-downgrade
+blockExoticSubdeps: true
+
+allowBuilds:
+  esbuild: true
