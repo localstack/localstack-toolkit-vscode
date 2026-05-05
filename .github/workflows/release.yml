@@ -21,6 +21,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v5
+        with:
+          persist-credentials: false
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
@@ -64,6 +66,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v5
+        with:
+          persist-credentials: false
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
@@ -97,6 +101,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v5
+        with:
+          persist-credentials: false
 
       - name: Download VSIX
         uses: actions/download-artifact@v4
@@ -109,7 +115,8 @@ jobs:
       - name: Upload Release Artifact
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh release upload ${{ needs.release.outputs.tag_name }} *.vsix
+          NEEDS_RELEASE_OUTPUTS_TAG_NAME: ${{ needs.release.outputs.tag_name }}
+        run: gh release upload ${NEEDS_RELEASE_OUTPUTS_TAG_NAME} *.vsix
 
   publish-vscode-marketplace:
     name: Publish to VS Marketplace
