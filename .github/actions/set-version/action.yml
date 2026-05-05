@@ -1,10 +1,16 @@
 name: 'Set Version from Branch'
-description: 'Sets VERSION environment variable from the current branch name'
+description: 'Sets VERSION output from the current branch name'
+
+outputs:
+  version:
+    description: 'The version extracted from the branch name'
+    value: ${{ steps.set-version.outputs.version }}
 
 runs:
   using: composite
   steps:
     - name: Set version from branch name
+      id: set-version
       shell: bash
       run: |
         # GITHUB_HEAD_REF contains the source branch for PRs (e.g., "v1.2.5"), but is empty for pushes
@@ -30,5 +36,5 @@ runs:
           exit 1
         fi
 
-        echo "VERSION=$VERSION" >> $GITHUB_ENV
+        echo "version=$VERSION" >> $GITHUB_OUTPUT
         echo "Using version: $VERSION (from branch: $BRANCH_NAME)"

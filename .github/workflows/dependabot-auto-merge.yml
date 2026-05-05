@@ -1,7 +1,7 @@
 name: Auto merge Dependabot pull requests
 
 on:
-  pull_request_target:
+  pull_request:
     types:
       - labeled
       - opened
@@ -19,11 +19,6 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event.pull_request.user.login == 'dependabot[bot]'
     steps:
-      - name: Checkout
-        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
-        with:
-          persist-credentials: false
-
       - name: Approve
         run: gh pr review "$PR_NUMBER" --approve
         env:
