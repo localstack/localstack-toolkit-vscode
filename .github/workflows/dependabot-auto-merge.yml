@@ -17,7 +17,7 @@ jobs:
   auto-merge:
     name: Auto merge Dependabot pull requests
     runs-on: ubuntu-latest
-    if: github.actor == 'dependabot[bot]'
+    if: github.event.pull_request.user.login == 'dependabot[bot]'
     steps:
       - name: Checkout
         uses: actions/checkout@v5
