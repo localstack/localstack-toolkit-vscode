@@ -126,8 +126,9 @@
 			}
 		}
 	},
+	"packageManager": "pnpm@10.33.3",
 	"scripts": {
-		"vscode:prepublish": "npm run package",
+		"vscode:prepublish": "pnpm run package",
 		"compile": "npm-run-all -p compile:extension compile:appinspector-webview",
 		"compile:appinspector-webview": "vite build",
 		"compile:extension": "node --env-file=.env.local --env-file-if-exists=.env build/extension.mjs",
@@ -137,15 +138,15 @@
 		"dev:extension": "node --watch --env-file=.env.local --env-file-if-exists=.env build/extension.mjs --dev",
 		"dev:tsc": "tsc --watch",
 		"dev:localstack-web-mock-server": "node --watch --env-file=.env.local --env-file-if-exists=.env build/localstack-web-mock-server.mjs",
-		"package": "npm run compile",
-		"pretest": "npm run compile",
+		"package": "pnpm run compile",
+		"pretest": "pnpm run compile",
 		"check-types": "tsc",
 		"lint": "eslint",
 		"format": "biome check",
 		"test": "vscode-test"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "^2.4.14",
+		"@biomejs/biome": "^2.4.13",
 		"@eslint/compat": "^2.0.5",
 		"@eslint/js": "^9.39.4",
 		"@localstack/appinspector-ui": "^1.0.125",
