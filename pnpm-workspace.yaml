@@ -1,4 +1,6 @@
 minimumReleaseAge: 10080 # 7 days
+minimumReleaseAgeExclude:
+  - "@localstack/appinspector-ui"
 trustPolicy: no-downgrade
 blockExoticSubdeps: true
 
