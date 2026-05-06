@@ -141,7 +141,7 @@ jobs:
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
 
       - name: Publish to VS Marketplace
-        run: npx @vscode/vsce publish --packagePath *.vsix
+        run: pnpm dlx @vscode/vsce publish --packagePath *.vsix
         env:
           VSCE_PAT: ${{ secrets.VSCE_PAT }}
 
@@ -161,6 +161,6 @@ jobs:
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
 
       - name: Publish to Open VSX
-        run: npx ovsx publish *.vsix -p $OVSX_PAT
+        run: pnpm dlx ovsx publish *.vsix -p $OVSX_PAT
         env:
           OVSX_PAT: ${{ secrets.OVSX_PAT }}
