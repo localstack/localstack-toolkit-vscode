@@ -12,8 +12,6 @@ updates:
           - "version-update:semver-major"
     cooldown:
       default-days: 7
-      ignore:
-        - dependency-name: "@localstack/appinspector-ui"
     groups:
       minor-patch:
         update-types:
