@@ -60,6 +60,7 @@ jobs:
         id: release
         with:
           release-type: node
+          token: ${{ secrets.LOCALSTACK_BOT_TOKEN }}
 
   build:
     name: Build
