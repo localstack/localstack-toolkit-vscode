@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.6.2](https://github.com/localstack/localstack-toolkit-vscode/compare/v1.6.1...v1.6.2) (2026-05-07)
+
+
+### Bug Fixes
+
+* **ci:** specify pnpm version in publish jobs ([#169](https://github.com/localstack/localstack-toolkit-vscode/issues/169)) ([50ac5e0](https://github.com/localstack/localstack-toolkit-vscode/commit/50ac5e0846561d412b5abeabb9ff7e4333692f44))
+
 ## [1.6.1](https://github.com/localstack/localstack-toolkit-vscode/compare/v1.6.0...v1.6.1) (2026-05-07)
 
 
