@@ -1,7 +1,7 @@
 name: Auto merge Dependabot pull requests
 
-on:
-  pull_request:
+on: # zizmor: ignore[dangerous-triggers]
+  pull_request_target:
     types:
       - labeled
       - opened
