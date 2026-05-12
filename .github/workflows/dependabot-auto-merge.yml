@@ -20,13 +20,13 @@ jobs:
     if: github.event.pull_request.user.login == 'dependabot[bot]'
     steps:
       - name: Approve
-        run: gh pr review "$PR_NUMBER" --approve
+        run: gh pr review "$PR_NUMBER" --approve --repo "$GITHUB_REPOSITORY"
         env:
           PR_NUMBER: ${{ github.event.number }}
           GH_TOKEN: ${{ secrets.LOCALSTACK_BOT_TOKEN }}
 
       - name: Enable auto-merge
-        run: gh pr merge "$PR_NUMBER" --auto --squash
+        run: gh pr merge "$PR_NUMBER" --auto --squash --repo "$GITHUB_REPOSITORY"
         env:
           PR_NUMBER: ${{ github.event.number }}
           GH_TOKEN: ${{ secrets.LOCALSTACK_BOT_TOKEN }}
