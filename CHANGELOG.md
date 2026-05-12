@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.6.3](https://github.com/localstack/localstack-toolkit-vscode/compare/v1.6.2...v1.6.3) (2026-05-12)
+
+
+### Bug Fixes
+
+* **ci:** add --repo flag to gh commands in auto-merge workflow ([#174](https://github.com/localstack/localstack-toolkit-vscode/issues/174)) ([4d1e972](https://github.com/localstack/localstack-toolkit-vscode/commit/4d1e97257602f2eef9681af76709cc2021839ba8))
+
 ## [1.6.2](https://github.com/localstack/localstack-toolkit-vscode/compare/v1.6.1...v1.6.2) (2026-05-07)
 
 
