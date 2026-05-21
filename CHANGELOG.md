@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.7.0](https://github.com/localstack/localstack-toolkit-vscode/compare/v1.6.3...v1.7.0) (2026-05-21)
+
+
+### Miscellaneous Chores
+
+* release 1.7.0 ([62610d3](https://github.com/localstack/localstack-toolkit-vscode/commit/62610d357f90b8b67630d3b46c3b40eb56cc07c0))
+
 ## [1.6.3](https://github.com/localstack/localstack-toolkit-vscode/compare/v1.6.2...v1.6.3) (2026-05-12)
 
 
