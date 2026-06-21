@@ -96,4 +96,24 @@ export default defineConfig(
 			],
 		},
 	},
+	{
+		// Ported AWS Inspector code and SDK/dynamic-JSON-facing modules interface
+		// with loosely-typed AWS SDK responses; relax the type-checked "unsafe"
+		// rules here rather than rewriting code that is reused verbatim.
+		files: [
+			"src/platforms/aws/**/*.ts",
+			"src/views/resources/**/*.ts",
+			"src/views/resource-details/**/*.ts",
+			"src/utils/memoize.ts",
+		],
+		rules: {
+			"@typescript-eslint/no-unsafe-assignment": "off",
+			"@typescript-eslint/no-unsafe-member-access": "off",
+			"@typescript-eslint/no-unsafe-return": "off",
+			"@typescript-eslint/no-unsafe-argument": "off",
+			"@typescript-eslint/no-unsafe-call": "off",
+			"@typescript-eslint/restrict-template-expressions": "off",
+			"@typescript-eslint/no-base-to-string": "off",
+		},
+	},
 );

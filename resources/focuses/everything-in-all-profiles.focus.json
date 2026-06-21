@@ -1,0 +1,26 @@
+{
+  "version": "1.0",
+  "profiles": [
+    {
+      "id": "*",
+      "regions": [
+        {
+          "id": "*",
+          "services": [
+            {
+              "id": "*",
+              "resourcetypes": [
+                {
+                  "id": "*",
+                  "arns": [
+                    "*"
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
