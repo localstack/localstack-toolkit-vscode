@@ -6,6 +6,7 @@ import appInspectorWebview from "./plugins/app-inspector-webview.ts";
 import configureAws from "./plugins/configure-aws.ts";
 import logs from "./plugins/logs.ts";
 import manage from "./plugins/manage.ts";
+import resourceBrowser from "./plugins/resource-browser.ts";
 import setup from "./plugins/setup.ts";
 import statusBar from "./plugins/status-bar.ts";
 import { PluginManager } from "./plugins.ts";
@@ -23,6 +24,7 @@ const plugins = new PluginManager([
 	statusBar,
 	logs,
 	appInspectorWebview,
+	resourceBrowser,
 ]);
 
 export async function activate(context: ExtensionContext) {
