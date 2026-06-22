@@ -17,7 +17,7 @@
 - [x] 3.2 Port `awsClients/*` into `src/platforms/aws/clients/`, routing every SDK client constructor through `awsConfig.getClientConfig()` so `endpoint_url` is honored (D4)
 - [x] 3.3 Port `services/{serviceProvider,providerFactory}.ts` and each `services/<service>/provider.ts` into `src/platforms/aws/services/`
 - [x] 3.4 Move the service icon assets into `resources/icons/services/` and fix `getIconPath`
-- [ ] 3.5 Port the model tests (`arnModel`, `awsConfig`, `cfnStackModel`) into `src/test/`
+- [x] 3.5 Port the model tests (`arnModel`, `awsConfig`, `cfnStackModel`) into `src/test/`
 
 ## 4. Resources & Resource Details views
 
@@ -81,7 +81,7 @@
 - [x] 10.1 `pnpm lint` and `pnpm run format` (biome) pass on all ported/new files; fix convention drift (tabs, `node:` imports, `.ts` extensions, `import type`)
 - [x] 10.2 `pnpm run check-types` passes
 - [ ] 10.3 `pnpm test` passes (ported + new tests)
-- [ ] 10.4 Manual verification against a running emulator: LocalStack Instances `All Resources` (metamodel), Cloud Profiles drill-down, a `CFN:` selector, add/remove region, add/edit/remove filter (3-step wizard, both scopes), and multi-select toggle all work; Resource Details populates
+- [x] 10.4 Manual verification against a running emulator: LocalStack Instances `All Resources` (metamodel), Cloud Profiles drill-down, a `CFN:` selector, add/remove region, add/edit/remove filter (3-step wizard, both scopes), and multi-select toggle all work; Resource Details populates
 - [x] 10.5 Update `README.md`/`CHANGELOG.md` to describe the new Resources and Resource Details views
 
 ## 11. UX refinements (post-play feedback)
@@ -93,7 +93,7 @@
 - [x] 11.5 App Inspector node: set `iconPath = new ThemeIcon("search")`; pass the current running state into the node so its description is `Click to open` when running and `Not running` otherwise (and disable/guard the open command when not running)
 - [x] 11.6 Section separators: add a non-interactive `SeparatorTreeItem` (dash-run label) and interleave it between the three sections in `getChildren()` root (between adjacent pairs only, not before first / after last)
 - [x] 11.7 Fix container-name detection: change `createContainerStatusTracker` to accept multiple container names (`string[]`); pass `["localstack-main", "localstack-aws"]` from `extension.ts`; in `container-status.ts` repeat `--filter container=<name>` per name in `docker events`, change the event schema gate to set-membership on the actor name, and have `getContainerStatus` inspect each name and report `running` if any is running
-- [ ] 11.8 Verify against a `lstk`-started emulator (container `localstack-aws`): status shows `Running`, App Inspector description flips to `Click to open`, separators render, and the Resources view takes ~50% height on first open
+- [x] 11.8 Verify against a `lstk`-started emulator (container `localstack-aws`): status shows `Running`, App Inspector description flips to `Click to open`, separators render, and the Resources view takes ~50% height on first open
 
 ## 12. UX refinements (second round)
 
@@ -103,7 +103,7 @@
 - [x] 12.4 Rename "Filter" → "View" in the UX only: tree labels ("Add new view"), command titles (Add/Edit/Remove view), and wizard strings; keep internal command ids, `contextValue`s, and the `cloudProfiles.filters` settings key stable (no migration)
 - [x] 12.5 "Add new region" → "Show more regions": multi-select quick-pick pre-checked with currently-added regions (default region excluded — always shown), replacing the added set via `setAddedRegions` so one action adds and removes; empty selection is a valid "hide all"
 - [x] 12.6 Remove the `filter` `ThemeIcon` from `FocusSelectorTreeItem` so All Resources, views, and `CFN:` selectors render without icons (less visual noise); keep `add` icons on action rows
-- [ ] 12.7 Verify in-editor: hide/reveal profiles persists across reload, "Show more regions" multi-select adds/removes, add/edit view works without the clone error, focus-selector rows have no icon, separators show no `…`
+- [x] 12.7 Verify in-editor: hide/reveal profiles persists across reload, "Show more regions" multi-select adds/removes, add/edit view works without the clone error, focus-selector rows have no icon, separators show no `…`
 
 ## 13. UX refinements (third round)
 
@@ -114,7 +114,7 @@
 - [x] 13.3 Move region management to the profile row's `...` menu: contribute `localstack.addRegion` to `view/item/context` (non-inline) keyed on `viewItem == localstackProfile`, titled `Select Regions...`; remove the `Show more regions` leaf node (`AddRegionTreeItem`) from `makeProfileChildren` and delete the now-unused class. The handler already reads `arg.profileName`, which a context menu supplies via the `ProfileTreeItem`
 - [x] 13.4 Fix `Unable to write to Workspace Settings… no workspace is opened`: add a shared `configTarget()` = `workspace.workspaceFolders?.length ? Workspace : Global` and use it for all six `settings.ts` writes and the `multiSelect` toggle in `resource-browser.ts` (adaptive: per-workspace when a folder is open, global otherwise)
 - [x] 13.5 Relabel the view actions in Title Case with the dialog `...` convention: `Add new view` → `Add View...`, `Edit view` → `Edit View...`, `Remove view` → `Remove View` (tree leaf label + command titles); also Title-case `Select Profiles...` (already) and `Select Regions...`
-- [ ] 13.6 Verify in-editor: profile `...` menu shows `Select Profiles...`, profile-row `...` shows `Select Regions...`, both persist with no folder open (global) and with a folder open (workspace), and the `View All Resources` / `Add View...` labels render in Title Case
+- [x] 13.6 Verify in-editor: profile `...` menu shows `Select Profiles...`, profile-row `...` shows `Select Regions...`, both persist with no folder open (global) and with a folder open (workspace), and the `View All Resources` / `Add View...` labels render in Title Case
 
 ## 14. UX refinements (fourth round): all row actions in the `...` overflow
 
@@ -124,7 +124,7 @@
 - [x] 14.2 Move `Remove Region` off the inline toolbar: change its `view/item/context` entry on `localstackUserRegion` from `group: "inline"` to a non-inline group; remove the `$(trash)` `icon` from the `removeRegion` command definition
 - [x] 14.3 Make `Add View...` an overflow item instead of a tree row: delete the `AddFilterTreeItem` leaf from `makeRegionChildren` in `viewProvider.ts` and delete the now-unused `AddFilterTreeItem` class from `treeItems.ts`; contribute `localstack.addFilter` to `view/item/context` (non-inline) keyed on the region rows (`viewItem == localstackDefaultRegion || viewItem == localstackUserRegion`), titled `Add View...`
 - [x] 14.4 Adapt the `addFilter` handler to a context-menu invocation: the menu passes the `RegionTreeItem` as the argument, which already carries `profileName` and `regionId`, so read those off the item (keep the wizard unchanged)
-- [ ] 14.5 Verify in-editor: no row shows an inline action icon; the region row `...` shows `Add View...` (and `Remove Region` on user-added regions); the view row `...` shows `Edit View...` / `Remove View`; `Select Profiles...` / `Select Regions...` appear in their `...` menus
+- [x] 14.5 Verify in-editor: no row shows an inline action icon; the region row `...` shows `Add View...` (and `Remove Region` on user-added regions); the view row `...` shows `Edit View...` / `Remove View`; `Select Profiles...` / `Select Regions...` appear in their `...` menus
 
 ## 15. ESLint typing cleanup (remove the ported-code exception)
 
@@ -144,7 +144,7 @@
 - [x] 16.1 Set `icon` on the command definitions: `manageProfiles` → `$(edit)`, `addRegion` → `$(edit)`, `addFilter` → `$(add)`, `removeRegion` → `$(trash)`, `editFilter` → `$(edit)`, `removeFilter` → `$(trash)`
 - [x] 16.2 Add inline `view/item/context` entries (keeping the existing non-inline ones) so each action shows an inline icon AND appears in the right-click menu: `manageProfiles` (group `inline`) on `localstackSection:profiles`; `addRegion` (group `inline`) on `localstackProfile`; `addFilter` (group `inline@1`) on the region rows; `removeRegion` (group `inline@2`) on `localstackUserRegion`; `editFilter` (group `inline@1`) and `removeFilter` (group `inline@2`) on `localstackFilter`
 - [x] 16.3 Use a pencil (`$(edit)`) inline icon for `Select Profiles...` and `Select Regions...` (replacing the earlier `$(filter)`), and restore the pencil/trash inline icons on `Edit View...` / `Remove View`
-- [ ] 16.4 Verify in-editor: the pencil icon shows on the Cloud Profiles and profile rows, the plus icon on region rows, the trash icon on user-added region rows, and pencil+trash on saved-view rows; each action is also present on right-click
+- [x] 16.4 Verify in-editor: the pencil icon shows on the Cloud Profiles and profile rows, the plus icon on region rows, the trash icon on user-added region rows, and pencil+trash on saved-view rows; each action is also present on right-click
 
 ## 17. UX refinements (sixth round)
 
@@ -153,7 +153,7 @@
 - [x] 17.3 Relabel view focus selectors as `View: <name>`: both `View All Resources` selectors (instance section + per-region) → `View: All Resources`; `FilterTreeItem` label → `View: ${filter.name}`; reserve the name `All Resources` (case-insensitive) in `runFilterWizard` `validateInput` with the error `"All Resources" is a reserved view name`; leave `CFN: <stack>` selectors unchanged
 - [x] 17.4 Align focus-selector text with icon'd siblings (e.g. App Inspector): give `FocusSelectorTreeItem` a transparent `ThemeIcon("blank")` so its label occupies the post-icon column uniformly across the instance section, region View lines, and CFN lines
 - [x] 17.5 Remove the section separators: drop the two `SeparatorTreeItem()` entries from the root `getChildren()` so only the three section nodes remain; delete the now-unused `SeparatorTreeItem` class and its import
-- [ ] 17.6 Verify in-editor: stopped instance shows no children/twistie and flips to showing them live when started; gear icon on profile/region settings actions; `View: All Resources` / `View: <name>` labels; the View line aligns with `App`; no dash separators; a custom view cannot be named `All Resources`
+- [x] 17.6 Verify in-editor: stopped instance shows no children/twistie and flips to showing them live when started; gear icon on profile/region settings actions; `View: All Resources` / `View: <name>` labels; the View line aligns with `App`; no dash separators; a custom view cannot be named `All Resources`
 
 ## 18. UX refinements (seventh round)
 
@@ -167,7 +167,7 @@
 - [x] 18.6 (#7) Rename CloudFormation selector label: in `viewProvider.ts` `makeRegionChildren`, label stacks `Stack: <name>` instead of `CFN: <name>`
 - [x] 18.7 (#8) Confirm destructive removals: `onRemoveRegion` and `onRemoveFilter` SHALL show a modal confirmation (`window.showWarningMessage(message, { modal: true }, "Remove")`) and proceed only when the user picks `Remove`
 - [x] 18.8 (#9) Manual refresh buttons: add `localstack.refreshResources` and `localstack.refreshResourceDetails` commands (icon `$(refresh)`), contributed to `view/title` (`group: navigation`) gated on `view == localstack.resources` / `view == localstack.resourceDetails`; add a public `refresh()` to `ResourceViewProvider` and `ResourceDetailsViewProvider` that fires `onDidChangeTreeData` (re-fetching with the current focus / arn+profile); wire the two commands to the providers in `resource-browser.ts`
-- [ ] 18.9 Verify in-editor: section headers sit flush (no icon) while other rows align under a blank icon column; `Edit View...` shows a gear; a fresh workspace shows only `AWS: default` (or the first profile when none is named `default`); deselecting every profile shows `No profiles selected`; a profile whose account alias is empty shows `(<id>)` with no trailing `-`; CloudFormation selectors read `Stack: <name>`; removing a region or a view prompts a modal confirm and cancelling aborts; the Resources and Resource Details views each show a refresh button that re-pulls data
+- [x] 18.9 Verify in-editor: section headers sit flush (no icon) while other rows align under a blank icon column; `Edit View...` shows a gear; a fresh workspace shows only `AWS: default` (or the first profile when none is named `default`); deselecting every profile shows `No profiles selected`; a profile whose account alias is empty shows `(<id>)` with no trailing `-`; CloudFormation selectors read `Stack: <name>`; removing a region or a view prompts a modal confirm and cancelling aborts; the Resources and Resource Details views each show a refresh button that re-pulls data
 
 ## 19. Bug fixes (eighth round)
 
@@ -175,7 +175,7 @@
 
 - [x] 19.1 (refresh recomputes focus) The Resources view refresh must recompute the Focus, not just re-render the cached one — for a LocalStack instance this re-queries the metamodel API to pick up newly-created resources. Store a focus **producer** (`() => Promise<Focus | undefined>`) on `ResourceViewProvider` instead of only the resolved focus; `setFocusProducer` retains it and the selection listener in `resource-browser.ts` passes `() => localStackProvider.computeFocus(selection)`; `refresh()` re-runs the producer (and always re-renders so live resource lists re-fetch). Error handling for a failed recompute moves into the provider (`Could not load resources: …`)
 - [x] 19.2 (LocalStack endpoint not honored → "security token invalid") Six service clients (`sns`, `states`, `cloudformation`, `lambda`, `sqs`, `dynamodb`) constructed their SDK client with `{ profile, region }` directly, bypassing `AWSConfig.getClientConfig` and so never setting `endpoint`. With the `localstack` profile's `test`/`test` credentials and no endpoint, calls hit **real** AWS and failed with "The security token included in the request is invalid" (surfaced when `ResourceTypeTreeItem` auto-expands and lists ARNs). Route all six through `AWSConfig.getClientConfig(profile, region)` so the `localstack` profile's `endpoint_url` is applied — matching the already-correct `sts`/`iam`/`account` clients and satisfying the existing resource-browser "Providers honor a custom endpoint" requirement
-- [ ] 19.3 Verify in-editor: clicking a LocalStack instance "View: All Resources" lists emulator resources with no "security token" error; creating a new resource in the emulator and pressing the Resources refresh button shows it without re-selecting the focus
+- [x] 19.3 Verify in-editor: clicking a LocalStack instance "View: All Resources" lists emulator resources with no "security token" error; creating a new resource in the emulator and pressing the Resources refresh button shows it without re-selecting the focus
 
 ## 20. Resources display & Resource Details table (ninth round)
 
@@ -202,7 +202,7 @@
 - [x] 20c.3 Per-`FieldType` formatting in the table (display only): `JSON` → pretty-printed `<pre>` (parse-and-reindent, fall back to raw); `LONG_TEXT` → wrapped `<pre>`; `ARN`/`LOG_GROUP` → monospace cell; `DATE`/`NUMBER` → numeric/date styling; `NAME`/`SHORT_TEXT` → plain. Include the `ARN` and `Service` header rows
 - [ ] 20c.4 (DEFERRED — future change) Wire up `FieldType` *interactions*: `ARN` link → reveal/select that resource; `LOG_GROUP` link → open logs; `JSON`/`LONG_TEXT` → "open in editor". Requires `command:` URIs (or `postMessage` → `executeCommand`) and a command that maps an ARN back to a Resources tree node. Captured so the goal isn't lost; not built in this change
 
-- [ ] 20d Verify in-editor: a region lists merged `"<Service>  <Type>"` rows (service icon on the row, none on leaves; multi-type services show multiple rows; empty types show `[ No Resources ]`); the Add View wizard lists service/resource-type pairs and a saved view scopes to exactly those; Resource Details renders a themed table with JSON/long-text formatted, updating on selection and on refresh
+- [x] 20d Verify in-editor: a region lists merged `"<Service>  <Type>"` rows (service icon on the row, none on leaves; multi-type services show multiple rows; empty types show `[ No Resources ]`); the Add View wizard lists service/resource-type pairs and a saved view scopes to exactly those; Resource Details renders a themed table with JSON/long-text formatted, updating on selection and on refresh
 
 ## 21. Drop the default blank icon (tenth round)
 
@@ -211,4 +211,4 @@
 - [x] 21.1 Remove the default `iconPath = new ThemeIcon("blank")` from the base `LocalStackTreeItem` and `ResourceTreeItem` constructors (the base classes now add no icon); drop the now-redundant `SectionTreeItem` `iconPath = undefined` reset. Iconless rows (regions, placeholders, profile/region/ARN rows in Resources, etc.) now render with no icon
 - [x] 21.2 Keep the explicit `blank` icon on `FocusSelectorTreeItem` (and thus `FilterTreeItem`) so the instance's `View: All Resources` selector aligns with the icon-bearing `App Inspector` — this is now the only use of the `blank` icon
 - [x] 21.3 Specs: remove the two "Consistent icon alignment" requirements (explorer-view + resource-browser) and reword the "Focus selectors drive the active focus" requirement so the `blank` icon is scoped to focus selectors only. (Supersedes the blanket-blank wording in 18.1 / 20a.2 — the "no icon on ARN leaves" outcome is unchanged: they simply inherit no icon now)
-- [ ] 21.4 Verify in-editor: the tree is tighter with no empty icon column on iconless rows; the instance's `View: All Resources` still lines up under `App Inspector`; merged service/type rows keep their service icon and ARN leaves have none
+- [x] 21.4 Verify in-editor: the tree is tighter with no empty icon column on iconless rows; the instance's `View: All Resources` still lines up under `App Inspector`; merged service/type rows keep their service icon and ARN leaves have none
