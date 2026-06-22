@@ -13,7 +13,6 @@ import ARN from "../../platforms/aws/models/arnModel.ts";
 import AWSConfig from "../../platforms/aws/models/awsConfig.ts";
 import CfnStackModel from "../../platforms/aws/models/cfnStackModel.ts";
 import { computeMetamodelFocus } from "../../platforms/aws/models/metamodelFocus.ts";
-import { ProviderFactory } from "../../platforms/aws/services/providerFactory.ts";
 import {
 	endpointHostPort,
 	getLocalStackEndpointUrl,
@@ -225,21 +224,25 @@ export class LocalStackViewProvider
 	}
 }
 
-/** Build a focus for a region scoped to a filter's chosen services. */
+/** Build a focus for a region scoped to a filter's chosen service/type pairs. */
 function makeFilterFocus(
 	profile: string,
 	region: string,
 	filter: SavedFilter,
 ): Focus {
-	const services = filter.services.map((serviceId) => {
-		const provider = ProviderFactory.getProviderForService(serviceId);
-		return {
-			id: serviceId,
-			resourcetypes: provider
-				.getResourceTypes()
-				.map((rt) => ({ id: rt, arns: ["*"] })),
-		};
-	});
+	/* Group the flat pair list by service into the focus shape. */
+	const resourceTypesByService = new Map<string, string[]>();
+	for (const { service, resourceType } of filter.resources) {
+		const list = resourceTypesByService.get(service) ?? [];
+		list.push(resourceType);
+		resourceTypesByService.set(service, list);
+	}
+	const services = [...resourceTypesByService.entries()].map(
+		([id, resourceTypes]) => ({
+			id,
+			resourcetypes: resourceTypes.map((rt) => ({ id: rt, arns: ["*"] })),
+		}),
+	);
 	return {
 		version: "1.0",
 		profiles: [{ id: profile, regions: [{ id: region, services }] }],

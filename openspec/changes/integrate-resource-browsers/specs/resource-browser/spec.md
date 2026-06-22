@@ -2,7 +2,7 @@
 
 ### Requirement: Resources view renders the active focus
 
-The system SHALL provide a "Resources" tree view that renders the active focus as a hierarchy of profile → region → service → resource type → resource (ARN). When no focus is active, the view SHALL show a placeholder prompting the user to select a focus.
+The system SHALL provide a "Resources" tree view that renders the active focus as a hierarchy of profile → region → **service-and-resource-type** → resource (ARN). The service and resource type SHALL be combined into a single row rather than two nested levels: the row's label is the service name and its description (dimmed) is the resource type's plural name (e.g. label `SQS` / description `Queues`). A service with multiple resource types SHALL render one row per resource type, each sharing the service name and icon (e.g. `Lambda — Functions` and `Lambda — Event Source Mappings`). The service icon SHALL appear on this combined row and SHALL NOT appear on the individual resource (ARN) leaves. When no focus is active, the view SHALL show a placeholder prompting the user to select a focus.
 
 #### Scenario: No focus shows a placeholder
 
@@ -12,7 +12,22 @@ The system SHALL provide a "Resources" tree view that renders the active focus a
 #### Scenario: Active focus is rendered hierarchically
 
 - **WHEN** a focus is active
-- **THEN** the Resources view shows its profiles, and each profile expands to regions, services, resource types, and resources in turn
+- **THEN** the Resources view shows its profiles, and each profile expands to regions, then to combined service-and-resource-type rows, then to resources
+
+#### Scenario: Service and resource type share one row
+
+- **WHEN** a region contains the SQS service with its single `Queues` resource type
+- **THEN** a single row labeled `SQS` with the dimmed description `Queues` is shown (carrying the SQS icon), and expanding it lists the queue ARNs (which carry no service icon)
+
+#### Scenario: A multi-resource-type service renders one row per type
+
+- **WHEN** a region contains Lambda (which has both Functions and Event Source Mappings)
+- **THEN** two sibling rows appear — `Lambda` / `Functions` and `Lambda` / `Event Source Mappings` — each carrying the Lambda icon
+
+#### Scenario: Empty resource types still appear
+
+- **WHEN** a combined service-and-resource-type row has no resources
+- **THEN** the row is still shown and expands to a `[ No Resources ]` placeholder
 
 ### Requirement: Dynamic expansion of wildcard selectors
 
@@ -30,12 +45,24 @@ The system SHALL expand wildcard and default selectors in the active focus when 
 
 ### Requirement: Resource Details view
 
-The system SHALL provide a "Resource Details" tree view that shows the details of the resource currently selected in the Resources view, including at least its ARN and service, plus service-specific fields. The system SHALL obtain these fields via the AWS SDK `describeResource` path for the selected resource's service — directed at the profile's `endpoint_url` when present — for both LocalStack and real AWS cloud resources, so behavior is identical across the two. The system SHALL NOT source Resource Details from the LocalStack metamodel. When no resource is selected, it SHALL show a placeholder.
+The system SHALL provide a "Resource Details" view, rendered as a **webview** showing a key/value **table** of the resource currently selected in the Resources view, including at least its ARN and service, plus service-specific fields. The system SHALL obtain these fields via the AWS SDK `describeResource` path for the selected resource's service — directed at the profile's `endpoint_url` when present — for both LocalStack and real AWS cloud resources, so behavior is identical across the two. The system SHALL NOT source Resource Details from the LocalStack metamodel. The webview SHALL be self-contained (a strict Content-Security-Policy, no external resources) and SHALL match the active VS Code theme via theme CSS variables; field values SHALL be HTML-escaped. When no resource is selected, it SHALL show a placeholder; when `describeResource` fails, it SHALL show an error in place of the fields.
 
-#### Scenario: Selecting a resource shows its details
+The table SHALL format values according to each field's `FieldType` (display only): `JSON` as a pretty-printed monospace block, `LONG_TEXT` as a wrapped monospace block, `ARN`/`LOG_GROUP` in a monospace cell, and `DATE`/`NUMBER`/`NAME`/`SHORT_TEXT` as plain text. Making these field types **interactive** (e.g. an `ARN` link that reveals the resource, a `LOG_GROUP` link, or "open in editor" for `JSON`/`LONG_TEXT`) is out of scope for this change and is deferred to future work; the webview foundation (which supports `command:` URIs and `postMessage`) is what enables it later.
+
+#### Scenario: Selecting a resource shows its details as a table
 
 - **WHEN** the user selects a resource (ARN) in the Resources view
-- **THEN** the Resource Details view shows that resource's ARN, service, and service-specific fields
+- **THEN** the Resource Details webview shows a table of that resource's ARN, service, and service-specific fields, themed to match VS Code
+
+#### Scenario: Field types are formatted
+
+- **WHEN** a described field has type `JSON` or `LONG_TEXT`
+- **THEN** its value is rendered in a monospace block (JSON pretty-printed), rather than a single truncated line
+
+#### Scenario: Describe failure shows an error
+
+- **WHEN** `describeResource` throws for the selected resource
+- **THEN** the Resource Details view shows an error message rather than a stale or empty table
 
 #### Scenario: Details come from the SDK for LocalStack and cloud alike
 
@@ -89,23 +116,19 @@ In the Resources view, the profile node's description SHALL show the AWS account
 - **WHEN** the selected profile's account has no alias
 - **THEN** the profile node description reads `(<accountId>)` with no trailing `-`
 
-### Requirement: Consistent icon alignment in the Resources view
-
-Every Resources-view row that does not assign its own icon (profile, region, service, and resource-type nodes) SHALL carry a transparent (`blank`) icon by default so labels align under a common icon column. Rows that assign their own icon (resource/ARN nodes with the service icon, error nodes) keep it.
-
-#### Scenario: Iconless resource rows align
-
-- **WHEN** the Resources view renders profile, region, service, or resource-type rows
-- **THEN** each shows a transparent `blank` icon so its label aligns with the icon-bearing resource (ARN) rows
-
 ### Requirement: Manual refresh of the Resources and Resource Details views
 
-The Resources and Resource Details views SHALL each provide a refresh action in the view's title bar. Invoking it SHALL re-fetch and re-render the view's current content — the Resources view against its active focus, and the Resource Details view against its currently selected resource — without requiring the user to re-select a focus or resource.
+The Resources and Resource Details views SHALL each provide a refresh action in the view's title bar. Invoking it SHALL re-fetch and re-render the view's current content — the Resources view against its active focus, and the Resource Details view against its currently selected resource — without requiring the user to re-select a focus or resource. Refreshing the Resources view SHALL **recompute** the active focus from its source rather than re-rendering a cached structure; for a LocalStack instance focus this means re-querying the metamodel API, so resources created since the focus was first selected appear.
 
 #### Scenario: Refreshing the Resources view re-fetches the active focus
 
 - **WHEN** the user clicks the refresh action in the Resources view title bar while a focus is active
 - **THEN** the view re-queries the platform and re-renders the resources for that same focus
+
+#### Scenario: Refreshing a LocalStack instance focus picks up new resources
+
+- **WHEN** the active focus came from a LocalStack instance "All Resources" selector and a new resource has since been created in the emulator
+- **THEN** clicking refresh re-queries the metamodel, recomputes the focus, and the new resource appears without the user re-selecting the focus selector
 
 #### Scenario: Refreshing the Resource Details view re-fetches the selected resource
 

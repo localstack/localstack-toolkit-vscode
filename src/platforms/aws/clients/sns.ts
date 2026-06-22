@@ -10,6 +10,7 @@ import type {
 } from "@aws-sdk/client-sns";
 
 import { memoize } from "../../../utils/memoize.ts";
+import AWSConfig from "../models/awsConfig.ts";
 
 /**
  * Accessor functions for the AWS "SNS" (Simple Notification Service) service
@@ -17,7 +18,7 @@ import { memoize } from "../../../utils/memoize.ts";
 export class Sns {
 	private static cachedGetSnsClient = memoize(
 		(profile: string, region: string) => {
-			return new SNSClient({ profile, region });
+			return new SNSClient(AWSConfig.getClientConfig(profile, region));
 		},
 	);
 

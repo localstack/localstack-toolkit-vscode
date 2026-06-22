@@ -13,6 +13,7 @@ import type {
 
 import { memoize } from "../../../utils/memoize.ts";
 import type ARN from "../models/arnModel.ts";
+import AWSConfig from "../models/awsConfig.ts";
 
 /**
  * Accessor functions for the AWS "Lambda" service
@@ -20,7 +21,7 @@ import type ARN from "../models/arnModel.ts";
 export class Lambda {
 	private static cachedGetLambdaClient = memoize(
 		(profile: string, region: string) => {
-			return new LambdaClient({ profile, region });
+			return new LambdaClient(AWSConfig.getClientConfig(profile, region));
 		},
 	);
 

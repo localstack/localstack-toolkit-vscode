@@ -34,9 +34,15 @@ export function configTarget(): ConfigurationTarget {
 /** Scope of a saved filter: a single region, or every region of the profile. */
 export type FilterScope = { region: string } | { allRegions: true };
 
+/** A service and one of its resource types, the granularity a view filters at. */
+export interface ResourcePair {
+	service: string;
+	resourceType: string;
+}
+
 export interface SavedFilter {
 	name: string;
-	services: string[];
+	resources: ResourcePair[];
 	scope: FilterScope;
 }
 
