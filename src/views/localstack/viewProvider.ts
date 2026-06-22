@@ -20,11 +20,13 @@ import {
 } from "../../utils/localstack-endpoint.ts";
 import type { LocalStackStatusTracker } from "../../utils/localstack-status.ts";
 
-import { getAddedRegions, getFiltersForRegion } from "./settings.ts";
+import {
+	getAddedRegions,
+	getFiltersForRegion,
+	getHiddenProfiles,
+} from "./settings.ts";
 import type { SavedFilter } from "./settings.ts";
 import {
-	AddFilterTreeItem,
-	AddRegionTreeItem,
 	AppInspectorTreeItem,
 	ErrorTreeItem,
 	FilterTreeItem,
@@ -34,7 +36,7 @@ import {
 	ProfileTreeItem,
 	RegionTreeItem,
 	SectionTreeItem,
-	StatusTreeItem,
+	SeparatorTreeItem,
 } from "./treeItems.ts";
 import type { LocalStackTreeItem } from "./treeItems.ts";
 
@@ -55,16 +57,19 @@ export class LocalStackViewProvider
 		LocalStackTreeItem | undefined | void
 	> = this.#onDidChangeTreeData.event;
 
-	#statusItem: StatusTreeItem | undefined;
+	#instanceItem: InstanceTreeItem | undefined;
 
 	constructor(
 		private readonly statusTracker: LocalStackStatusTracker,
 		private readonly log?: LogOutputChannel,
 	) {
 		this.statusTracker.onChange((status) => {
-			if (this.#statusItem) {
-				this.#statusItem.description = status;
-				this.#onDidChangeTreeData.fire(this.#statusItem);
+			if (this.#instanceItem) {
+				/* Update the inline status label and refresh the instance node;
+				 * firing it also rebuilds its children so the App Inspector
+				 * description reflects the new running state. */
+				this.#instanceItem.setStatus(status);
+				this.#onDidChangeTreeData.fire(this.#instanceItem);
 			}
 		});
 	}
@@ -84,7 +89,9 @@ export class LocalStackViewProvider
 		if (!element) {
 			return [
 				new SectionTreeItem("instances", "LocalStack Instances"),
+				new SeparatorTreeItem(),
 				new SectionTreeItem("profiles", "Cloud Profiles"),
+				new SeparatorTreeItem(),
 				new SectionTreeItem("workspace", "Workspace IaC"),
 			];
 		}
@@ -127,27 +134,36 @@ export class LocalStackViewProvider
 
 	private async makeInstances(): Promise<LocalStackTreeItem[]> {
 		const endpoint = await getLocalStackEndpointUrl();
-		return [new InstanceTreeItem(endpointHostPort(endpoint))];
+		const item = new InstanceTreeItem(
+			endpointHostPort(endpoint),
+			this.statusTracker.status(),
+		);
+		this.#instanceItem = item;
+		return [item];
 	}
 
 	private makeInstanceChildren(): LocalStackTreeItem[] {
-		const statusItem = new StatusTreeItem();
-		statusItem.description = this.statusTracker.status();
-		this.#statusItem = statusItem;
+		const isRunning = this.statusTracker.status() === "running";
 
 		const allResources = new FocusSelectorTreeItem(
-			"All Resources",
+			"View All Resources",
 			async () => {
 				const endpoint = await getLocalStackEndpointUrl();
 				return computeMetamodelFocus(endpoint, this.log);
 			},
 		);
 
-		return [statusItem, new AppInspectorTreeItem(), allResources];
+		return [new AppInspectorTreeItem(isRunning), allResources];
 	}
 
 	private makeProfiles(): LocalStackTreeItem[] {
-		const profiles = AWSConfig.getProfileNames();
+		const hidden = new Set(getHiddenProfiles());
+		const profiles = AWSConfig.getProfileNames().filter(
+			(profile) => !hidden.has(profile),
+		);
+		if (profiles.length === 0) {
+			return [new PlaceholderTreeItem("All profiles hidden")];
+		}
 		return profiles.map((profile) => new ProfileTreeItem(profile));
 	}
 
@@ -165,7 +181,6 @@ export class LocalStackViewProvider
 				seen.add(region);
 			}
 		}
-		regions.push(new AddRegionTreeItem(profile));
 		return regions;
 	}
 
@@ -176,7 +191,7 @@ export class LocalStackViewProvider
 		const children: LocalStackTreeItem[] = [];
 
 		children.push(
-			new FocusSelectorTreeItem("All Resources", () =>
+			new FocusSelectorTreeItem("View All Resources", () =>
 				Promise.resolve(makeWildcardFocus(profile, region)),
 			),
 		);
@@ -188,8 +203,6 @@ export class LocalStackViewProvider
 				),
 			);
 		}
-
-		children.push(new AddFilterTreeItem(profile, region));
 
 		/* CloudFormation stacks for this profile/region. */
 		try {

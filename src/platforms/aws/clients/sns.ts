@@ -3,7 +3,11 @@ import {
 	ListTopicsCommand,
 	SNSClient,
 } from "@aws-sdk/client-sns";
-import type { ListTopicsCommandOutput, Topic } from "@aws-sdk/client-sns";
+import type {
+	GetTopicAttributesCommandOutput,
+	ListTopicsCommandOutput,
+	Topic,
+} from "@aws-sdk/client-sns";
 
 import { memoize } from "../../../utils/memoize.ts";
 
@@ -48,7 +52,7 @@ export class Sns {
 		profile: string,
 		region: string,
 		topicArn: string,
-	): Promise<any> {
+	): Promise<GetTopicAttributesCommandOutput> {
 		const client = Sns.cachedGetSnsClient(profile, region);
 		const command = new GetTopicAttributesCommand({ TopicArn: topicArn });
 		return client.send(command);

@@ -18,7 +18,7 @@ export interface ContainerStatusTracker extends Disposable {
  * Checks the status of a docker container in realtime.
  */
 export async function createContainerStatusTracker(
-	containerName: string,
+	containerNames: string[],
 	outputChannel: LogOutputChannel,
 	timeTracker: TimeTracker,
 ): Promise<ContainerStatusTracker> {
@@ -26,7 +26,7 @@ export async function createContainerStatusTracker(
 	const emitter = createEmitter<ContainerStatus>(outputChannel);
 
 	const disposable = listenToContainerStatus(
-		containerName,
+		containerNames,
 		outputChannel,
 		(newStatus) => {
 			if (status !== newStatus) {
@@ -37,7 +37,7 @@ export async function createContainerStatusTracker(
 	);
 
 	await timeTracker.run("container-status.getContainerStatus", async () => {
-		await getContainerStatus(containerName).then((newStatus) => {
+		await getContainerStatus(containerNames).then((newStatus) => {
 			status ??= newStatus;
 			void emitter.emit(status);
 		});
@@ -70,13 +70,20 @@ const DockerEventsSchema = z.object({
 });
 
 function listenToContainerStatus(
-	containerName: string,
+	containerNames: string[],
 	outputChannel: LogOutputChannel,
 	onStatusChange: (status: ContainerStatus) => void,
 ): Disposable {
 	let dockerEvents: ReturnType<typeof spawn> | undefined;
 	let isDisposed = false;
 	let restartTimeout: NodeJS.Timeout | undefined;
+
+	/* Docker OR's repeated --filter container=… values together. */
+	const containerFilters = containerNames.flatMap((name) => [
+		"--filter",
+		`container=${name}`,
+	]);
+	const watchedNames = new Set(containerNames);
 
 	const startListening = () => {
 		if (isDisposed) return;
@@ -88,8 +95,7 @@ function listenToContainerStatus(
 		try {
 			dockerEvents = spawn("docker", [
 				"events",
-				"--filter",
-				`container=${containerName}`,
+				...containerFilters,
 				"--filter",
 				"event=start",
 				"--filter",
@@ -137,7 +143,7 @@ function listenToContainerStatus(
 					return;
 				}
 
-				if (parsed.data.Actor.Attributes.name !== containerName) {
+				if (!watchedNames.has(parsed.data.Actor.Attributes.name)) {
 					return;
 				}
 
@@ -194,6 +200,18 @@ function listenToContainerStatus(
 }
 
 async function getContainerStatus(
+	containerNames: string[],
+): Promise<ContainerStatus> {
+	const statuses = await Promise.all(
+		containerNames.map((name) => getSingleContainerStatus(name)),
+	);
+	/* Report the most-alive status across all watched names. */
+	if (statuses.includes("running")) return "running";
+	if (statuses.includes("stopping")) return "stopping";
+	return "stopped";
+}
+
+async function getSingleContainerStatus(
 	containerName: string,
 ): Promise<ContainerStatus> {
 	return new Promise((resolve) => {

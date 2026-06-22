@@ -3,6 +3,7 @@ import os from "node:os";
 import path from "node:path";
 
 import { parse } from "js-ini";
+import type { IIniObject, IIniObjectSection } from "js-ini";
 
 import { UserConfigurationError } from "../../../utils/errors.ts";
 
@@ -50,11 +51,8 @@ export default class AWSConfig {
 			return process.env.AWS_REGION;
 		}
 
-		const profileConfig = AWSConfig.getSectionForProfile(profile);
-		if (profileConfig && profileConfig["region"]) {
-			return profileConfig["region"];
-		}
-		return undefined;
+		const region = AWSConfig.getSectionForProfile(profile)?.region;
+		return typeof region === "string" ? region : undefined;
 	}
 
 	/**
@@ -64,43 +62,41 @@ export default class AWSConfig {
 	 */
 	public static getClientConfig(profile: string, region?: string): object {
 		/* use endpoint from profile, if it's defined */
-		let endpoint: string | undefined;
-		const profileConfig = AWSConfig.getSectionForProfile(profile);
-		if (profileConfig && profileConfig["endpoint_url"]) {
-			endpoint = profileConfig["endpoint_url"];
-		}
+		const endpointUrl = AWSConfig.getSectionForProfile(profile)?.endpoint_url;
+		const endpoint = typeof endpointUrl === "string" ? endpointUrl : undefined;
 		return { profile, region, endpoint };
 	}
 
 	/** Read and parse the AWS config file */
-	private static readAWSConfigFile() {
-		let parsedConfig: any = {};
+	private static readAWSConfigFile(): IIniObject {
 		try {
 			const configContent = fs.readFileSync(AWSConfig.AWS_CONFIG_FILE, "utf-8");
-			parsedConfig = parse(configContent, { comment: [";", "#"] });
-		} catch (error: any) {
-			if (error.code === "ENOENT") {
+			return parse(configContent, { comment: [";", "#"] });
+		} catch (error: unknown) {
+			if ((error as NodeJS.ErrnoException).code === "ENOENT") {
 				/* file does not exist, return empty config */
 				return {};
 			}
 			if (error instanceof Error) {
 				/* file exists but is malformed */
 				throw new UserConfigurationError(error.message);
-			} else {
-				/* other unknown error */
-				throw error;
 			}
+			/* other unknown error */
+			throw error;
 		}
-		return parsedConfig;
 	}
 
 	/** Return the configuration section for the specified profile */
-	private static getSectionForProfile(profile: string): any {
+	private static getSectionForProfile(
+		profile: string,
+	): IIniObjectSection | undefined {
 		const parsedConfig = AWSConfig.readAWSConfigFile();
 		const section = profile === "default" ? "default" : `profile ${profile}`;
-		if (!parsedConfig[section] || typeof parsedConfig[section] !== "object") {
+		const value = parsedConfig[section];
+		/* A section is an object; skip scalars and data sections (string[]). */
+		if (typeof value !== "object" || Array.isArray(value)) {
 			return undefined;
 		}
-		return parsedConfig[section];
+		return value;
 	}
 }

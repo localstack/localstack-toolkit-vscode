@@ -51,7 +51,7 @@ export async function activate(context: ExtensionContext) {
 		statusBarItem.show();
 
 		const containerStatusTracker = await createContainerStatusTracker(
-			"localstack-main",
+			["localstack-main", "localstack-aws"],
 			outputChannel,
 			timeTracker,
 		);

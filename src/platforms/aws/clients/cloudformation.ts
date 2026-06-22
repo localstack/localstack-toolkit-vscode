@@ -6,6 +6,7 @@ import {
 } from "@aws-sdk/client-cloudformation";
 import type {
 	ListStacksCommandOutput,
+	StackResourceSummary,
 	StackStatus,
 	StackSummary,
 } from "@aws-sdk/client-cloudformation";
@@ -120,7 +121,7 @@ export class CloudFormation {
 			arn.region,
 		);
 
-		const resources: any[] = [];
+		const resources: StackResourceSummary[] = [];
 		let nextToken: string | undefined;
 
 		do {

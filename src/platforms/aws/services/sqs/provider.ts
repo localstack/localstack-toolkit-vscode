@@ -60,33 +60,35 @@ export class SqsServiceProvider extends ServiceProvider {
 			},
 			{
 				field: "SQS Managed SSE Enabled",
-				value: attributes.SqsManagedSseEnabled || false,
+				value: attributes.SqsManagedSseEnabled || "N/A",
 				type: FieldType.NAME,
 			},
 			{
 				field: "Approximate Number of Messages",
-				value: attributes.ApproximateNumberOfMessages || 0,
+				value: attributes.ApproximateNumberOfMessages || "0",
 				type: FieldType.NUMBER,
 			},
 			{
 				field: "Approximate Number of Messages Delayed",
-				value: attributes.ApproximateNumberOfMessagesDelayed || 0,
+				value: attributes.ApproximateNumberOfMessagesDelayed || "0",
 				type: FieldType.NUMBER,
 			},
 			{
 				field: "Approximate Number of Messages Not Visible",
-				value: attributes.ApproximateNumberOfMessagesNotVisible || 0,
+				value: attributes.ApproximateNumberOfMessagesNotVisible || "0",
 				type: FieldType.NUMBER,
 			},
 			{
 				field: "Created Timestamp",
-				value: new Date(parseInt(attributes.CreatedTimestamp)).toISOString(),
+				value: new Date(
+					parseInt(attributes.CreatedTimestamp ?? ""),
+				).toISOString(),
 				type: FieldType.DATE,
 			},
 			{
 				field: "Last Modified Timestamp",
 				value: new Date(
-					parseInt(attributes.LastModifiedTimestamp),
+					parseInt(attributes.LastModifiedTimestamp ?? ""),
 				).toISOString(),
 				type: FieldType.DATE,
 			},
