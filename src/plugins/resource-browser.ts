@@ -111,6 +111,12 @@ export default createPlugin(
 			commands.registerCommand("localstack.disableMultiSelect", () =>
 				setMultiSelect(false),
 			),
+			commands.registerCommand("localstack.refreshResources", () =>
+				resourcesProvider.refresh(),
+			),
+			commands.registerCommand("localstack.refreshResourceDetails", () =>
+				detailsProvider.refresh(),
+			),
 			...registerLocalStackCommands(localStackProvider),
 		);
 

@@ -14,6 +14,10 @@ function capitalizeStatus(status: LocalStackStatus): string {
 export class LocalStackTreeItem extends TreeItem {
 	constructor(label: string, state?: TreeItemCollapsibleState) {
 		super(label, state);
+		/* Default to a transparent icon so rows without their own icon still
+		 * align under a common icon column. Subclasses that assign a real icon
+		 * (or explicitly clear it, like section headers) override this. */
+		this.iconPath = new ThemeIcon("blank");
 	}
 }
 
@@ -27,6 +31,8 @@ export class SectionTreeItem extends LocalStackTreeItem {
 	) {
 		super(label, TreeItemCollapsibleState.Expanded);
 		this.contextValue = `localstackSection:${kind}`;
+		/* Top-level section headers sit flush — no icon column. */
+		this.iconPath = undefined;
 	}
 }
 
@@ -45,25 +51,29 @@ export class InstanceTreeItem extends LocalStackTreeItem {
 		this.setStatus(status);
 	}
 
-	/** Update the inline status portion of the label. */
+	/** Update the inline status portion of the label and expandability. */
 	setStatus(status: LocalStackStatus): void {
 		this.label = `AWS (${capitalizeStatus(status)}): ${this.hostPort}`;
+		/* Only a running instance has children (App Inspector, View selectors),
+		 * so a stopped instance renders as a plain, non-expandable line. */
+		this.collapsibleState =
+			status === "running"
+				? TreeItemCollapsibleState.Expanded
+				: TreeItemCollapsibleState.None;
 	}
 }
 
-/** Opens the App Inspector webview when clicked (only when running). */
+/** Opens the App Inspector webview when clicked. Only shown while running. */
 export class AppInspectorTreeItem extends LocalStackTreeItem {
-	constructor(isRunning: boolean) {
+	constructor() {
 		super("App Inspector", TreeItemCollapsibleState.None);
-		this.description = isRunning ? "Click to open" : "Not running";
+		this.description = "Click to open";
 		this.contextValue = "localstackAppInspector";
 		this.iconPath = new ThemeIcon("search");
-		if (isRunning) {
-			this.command = {
-				title: "Open App Inspector",
-				command: "localstack.openAppInspector",
-			};
-		}
+		this.command = {
+			title: "Open App Inspector",
+			command: "localstack.openAppInspector",
+		};
 	}
 }
 
@@ -104,6 +114,8 @@ export class FocusSelectorTreeItem extends LocalStackTreeItem {
 		super(label, TreeItemCollapsibleState.None);
 		this.contextValue = "localstackFocusSelector";
 		this.tooltip = `Select to focus on: ${label}`;
+		/* The transparent (blank) icon is inherited from LocalStackTreeItem so
+		 * the label aligns with icon-bearing siblings (e.g. the App Inspector). */
 	}
 }
 
@@ -114,16 +126,8 @@ export class FilterTreeItem extends FocusSelectorTreeItem {
 		public readonly filter: SavedFilter,
 		getFocus: () => Promise<Focus>,
 	) {
-		super(filter.name, getFocus);
+		super(`View: ${filter.name}`, getFocus);
 		this.contextValue = "localstackFilter";
-	}
-}
-
-/** A non-interactive visual separator drawn between top-level sections. */
-export class SeparatorTreeItem extends LocalStackTreeItem {
-	constructor() {
-		super("─".repeat(12), TreeItemCollapsibleState.None);
-		this.contextValue = "localstackSeparator";
 	}
 }
 

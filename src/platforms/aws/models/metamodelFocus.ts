@@ -1,6 +1,6 @@
 /*
  * Translates the running emulator's pods-state metamodel into a platform-neutral
- * Focus for the LocalStack Instances "View All Resources" selector.
+ * Focus for the LocalStack Instances "View: All Resources" selector.
  *
  * Metamodel shape (account -> Service label -> region -> apiOperation -> response):
  *   { "000000000000": { "S3": { "us-east-1": { "listBuckets": { ... } } } } }

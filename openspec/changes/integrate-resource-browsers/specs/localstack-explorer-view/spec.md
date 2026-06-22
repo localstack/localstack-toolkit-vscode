@@ -2,14 +2,12 @@
 
 ### Requirement: Combined Explore tree view
 
-The system SHALL provide a single tree view named "Explore" in the LocalStack activity-bar container with three top-level sections in this order: **LocalStack Instances**, **Cloud Profiles**, and **Workspace IaC**. The view name SHALL be "Explore" (not "LocalStack") to avoid visual duplication with the "LocalStack" activity-bar container title.
-
-A visual separator (a non-interactive node whose label is a short fixed run of dashes) SHALL be rendered *between* adjacent sections — i.e. between **LocalStack Instances** and **Cloud Profiles**, and between **Cloud Profiles** and **Workspace IaC** — but not before the first section or after the last. The dash run is intentionally short (not full-width): VS Code provides no panel width to the tree provider and always appends an ellipsis to overflowing labels, so a short run avoids a trailing `…` at typical panel widths.
+The system SHALL provide a single tree view named "Explore" in the LocalStack activity-bar container with three top-level sections in this order: **LocalStack Instances**, **Cloud Profiles**, and **Workspace IaC**. The view name SHALL be "Explore" (not "LocalStack") to avoid visual duplication with the "LocalStack" activity-bar container title. No separator nodes SHALL be rendered between the sections.
 
 #### Scenario: Three sections are shown at the root
 
 - **WHEN** the Explore view is rendered
-- **THEN** the three top-level section nodes appear in order — "LocalStack Instances", "Cloud Profiles", and "Workspace IaC" — separated by a dash-run separator node between each adjacent pair
+- **THEN** the three top-level section nodes appear in order — "LocalStack Instances", "Cloud Profiles", and "Workspace IaC" — with no separator node between them
 
 #### Scenario: View name avoids container duplication
 
@@ -27,17 +25,22 @@ When the LocalStack activity-bar container is first opened, the system SHALL all
 
 ### Requirement: LocalStack Instances section
 
-Under **LocalStack Instances**, the system SHALL show an instance node labeled `AWS (<Status>): <host:port>`, where the endpoint is derived from the endpoint the Toolkit is configured to use (the `localstack` profile's `endpoint_url` in `~/.aws/config`) rather than a hardcoded value, and `<Status>` is the live emulator status with its first letter capitalized (e.g. `Running`, `Stopped`). The status SHALL be presented on the same line as the endpoint, NOT as a separate `Status` child node. The instance node's children are: an `App Inspector` node that opens the App Inspector when clicked, and a `View All Resources` focus selector.
+Under **LocalStack Instances**, the system SHALL show an instance node labeled `AWS (<Status>): <host:port>`, where the endpoint is derived from the endpoint the Toolkit is configured to use (the `localstack` profile's `endpoint_url` in `~/.aws/config`) rather than a hardcoded value, and `<Status>` is the live emulator status with its first letter capitalized (e.g. `Running`, `Stopped`). The status SHALL be presented on the same line as the endpoint, NOT as a separate `Status` child node. The instance node SHALL show child nodes only when the emulator is running: an `App Inspector` node that opens the App Inspector when clicked, and a `View: All Resources` focus selector. When the emulator is not running, the instance node SHALL have no children and SHALL render as a non-expandable line (no twistie).
 
-#### Scenario: Status is shown on the endpoint line, capitalized
+#### Scenario: Stopped instance shows the status line and no children
 
 - **WHEN** the emulator is stopped and the endpoint is `localhost:4566`
-- **THEN** the instance node is labeled `AWS (Stopped): localhost:4566`, with no separate `Status` child node
+- **THEN** the instance node is labeled `AWS (Stopped): localhost:4566`, with no separate `Status` child node, no `App Inspector`/`View: All Resources` children, and no expand twistie
 
-#### Scenario: Instance node exposes app inspector and a focus selector
+#### Scenario: Running instance exposes app inspector and a focus selector
 
-- **WHEN** the LocalStack Instances section is expanded
-- **THEN** the instance node shows an `App Inspector` child and a `View All Resources` focus selector child (and no standalone `Status` child)
+- **WHEN** the emulator is running and the LocalStack Instances section is expanded
+- **THEN** the instance node shows an `App Inspector` child and a `View: All Resources` focus selector child (and no standalone `Status` child)
+
+#### Scenario: Children appear and disappear with live status
+
+- **WHEN** the emulator transitions from stopped to running (or vice versa)
+- **THEN** the instance node gains (or loses) its `App Inspector` and `View: All Resources` children without a manual refresh
 
 #### Scenario: Instance label reflects the configured endpoint
 
@@ -56,28 +59,21 @@ Under **LocalStack Instances**, the system SHALL show an instance node labeled `
 
 ### Requirement: App Inspector node
 
-The `App Inspector` node under an instance SHALL display a magnifying-glass icon (the `search` theme icon) and SHALL open the existing App Inspector webview when clicked. Its description SHALL reflect the emulator's running state: `Click to open` only when the emulator is running, and `Not running` otherwise.
+The `App Inspector` node under an instance SHALL display a magnifying-glass icon (the `search` theme icon) and SHALL open the existing App Inspector webview when clicked. Because the node is only shown when the emulator is running, its description SHALL read `Click to open`.
 
 #### Scenario: App Inspector shows a magnifying-glass icon
 
-- **WHEN** the LocalStack Instances section is expanded
-- **THEN** the `App Inspector` node displays the `search` (magnifying glass) theme icon
-
-#### Scenario: App Inspector description tracks running state
-
-- **WHEN** the emulator is not running
-- **THEN** the `App Inspector` node's description reads `Not running`
-- **WHEN** the emulator is running
-- **THEN** the `App Inspector` node's description reads `Click to open`
+- **WHEN** the running instance node is expanded
+- **THEN** the `App Inspector` node displays the `search` (magnifying glass) theme icon and a `Click to open` description
 
 #### Scenario: App Inspector opens the existing webview
 
-- **WHEN** the user clicks the `App Inspector` node while the emulator is running
+- **WHEN** the user clicks the `App Inspector` node
 - **THEN** the existing App Inspector webview panel opens (behavior unchanged from before this change)
 
 ### Requirement: Cloud Profiles section
 
-Under **Cloud Profiles**, the system SHALL show one node per AWS profile discovered in `~/.aws/config` (including `default` and the bundled `localstack` profile), labeled `AWS: <profile>`. Each profile SHALL show its configured default region plus any user-added regions; each region SHALL contain a `View All Resources` focus selector, the filters applicable to that region, and one `CFN: <stack>` focus selector per active CloudFormation stack in that region. Region-level actions (`Add View...`, and `Remove Region` for user-added regions) are available on the region row as inline icons and in the right-click context menu, not as child action nodes. The profile's region set is managed from the profile row's `Select Regions...` action (an inline filter icon, also in the context menu), also not via a child action node.
+Under **Cloud Profiles**, the system SHALL show one node per AWS profile discovered in `~/.aws/config` (including `default` and the bundled `localstack` profile), labeled `AWS: <profile>`. Each profile SHALL show its configured default region plus any user-added regions; each region SHALL contain a `View All Resources` focus selector, the filters applicable to that region, and one `Stack: <stack>` focus selector per active CloudFormation stack in that region. Region-level actions (`Add View...`, and `Remove Region` for user-added regions) are available on the region row as inline icons and in the right-click context menu, not as child action nodes. The profile's region set is managed from the profile row's `Select Regions...` action (an inline filter icon, also in the context menu), also not via a child action node.
 
 #### Scenario: Profiles are listed from AWS config
 
@@ -87,7 +83,7 @@ Under **Cloud Profiles**, the system SHALL show one node per AWS profile discove
 #### Scenario: A region lists its focus selectors
 
 - **WHEN** a profile's region is expanded
-- **THEN** it shows `View All Resources`, the filters applicable to that region, and one `CFN: <stack>` selector per active CloudFormation stack (the `Add View...` action lives in the region row's `...` menu, not as a child node)
+- **THEN** it shows `View: All Resources`, the filters applicable to that region (each labeled `View: <name>`), and one `Stack: <stack>` selector per active CloudFormation stack (the `Add View...` action is on the region row, not a child node)
 
 #### Scenario: The bundled localstack profile is shown
 
@@ -99,24 +95,34 @@ Under **Cloud Profiles**, the system SHALL show one node per AWS profile discove
 - **WHEN** a profile cannot be queried (e.g. invalid credentials)
 - **THEN** an error node is shown for that profile rather than failing the whole view
 
-### Requirement: Hide and reveal Cloud Profiles
+### Requirement: Select which Cloud Profiles are shown
 
-All discovered profiles SHALL be shown initially. The Cloud Profiles section row SHALL offer a `Select Profiles...` action (an inline filter icon, also in the right-click context menu) that opens a multi-select picker of all profiles, where checked profiles are shown and unchecked profiles are hidden. The set of hidden profiles SHALL be persisted in `localstack.cloudProfiles.hidden` and SHALL NOT modify `~/.aws/config`. Hidden profiles SHALL be omitted from the section until revealed again.
+By default, only the profile named `default` SHALL be shown under Cloud Profiles; when no profile named `default` exists, the first discovered profile SHALL be shown instead. The set of shown profiles SHALL be persisted in `localstack.cloudProfiles.shown` (a list of profile names) and SHALL NOT modify `~/.aws/config`. When the setting is **unset**, the system SHALL apply the default-only behavior above; when it is set (including the empty list), the system SHALL honor it exactly. The Cloud Profiles section row SHALL offer a `Select Profiles...` action (an inline gear icon, also in the right-click context menu) that opens a multi-select picker of all discovered profiles, pre-checked with the currently shown set; confirming SHALL persist the checked names as the shown set. When the shown set is empty, the section SHALL render a single non-interactive `No profiles selected` placeholder.
 
-#### Scenario: Hiding a profile removes it from the section
+#### Scenario: Only the default profile is shown initially
 
-- **WHEN** the user opens `Select Profiles...` from the Cloud Profiles row and unchecks a profile
-- **THEN** that profile no longer appears under Cloud Profiles, and the choice is saved to `localstack.cloudProfiles.hidden` without changing `~/.aws/config`
+- **WHEN** the Cloud Profiles section is first rendered, `localstack.cloudProfiles.shown` is unset, and `~/.aws/config` defines `default` and `staging`
+- **THEN** only `AWS: default` appears, and `AWS: staging` is hidden until explicitly enabled
 
-#### Scenario: Revealing a previously hidden profile
+#### Scenario: First profile shown when none is named default
 
-- **WHEN** the user opens `Select Profiles...` and re-checks a hidden profile
-- **THEN** that profile reappears under Cloud Profiles
+- **WHEN** `localstack.cloudProfiles.shown` is unset and no profile is named `default`
+- **THEN** the first discovered profile is shown
 
-#### Scenario: Hidden profiles persist across reloads
+#### Scenario: Enabling additional profiles
 
-- **WHEN** the workspace is reloaded after hiding a profile
-- **THEN** that profile is still hidden
+- **WHEN** the user opens `Select Profiles...` and checks `staging`
+- **THEN** `AWS: staging` appears under Cloud Profiles and the choice is saved to `localstack.cloudProfiles.shown` without changing `~/.aws/config`
+
+#### Scenario: Deselecting every profile shows a placeholder
+
+- **WHEN** the user opens `Select Profiles...` and unchecks every profile
+- **THEN** the Cloud Profiles section shows a single `No profiles selected` placeholder, and the empty selection is honored (not reset to the default)
+
+#### Scenario: Shown profiles persist across reloads
+
+- **WHEN** the workspace is reloaded after changing which profiles are shown
+- **THEN** the same set of profiles is shown
 
 ### Requirement: Settings persistence target
 
@@ -181,12 +187,17 @@ The system SHALL let the user choose which regions are shown under a Cloud Profi
 
 ### Requirement: Remove a region
 
-The system SHALL let the user remove a user-added region via a `Remove Region` action on that region row (an inline trash icon, also in the right-click context menu), removing only that one region from the workspace settings. The profile's configured default region SHALL always be shown and SHALL NOT offer a remove action.
+The system SHALL let the user remove a user-added region via a `Remove Region` action on that region row (an inline trash icon, also in the right-click context menu), removing only that one region from the workspace settings. Invoking the action SHALL first present a modal confirmation dialog; the region SHALL be removed only when the user confirms. The profile's configured default region SHALL always be shown and SHALL NOT offer a remove action.
 
 #### Scenario: Removing a user-added region
 
-- **WHEN** the user invokes Remove on a user-added region node
+- **WHEN** the user invokes Remove on a user-added region node and confirms the dialog
 - **THEN** that single region is removed from the profile and from workspace settings, and other regions remain
+
+#### Scenario: Cancelling the confirmation keeps the region
+
+- **WHEN** the user invokes Remove on a user-added region node and cancels the dialog
+- **THEN** the region is not removed and settings are unchanged
 
 #### Scenario: Default region cannot be removed
 
@@ -195,12 +206,17 @@ The system SHALL let the user remove a user-added region via a `Remove Region` a
 
 ### Requirement: Add new view
 
-The system SHALL let the user define a named filter via the `Add View...` action — invoked from a region row's inline plus icon (also in the right-click context menu) — by selecting a set of services. In the UX a saved filter is labeled a "view" (the actions are `Add View...`, `Edit View...`, `Remove View`); the underlying concept and the `localstack.cloudProfiles.filters` settings key are unchanged, and the remainder of this spec refers to the concept as a "filter" for continuity with the persisted model. By default a filter is scoped to the single region it was created under; the dialog SHALL offer an "apply to all regions" option that instead makes the filter available under every region of that profile. The filter SHALL appear as a focus selector scoped to the chosen services and SHALL be persisted per profile in the workspace settings with its scope.
+The system SHALL let the user define a named filter via the `Add View...` action — invoked from a region row's inline plus icon (also in the right-click context menu) — by selecting a set of services. In the UX a saved filter is labeled a "view" (the actions are `Add View...`, `Edit View...`, `Remove View`); the underlying concept and the `localstack.cloudProfiles.filters` settings key are unchanged, and the remainder of this spec refers to the concept as a "filter" for continuity with the persisted model. By default a filter is scoped to the single region it was created under; the dialog SHALL offer an "apply to all regions" option that instead makes the filter available under every region of that profile. The filter SHALL appear as a focus selector labeled `View: <name>`, scoped to the chosen services, and SHALL be persisted per profile in the workspace settings with its scope. The name SHALL be unique within the profile and SHALL NOT be `All Resources` (case-insensitive), which is reserved for the built-in all-resources selector; the dialog SHALL reject a reserved or duplicate name.
 
 #### Scenario: Creating a region-scoped filter
 
-- **WHEN** the user invokes `Add View...` from a region's `...` menu, names it, selects one or more services, and leaves "apply to all regions" off
-- **THEN** a new focus selector with that name appears under that region only and is saved with a single-region scope
+- **WHEN** the user invokes `Add View...` from a region, names it, selects one or more services, and leaves "apply to all regions" off
+- **THEN** a new focus selector labeled `View: <name>` appears under that region only and is saved with a single-region scope
+
+#### Scenario: The reserved name is rejected
+
+- **WHEN** the user enters `All Resources` (in any letter case) as the view name
+- **THEN** the dialog rejects it as a reserved view name and does not save a filter
 
 #### Scenario: Creating a filter applied to all regions
 
@@ -214,7 +230,7 @@ The system SHALL let the user define a named filter via the `Add View...` action
 
 ### Requirement: Edit and remove filters
 
-The system SHALL let the user edit or remove a saved filter via `Edit View...` / `Remove View` actions on the filter row (inline pencil and trash icons, also in the right-click context menu). Editing SHALL reopen the filter wizard pre-populated with the filter's current name, services, and scope, and overwrite the saved filter with the new values. Removing SHALL delete the filter from the workspace settings.
+The system SHALL let the user edit or remove a saved filter via `Edit View...` / `Remove View` actions on the filter row (an inline gear icon for `Edit View...` and a trash icon for `Remove View`, also in the right-click context menu). The `Edit View...` icon SHALL be the same gear (settings) icon used by `Select Profiles...` / `Select Regions...`. Editing SHALL reopen the filter wizard pre-populated with the filter's current name, services, and scope, and overwrite the saved filter with the new values. Removing SHALL first present a modal confirmation dialog and SHALL delete the filter from the workspace settings only when the user confirms.
 
 #### Scenario: Editing a filter updates it
 
@@ -223,17 +239,36 @@ The system SHALL let the user edit or remove a saved filter via `Edit View...` /
 
 #### Scenario: Removing a filter deletes it
 
-- **WHEN** the user invokes Remove on a filter
+- **WHEN** the user invokes Remove on a filter and confirms the dialog
 - **THEN** the filter no longer appears under any region and is deleted from workspace settings
+
+#### Scenario: Cancelling the confirmation keeps the filter
+
+- **WHEN** the user invokes Remove on a filter and cancels the dialog
+- **THEN** the filter is left unchanged
 
 ### Requirement: Focus selectors drive the active focus
 
-The system SHALL treat `View All Resources`, saved filters, and `CFN: <stack>` nodes as focus selectors. Selecting a focus selector SHALL compute its focus and set it as the active focus for the Resources view.
+The system SHALL treat `View: All Resources`, saved filters (`View: <name>`), and `Stack: <stack>` nodes as focus selectors. Selecting a focus selector SHALL compute its focus and set it as the active focus for the Resources view. Focus selectors SHALL carry a transparent (`blank`) icon so their labels align with icon-bearing sibling rows such as the `App Inspector` node, rather than sitting in the icon column.
 
 #### Scenario: Selecting a focus selector updates the Resources view
 
 - **WHEN** the user clicks a focus selector
 - **THEN** the Resources view re-renders to show the resources described by that selector's focus
+
+### Requirement: Consistent icon alignment
+
+To keep the tree readable, every tree row that does not assign its own icon SHALL carry a transparent (`blank`) icon by default, so all such rows align under a common icon column rather than sitting flush-left. The three top-level **section** headers (LocalStack Instances, Cloud Profiles, Workspace IaC) are the sole exception: they SHALL NOT carry an icon (blank or otherwise) and SHALL sit flush. Rows that assign their own icon (the instance node, App Inspector, profile nodes, error nodes) keep it.
+
+#### Scenario: Iconless rows align under a blank icon column
+
+- **WHEN** the Explore view renders rows that have no assigned icon (e.g. regions, focus selectors, placeholders)
+- **THEN** each such row shows a transparent `blank` icon so its label aligns with icon-bearing sibling rows
+
+#### Scenario: Section headers sit flush
+
+- **WHEN** the three top-level section headers are rendered
+- **THEN** they carry no icon and their labels are not indented by an icon column
 
 ### Requirement: Single- and multi-select behavior
 
