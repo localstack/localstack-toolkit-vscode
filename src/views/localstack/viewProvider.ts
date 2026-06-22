@@ -208,7 +208,11 @@ export class LocalStackViewProvider
 			for (const stack of stacks) {
 				children.push(
 					new FocusSelectorTreeItem(`Stack: ${stack.StackName}`, () =>
-						new CfnStackModel(profile, new ARN(stack.StackId!)).toFocusModel(),
+						new CfnStackModel(
+							profile,
+							new ARN(stack.StackId!),
+							this.log,
+						).toFocusModel(),
 					),
 				);
 			}

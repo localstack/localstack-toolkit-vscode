@@ -1,5 +1,6 @@
 import { Stack, StackResource } from "@aws-sdk/client-cloudformation";
 import type { StackResourceSummary } from "@aws-sdk/client-cloudformation";
+import type { LogOutputChannel } from "vscode";
 
 import { Focus } from "../../../models/focus.ts";
 import type { ServiceFocus } from "../../../models/focus.ts";
@@ -24,10 +25,13 @@ export default class CfnStackModel {
 	 * Constructor for the CfnStackModel class.
 	 * @param profile The profile associated with the CloudFormation stack.
 	 * @param arn The ARN of the CloudFormation stack.
+	 * @param log Optional output channel used to report stack resources that
+	 *   could not be mapped into the Focus model (see `convertToServicesList`).
 	 */
 	constructor(
 		public profile: string,
 		public arn: ARN,
+		private readonly log?: LogOutputChannel,
 	) {
 		if (arn.service !== "cloudformation" || arn.resourceType !== "stack") {
 			throw new InternalError(
@@ -71,7 +75,10 @@ export default class CfnStackModel {
 	 * Convert the full list of CloudFormation stack resources into the Focus services
 	 * format. This is done in multiple steps:
 	 * 1. Convert each CloudFormation resource (e.g. "AWS::SQS::Queue") into a tuple of
-	 *    (serviceName, resourceTypeName, resourceArn), such as ("sqs", "queue", "arn:aws:sqs:...")
+	 *    (serviceName, resourceTypeName, resourceArn), such as ("sqs", "queue", "arn:aws:sqs:...").
+	 *    Conversion is per-resource and fault-tolerant: a resource we can't recognize or
+	 *    map to an ARN is skipped (with a warning logged) rather than aborting the whole
+	 *    stack, so the stack still shows every resource we *can* represent.
 	 * 2. Group the tuples by service and resource type, to create the hierarchical structure
 	 *    required by Focus.
 	 * 3. Traverse our existing ordered list of services and resource types (within services)
@@ -81,10 +88,24 @@ export default class CfnStackModel {
 	private convertToServicesList(
 		stackResources: StackResourceSummary[],
 	): ServiceFocus[] {
-		/* convert each CloudFormation resource into a (service, resourceType, arn) tuple */
-		const tuples = stackResources.map((resource) =>
-			this.convertToTuple(resource),
-		);
+		/*
+		 * Convert each CloudFormation resource into a (service, resourceType, arn)
+		 * tuple. Any resource that can't be converted — an unsupported service or
+		 * resource type, or a summary missing the fields we rely on — is skipped
+		 * with a warning instead of throwing, which would otherwise prevent the
+		 * entire stack from loading.
+		 */
+		const tuples: ServiceResourceArnTuple[] = [];
+		for (const resource of stackResources) {
+			try {
+				tuples.push(this.convertToTuple(resource));
+			} catch (error) {
+				this.log?.warn(
+					`[cfn-stack] Skipping unrecognized resource ` +
+						`${resource.LogicalResourceId} (${resource.ResourceType}): ${String(error)}`,
+				);
+			}
+		}
 
 		/* group the ARNs by service and resource type, so we end up with a hierarchical map */
 		const servicesMap = new Map<string, Map<string, string[]>>();
