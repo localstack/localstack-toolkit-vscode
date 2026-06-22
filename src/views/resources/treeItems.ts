@@ -17,6 +17,9 @@ export class ResourceTreeItem extends vscode.TreeItem {
 		state?: vscode.TreeItemCollapsibleState,
 	) {
 		super(label, state);
+		/* Default to a transparent icon so rows without their own icon align
+		 * under a common icon column with the icon-bearing resource rows. */
+		this.iconPath = new vscode.ThemeIcon("blank");
 	}
 }
 
@@ -33,7 +36,11 @@ export class ResourceProfileTreeItem extends ResourceTreeItem {
 		public readonly accountName: string,
 	) {
 		super(`Profile: ${profile.id}`, vscode.TreeItemCollapsibleState.Expanded);
-		this.description = `(${accountId} - ${accountName})`;
+		/* Only render the alias (and its separator) when one is set, otherwise
+		 * the description shows a dangling "(<id> - )". */
+		this.description = accountName
+			? `(${accountId} - ${accountName})`
+			: `(${accountId})`;
 	}
 }
 

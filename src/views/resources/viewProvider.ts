@@ -47,6 +47,11 @@ export class ResourceViewProvider
 		this._onDidChangeTreeData.fire(); // refresh the whole tree
 	}
 
+	/** Re-fetch and re-render the current focus (manual refresh action). */
+	public refresh() {
+		this._onDidChangeTreeData.fire();
+	}
+
 	public getTreeItem(
 		element: ResourceTreeItem,
 	): vscode.TreeItem | Thenable<vscode.TreeItem> {

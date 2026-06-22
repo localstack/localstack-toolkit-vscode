@@ -63,10 +63,9 @@
 						}
 					}
 				},
-				"localstack.cloudProfiles.hidden": {
+				"localstack.cloudProfiles.shown": {
 					"type": "array",
-					"default": [],
-					"markdownDescription": "AWS profile names hidden from the Cloud Profiles section. Managed via the section's \"Select Profiles...\" action; does not modify `~/.aws/config`.",
+					"markdownDescription": "AWS profile names shown under the Cloud Profiles section. Managed via the section's \"Select Profiles...\" action; does not modify `~/.aws/config`. When unset, only the `default` profile is shown (or the first discovered profile if none is named `default`); an empty list explicitly shows no profiles.",
 					"items": {
 						"type": "string"
 					}
@@ -181,7 +180,7 @@
 				"command": "localstack.addRegion",
 				"title": "Select Regions...",
 				"category": "LocalStack",
-				"icon": "$(edit)"
+				"icon": "$(settings-gear)"
 			},
 			{
 				"command": "localstack.removeRegion",
@@ -193,7 +192,7 @@
 				"command": "localstack.manageProfiles",
 				"title": "Select Profiles...",
 				"category": "LocalStack",
-				"icon": "$(edit)"
+				"icon": "$(settings-gear)"
 			},
 			{
 				"command": "localstack.addFilter",
@@ -205,7 +204,7 @@
 				"command": "localstack.editFilter",
 				"title": "Edit View...",
 				"category": "LocalStack",
-				"icon": "$(edit)"
+				"icon": "$(settings-gear)"
 			},
 			{
 				"command": "localstack.removeFilter",
@@ -222,6 +221,18 @@
 				"command": "localstack.disableMultiSelect",
 				"title": "Disable multi-select",
 				"category": "LocalStack"
+			},
+			{
+				"command": "localstack.refreshResources",
+				"title": "Refresh Resources",
+				"category": "LocalStack",
+				"icon": "$(refresh)"
+			},
+			{
+				"command": "localstack.refreshResourceDetails",
+				"title": "Refresh Resource Details",
+				"category": "LocalStack",
+				"icon": "$(refresh)"
 			}
 		],
 		"menus": {
@@ -233,6 +244,16 @@
 				{
 					"command": "localstack.disableMultiSelect",
 					"when": "view == localstack.instances && localstack.multiSelect"
+				},
+				{
+					"command": "localstack.refreshResources",
+					"when": "view == localstack.resources",
+					"group": "navigation"
+				},
+				{
+					"command": "localstack.refreshResourceDetails",
+					"when": "view == localstack.resourceDetails",
+					"group": "navigation"
 				}
 			],
 			"view/item/context": [

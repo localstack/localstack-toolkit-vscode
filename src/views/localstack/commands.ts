@@ -15,12 +15,12 @@ import { ProviderFactory } from "../../platforms/aws/services/providerFactory.ts
 import {
 	getAddedRegions,
 	getFilters,
-	getHiddenProfiles,
 	removeFilter,
 	removeRegion,
+	resolveShownProfiles,
 	saveFilter,
 	setAddedRegions,
-	setHiddenProfiles,
+	setShownProfiles,
 } from "./settings.ts";
 import type { FilterScope, SavedFilter } from "./settings.ts";
 import type { FilterTreeItem, RegionTreeItem } from "./treeItems.ts";
@@ -98,10 +98,11 @@ async function onAddRegion(
 async function onManageProfiles(
 	provider: LocalStackViewProvider,
 ): Promise<void> {
-	const hidden = new Set(getHiddenProfiles());
-	const items: QuickPickItem[] = AWSConfig.getProfileNames().map((profile) => ({
+	const all = AWSConfig.getProfileNames();
+	const shown = new Set(resolveShownProfiles(all));
+	const items: QuickPickItem[] = all.map((profile) => ({
 		label: profile,
-		picked: !hidden.has(profile),
+		picked: shown.has(profile),
 	}));
 
 	if (items.length === 0) {
@@ -117,11 +118,7 @@ async function onManageProfiles(
 	if (picked === undefined) {
 		return;
 	}
-	const visible = new Set(picked.map((p) => p.label));
-	const newHidden = AWSConfig.getProfileNames().filter(
-		(profile) => !visible.has(profile),
-	);
-	await setHiddenProfiles(newHidden);
+	await setShownProfiles(picked.map((p) => p.label));
 	provider.refresh();
 }
 
@@ -130,6 +127,14 @@ async function onRemoveRegion(
 	profile: string,
 	region: string,
 ): Promise<void> {
+	const confirmed = await window.showWarningMessage(
+		`Remove region "${region}" from profile "${profile}"?`,
+		{ modal: true },
+		"Remove",
+	);
+	if (confirmed !== "Remove") {
+		return;
+	}
 	await removeRegion(profile, region);
 	provider.refresh();
 }
@@ -166,6 +171,14 @@ async function onRemoveFilter(
 	profile: string,
 	name: string,
 ): Promise<void> {
+	const confirmed = await window.showWarningMessage(
+		`Remove view "${name}" from profile "${profile}"?`,
+		{ modal: true },
+		"Remove",
+	);
+	if (confirmed !== "Remove") {
+		return;
+	}
 	await removeFilter(profile, name);
 	provider.refresh();
 }
@@ -194,6 +207,9 @@ async function runFilterWizard(
 			const trimmed = value.trim();
 			if (!trimmed) {
 				return "Name cannot be empty";
+			}
+			if (trimmed.toLowerCase() === "all resources") {
+				return `"All Resources" is a reserved view name`;
 			}
 			if (takenNames.has(trimmed)) {
 				return `A view named "${trimmed}" already exists in this profile`;

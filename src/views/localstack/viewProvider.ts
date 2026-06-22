@@ -23,7 +23,7 @@ import type { LocalStackStatusTracker } from "../../utils/localstack-status.ts";
 import {
 	getAddedRegions,
 	getFiltersForRegion,
-	getHiddenProfiles,
+	resolveShownProfiles,
 } from "./settings.ts";
 import type { SavedFilter } from "./settings.ts";
 import {
@@ -36,7 +36,6 @@ import {
 	ProfileTreeItem,
 	RegionTreeItem,
 	SectionTreeItem,
-	SeparatorTreeItem,
 } from "./treeItems.ts";
 import type { LocalStackTreeItem } from "./treeItems.ts";
 
@@ -89,9 +88,7 @@ export class LocalStackViewProvider
 		if (!element) {
 			return [
 				new SectionTreeItem("instances", "LocalStack Instances"),
-				new SeparatorTreeItem(),
 				new SectionTreeItem("profiles", "Cloud Profiles"),
-				new SeparatorTreeItem(),
 				new SectionTreeItem("workspace", "Workspace IaC"),
 			];
 		}
@@ -143,26 +140,28 @@ export class LocalStackViewProvider
 	}
 
 	private makeInstanceChildren(): LocalStackTreeItem[] {
-		const isRunning = this.statusTracker.status() === "running";
+		/* Children are only meaningful while the emulator is running. */
+		if (this.statusTracker.status() !== "running") {
+			return [];
+		}
 
 		const allResources = new FocusSelectorTreeItem(
-			"View All Resources",
+			"View: All Resources",
 			async () => {
 				const endpoint = await getLocalStackEndpointUrl();
 				return computeMetamodelFocus(endpoint, this.log);
 			},
 		);
 
-		return [new AppInspectorTreeItem(isRunning), allResources];
+		return [new AppInspectorTreeItem(), allResources];
 	}
 
 	private makeProfiles(): LocalStackTreeItem[] {
-		const hidden = new Set(getHiddenProfiles());
-		const profiles = AWSConfig.getProfileNames().filter(
-			(profile) => !hidden.has(profile),
-		);
+		const all = AWSConfig.getProfileNames();
+		const shown = new Set(resolveShownProfiles(all));
+		const profiles = all.filter((profile) => shown.has(profile));
 		if (profiles.length === 0) {
-			return [new PlaceholderTreeItem("All profiles hidden")];
+			return [new PlaceholderTreeItem("No profiles selected")];
 		}
 		return profiles.map((profile) => new ProfileTreeItem(profile));
 	}
@@ -191,7 +190,7 @@ export class LocalStackViewProvider
 		const children: LocalStackTreeItem[] = [];
 
 		children.push(
-			new FocusSelectorTreeItem("View All Resources", () =>
+			new FocusSelectorTreeItem("View: All Resources", () =>
 				Promise.resolve(makeWildcardFocus(profile, region)),
 			),
 		);
@@ -209,7 +208,7 @@ export class LocalStackViewProvider
 			const stacks = await CloudFormation.listStacks(profile, region);
 			for (const stack of stacks) {
 				children.push(
-					new FocusSelectorTreeItem(`CFN: ${stack.StackName}`, () =>
+					new FocusSelectorTreeItem(`Stack: ${stack.StackName}`, () =>
 						new CfnStackModel(profile, new ARN(stack.StackId!)).toFocusModel(),
 					),
 				);

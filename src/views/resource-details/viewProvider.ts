@@ -46,6 +46,11 @@ export class ResourceDetailsViewProvider
 		}
 	}
 
+	/** Re-fetch and re-render the currently selected resource (manual refresh). */
+	public refresh() {
+		this._onDidChangeTreeData.fire();
+	}
+
 	getTreeItem(
 		element: ResourceDetailsTreeItem,
 	): vscode.TreeItem | Thenable<vscode.TreeItem> {

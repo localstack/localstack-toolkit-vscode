@@ -9,7 +9,7 @@ import { ConfigurationTarget, workspace } from "vscode";
 const CONFIG_SECTION = "localstack";
 const REGIONS_KEY = "cloudProfiles.regions";
 const FILTERS_KEY = "cloudProfiles.filters";
-const HIDDEN_PROFILES_KEY = "cloudProfiles.hidden";
+const SHOWN_PROFILES_KEY = "cloudProfiles.shown";
 
 /**
  * Deep-clone plain JSON config data. We cannot use `structuredClone` on the
@@ -107,20 +107,47 @@ export async function setAddedRegions(
 		.update(REGIONS_KEY, map, configTarget());
 }
 
-/** Profile names the user has chosen to hide from the Cloud Profiles section. */
-export function getHiddenProfiles(): string[] {
+/**
+ * Profile names the user has chosen to show under Cloud Profiles. Returns
+ * `undefined` when unset (never configured), which is distinct from an empty
+ * list (the user explicitly chose to show nothing).
+ */
+export function getShownProfiles(): string[] | undefined {
+	/* Use inspect() rather than get(): a contributed array setting always
+	 * resolves to its default ([]) via get(), which would erase the
+	 * unset-vs-empty distinction. Only an explicit user value at any scope
+	 * counts as "set". */
+	const inspected = workspace
+		.getConfiguration(CONFIG_SECTION)
+		.inspect<string[]>(SHOWN_PROFILES_KEY);
 	return (
-		workspace
-			.getConfiguration(CONFIG_SECTION)
-			.get<string[]>(HIDDEN_PROFILES_KEY) ?? []
+		inspected?.workspaceFolderValue ??
+		inspected?.workspaceValue ??
+		inspected?.globalValue
 	);
 }
 
-/** Replace the set of hidden profile names. */
-export async function setHiddenProfiles(profiles: string[]): Promise<void> {
+/** Replace the set of shown profile names. */
+export async function setShownProfiles(profiles: string[]): Promise<void> {
 	await workspace
 		.getConfiguration(CONFIG_SECTION)
-		.update(HIDDEN_PROFILES_KEY, profiles, configTarget());
+		.update(SHOWN_PROFILES_KEY, profiles, configTarget());
+}
+
+/** The default shown set when unset: `default` if present, else the first. */
+export function defaultShownProfiles(allProfiles: string[]): string[] {
+	if (allProfiles.includes("default")) {
+		return ["default"];
+	}
+	return allProfiles.length > 0 ? [allProfiles[0]] : [];
+}
+
+/**
+ * The effective set of shown profile names: the configured set when set
+ * (including an explicit empty list), otherwise the default-only fallback.
+ */
+export function resolveShownProfiles(allProfiles: string[]): string[] {
+	return getShownProfiles() ?? defaultShownProfiles(allProfiles);
 }
 
 /** All filters defined for a profile. */

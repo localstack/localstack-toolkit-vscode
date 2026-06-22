@@ -68,9 +68,46 @@ The system SHALL implement AWS service providers (for at least CloudFormation, D
 
 ### Requirement: CloudFormation stack focus
 
-The system SHALL compute a focus for a CloudFormation stack by querying the stack's resources and grouping them by service and resource type into the focus structure, so a `CFN: <stack>` selector scopes the Resources view to exactly that stack's resources.
+The system SHALL compute a focus for a CloudFormation stack by querying the stack's resources and grouping them by service and resource type into the focus structure, so a `Stack: <stack>` selector scopes the Resources view to exactly that stack's resources.
 
 #### Scenario: CFN selector scopes to stack resources
 
-- **WHEN** the user selects a `CFN: <stack>` focus selector
+- **WHEN** the user selects a `Stack: <stack>` focus selector
 - **THEN** the Resources view shows only the resources belonging to that CloudFormation stack, grouped by service and resource type
+
+### Requirement: Profile node account label
+
+In the Resources view, the profile node's description SHALL show the AWS account ID and, when present, the account alias, formatted `(<accountId> - <accountAlias>)`. When the account alias is empty, the description SHALL show `(<accountId>)` only — with no trailing ` - ` separator.
+
+#### Scenario: Account alias is shown when present
+
+- **WHEN** the selected profile's account has an alias `my-org`
+- **THEN** the profile node description reads `(<accountId> - my-org)`
+
+#### Scenario: Empty alias omits the separator
+
+- **WHEN** the selected profile's account has no alias
+- **THEN** the profile node description reads `(<accountId>)` with no trailing `-`
+
+### Requirement: Consistent icon alignment in the Resources view
+
+Every Resources-view row that does not assign its own icon (profile, region, service, and resource-type nodes) SHALL carry a transparent (`blank`) icon by default so labels align under a common icon column. Rows that assign their own icon (resource/ARN nodes with the service icon, error nodes) keep it.
+
+#### Scenario: Iconless resource rows align
+
+- **WHEN** the Resources view renders profile, region, service, or resource-type rows
+- **THEN** each shows a transparent `blank` icon so its label aligns with the icon-bearing resource (ARN) rows
+
+### Requirement: Manual refresh of the Resources and Resource Details views
+
+The Resources and Resource Details views SHALL each provide a refresh action in the view's title bar. Invoking it SHALL re-fetch and re-render the view's current content — the Resources view against its active focus, and the Resource Details view against its currently selected resource — without requiring the user to re-select a focus or resource.
+
+#### Scenario: Refreshing the Resources view re-fetches the active focus
+
+- **WHEN** the user clicks the refresh action in the Resources view title bar while a focus is active
+- **THEN** the view re-queries the platform and re-renders the resources for that same focus
+
+#### Scenario: Refreshing the Resource Details view re-fetches the selected resource
+
+- **WHEN** the user clicks the refresh action in the Resource Details view title bar while a resource is selected
+- **THEN** the view re-fetches and re-renders that resource's fields
