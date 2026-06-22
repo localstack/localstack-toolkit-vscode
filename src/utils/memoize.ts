@@ -4,29 +4,32 @@
  * @param func The function to memoize.
  * @returns A memoized version of the function.
  */
-// biome-ignore lint/suspicious/noExplicitAny: generic memoize wrapper
-export function memoize<T extends (...args: any[]) => any>(func: T): T {
-	const cache = new Map<string, ReturnType<T>>();
+export function memoize<Args extends unknown[], Result>(
+	func: (...args: Args) => Result,
+): (...args: Args) => Result {
+	/* For promise-returning functions we cache the resolved value (not the
+	 * promise), so the cache holds `Awaited<Result>`. */
+	const cache = new Map<string, Awaited<Result>>();
 
-	return ((...args: Parameters<T>): ReturnType<T> => {
+	return (...args: Args): Result => {
 		const key = JSON.stringify(args); // Create a unique key from arguments
 
 		if (cache.has(key)) {
-			return cache.get(key)!;
+			return cache.get(key) as Result;
 		}
 
 		const result = func(...args);
 
 		/* for Promises, only cache them if they're successful */
 		if (result instanceof Promise) {
-			return result.then((res) => {
+			return (result as Promise<Awaited<Result>>).then((res) => {
 				cache.set(key, res);
 				return res;
-			}) as ReturnType<T>;
+			}) as Result;
 
 			/* For non-Promises, always cache the result */
 		}
-		cache.set(key, result);
+		cache.set(key, result as Awaited<Result>);
 		return result;
-	}) as T;
+	};
 }

@@ -55,7 +55,7 @@
 				"localstack.cloudProfiles.regions": {
 					"type": "object",
 					"default": {},
-					"markdownDescription": "User-added regions per AWS profile shown under Cloud Profiles. Managed via the view's \"Add new region\" / \"Remove\" actions.",
+					"markdownDescription": "User-added regions per AWS profile shown under Cloud Profiles. Managed via the profile row's \"Select Regions...\" / \"Remove Region\" actions.",
 					"additionalProperties": {
 						"type": "array",
 						"items": {
@@ -63,10 +63,18 @@
 						}
 					}
 				},
+				"localstack.cloudProfiles.hidden": {
+					"type": "array",
+					"default": [],
+					"markdownDescription": "AWS profile names hidden from the Cloud Profiles section. Managed via the section's \"Select Profiles...\" action; does not modify `~/.aws/config`.",
+					"items": {
+						"type": "string"
+					}
+				},
 				"localstack.cloudProfiles.filters": {
 					"type": "object",
 					"default": {},
-					"markdownDescription": "User-defined resource filters per AWS profile. Managed via the view's \"Add new filter\" / \"Edit\" / \"Remove\" actions.",
+					"markdownDescription": "User-defined resource views per AWS profile. Managed via the view's \"Add View...\" / \"Edit View...\" / \"Remove View\" actions.",
 					"additionalProperties": {
 						"type": "array",
 						"items": {
@@ -103,18 +111,21 @@
 			"localstackActivityBar": [
 				{
 					"id": "localstack.instances",
-					"name": "LocalStack",
-					"icon": "resources/icons/localstack.svg"
+					"name": "Explore",
+					"icon": "resources/icons/localstack.svg",
+					"size": 1
 				},
 				{
 					"id": "localstack.resources",
 					"name": "Resources",
-					"icon": "resources/icons/localstack.svg"
+					"icon": "resources/icons/localstack.svg",
+					"size": 2
 				},
 				{
 					"id": "localstack.resourceDetails",
 					"name": "Resource Details",
-					"icon": "resources/icons/localstack.svg"
+					"icon": "resources/icons/localstack.svg",
+					"size": 1
 				}
 			]
 		},
@@ -168,31 +179,37 @@
 			},
 			{
 				"command": "localstack.addRegion",
-				"title": "Add new region",
+				"title": "Select Regions...",
 				"category": "LocalStack",
-				"icon": "$(add)"
+				"icon": "$(edit)"
 			},
 			{
 				"command": "localstack.removeRegion",
-				"title": "Remove region",
+				"title": "Remove Region",
 				"category": "LocalStack",
 				"icon": "$(trash)"
 			},
 			{
+				"command": "localstack.manageProfiles",
+				"title": "Select Profiles...",
+				"category": "LocalStack",
+				"icon": "$(edit)"
+			},
+			{
 				"command": "localstack.addFilter",
-				"title": "Add new filter",
+				"title": "Add View...",
 				"category": "LocalStack",
 				"icon": "$(add)"
 			},
 			{
 				"command": "localstack.editFilter",
-				"title": "Edit filter",
+				"title": "Edit View...",
 				"category": "LocalStack",
 				"icon": "$(edit)"
 			},
 			{
 				"command": "localstack.removeFilter",
-				"title": "Remove filter",
+				"title": "Remove View",
 				"category": "LocalStack",
 				"icon": "$(trash)"
 			},
@@ -220,14 +237,57 @@
 			],
 			"view/item/context": [
 				{
+					"command": "localstack.manageProfiles",
+					"when": "view == localstack.instances && viewItem == localstackSection:profiles"
+				},
+				{
+					"command": "localstack.manageProfiles",
+					"when": "view == localstack.instances && viewItem == localstackSection:profiles",
+					"group": "inline"
+				},
+				{
+					"command": "localstack.addRegion",
+					"when": "view == localstack.instances && viewItem == localstackProfile"
+				},
+				{
+					"command": "localstack.addRegion",
+					"when": "view == localstack.instances && viewItem == localstackProfile",
+					"group": "inline"
+				},
+				{
+					"command": "localstack.addFilter",
+					"when": "view == localstack.instances && (viewItem == localstackDefaultRegion || viewItem == localstackUserRegion)",
+					"group": "1_region@1"
+				},
+				{
+					"command": "localstack.addFilter",
+					"when": "view == localstack.instances && (viewItem == localstackDefaultRegion || viewItem == localstackUserRegion)",
+					"group": "inline@1"
+				},
+				{
 					"command": "localstack.removeRegion",
 					"when": "view == localstack.instances && viewItem == localstackUserRegion",
-					"group": "inline"
+					"group": "1_region@2"
+				},
+				{
+					"command": "localstack.removeRegion",
+					"when": "view == localstack.instances && viewItem == localstackUserRegion",
+					"group": "inline@2"
+				},
+				{
+					"command": "localstack.editFilter",
+					"when": "view == localstack.instances && viewItem == localstackFilter",
+					"group": "1_modify@1"
 				},
 				{
 					"command": "localstack.editFilter",
 					"when": "view == localstack.instances && viewItem == localstackFilter",
 					"group": "inline@1"
+				},
+				{
+					"command": "localstack.removeFilter",
+					"when": "view == localstack.instances && viewItem == localstackFilter",
+					"group": "1_modify@2"
 				},
 				{
 					"command": "localstack.removeFilter",
@@ -242,6 +302,10 @@
 				},
 				{
 					"command": "localstack.removeRegion",
+					"when": "false"
+				},
+				{
+					"command": "localstack.manageProfiles",
 					"when": "false"
 				},
 				{

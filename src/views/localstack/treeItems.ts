@@ -1,8 +1,14 @@
 import { ThemeIcon, TreeItem, TreeItemCollapsibleState } from "vscode";
 
 import type { Focus } from "../../models/focus.ts";
+import type { LocalStackStatus } from "../../utils/localstack-status.ts";
 
 import type { SavedFilter } from "./settings.ts";
+
+/** Capitalize a status word for display, e.g. "stopped" → "Stopped". */
+function capitalizeStatus(status: LocalStackStatus): string {
+	return status.charAt(0).toUpperCase() + status.slice(1);
+}
 
 /** Root class for every node in the LocalStack view. */
 export class LocalStackTreeItem extends TreeItem {
@@ -24,33 +30,40 @@ export class SectionTreeItem extends LocalStackTreeItem {
 	}
 }
 
-/** A running LocalStack emulator instance (LocalStack Instances section). */
+/**
+ * A LocalStack emulator instance (LocalStack Instances section). The live
+ * status is shown inline on the label, e.g. `AWS (Stopped): localhost:4566`.
+ */
 export class InstanceTreeItem extends LocalStackTreeItem {
-	constructor(hostPort: string) {
-		super(`AWS: ${hostPort}`, TreeItemCollapsibleState.Expanded);
+	constructor(
+		public readonly hostPort: string,
+		status: LocalStackStatus,
+	) {
+		super("", TreeItemCollapsibleState.Expanded);
 		this.contextValue = "localstackInstance";
 		this.iconPath = new ThemeIcon("server-environment");
+		this.setStatus(status);
+	}
+
+	/** Update the inline status portion of the label. */
+	setStatus(status: LocalStackStatus): void {
+		this.label = `AWS (${capitalizeStatus(status)}): ${this.hostPort}`;
 	}
 }
 
-/** The live status node under an instance. */
-export class StatusTreeItem extends LocalStackTreeItem {
-	constructor() {
-		super("Status", TreeItemCollapsibleState.None);
-		this.contextValue = "localstackStatus";
-	}
-}
-
-/** Opens the App Inspector webview when clicked. */
+/** Opens the App Inspector webview when clicked (only when running). */
 export class AppInspectorTreeItem extends LocalStackTreeItem {
-	constructor() {
+	constructor(isRunning: boolean) {
 		super("App Inspector", TreeItemCollapsibleState.None);
-		this.description = "Click to open";
+		this.description = isRunning ? "Click to open" : "Not running";
 		this.contextValue = "localstackAppInspector";
-		this.command = {
-			title: "Open App Inspector",
-			command: "localstack.openAppInspector",
-		};
+		this.iconPath = new ThemeIcon("search");
+		if (isRunning) {
+			this.command = {
+				title: "Open App Inspector",
+				command: "localstack.openAppInspector",
+			};
+		}
 	}
 }
 
@@ -90,7 +103,6 @@ export class FocusSelectorTreeItem extends LocalStackTreeItem {
 	) {
 		super(label, TreeItemCollapsibleState.None);
 		this.contextValue = "localstackFocusSelector";
-		this.iconPath = new ThemeIcon("filter");
 		this.tooltip = `Select to focus on: ${label}`;
 	}
 }
@@ -107,34 +119,11 @@ export class FilterTreeItem extends FocusSelectorTreeItem {
 	}
 }
 
-/** The "Add new filter" affordance under a region. */
-export class AddFilterTreeItem extends LocalStackTreeItem {
-	constructor(
-		public readonly profileName: string,
-		public readonly regionId: string,
-	) {
-		super("Add new filter", TreeItemCollapsibleState.None);
-		this.iconPath = new ThemeIcon("add");
-		this.contextValue = "localstackAddFilter";
-		this.command = {
-			title: "Add new filter",
-			command: "localstack.addFilter",
-			arguments: [{ profileName, regionId }],
-		};
-	}
-}
-
-/** The "Add new region" affordance under a profile. */
-export class AddRegionTreeItem extends LocalStackTreeItem {
-	constructor(public readonly profileName: string) {
-		super("Add new region", TreeItemCollapsibleState.None);
-		this.iconPath = new ThemeIcon("add");
-		this.contextValue = "localstackAddRegion";
-		this.command = {
-			title: "Add new region",
-			command: "localstack.addRegion",
-			arguments: [{ profileName }],
-		};
+/** A non-interactive visual separator drawn between top-level sections. */
+export class SeparatorTreeItem extends LocalStackTreeItem {
+	constructor() {
+		super("─".repeat(12), TreeItemCollapsibleState.None);
+		this.contextValue = "localstackSeparator";
 	}
 }
 

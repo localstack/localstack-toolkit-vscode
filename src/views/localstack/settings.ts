@@ -9,6 +9,27 @@ import { ConfigurationTarget, workspace } from "vscode";
 const CONFIG_SECTION = "localstack";
 const REGIONS_KEY = "cloudProfiles.regions";
 const FILTERS_KEY = "cloudProfiles.filters";
+const HIDDEN_PROFILES_KEY = "cloudProfiles.hidden";
+
+/**
+ * Deep-clone plain JSON config data. We cannot use `structuredClone` on the
+ * objects returned by `workspace.getConfiguration().get()` — they are not
+ * structured-cloneable and throw `#<Object> could not be cloned`.
+ */
+function cloneJson<T>(value: T): T {
+	return JSON.parse(JSON.stringify(value)) as T;
+}
+
+/**
+ * Choose where to persist settings: per-workspace when a folder is open,
+ * global otherwise. Writing to `Workspace` with no folder open throws
+ * "Unable to write to Workspace Settings because no workspace is opened".
+ */
+export function configTarget(): ConfigurationTarget {
+	return workspace.workspaceFolders?.length
+		? ConfigurationTarget.Workspace
+		: ConfigurationTarget.Global;
+}
 
 /** Scope of a saved filter: a single region, or every region of the profile. */
 export type FilterScope = { region: string } | { allRegions: true };
@@ -45,7 +66,7 @@ export async function addRegion(
 	profile: string,
 	region: string,
 ): Promise<void> {
-	const map = structuredClone(regionsMap());
+	const map = cloneJson(regionsMap());
 	const list = map[profile] ?? [];
 	if (!list.includes(region)) {
 		list.push(region);
@@ -53,21 +74,53 @@ export async function addRegion(
 	map[profile] = list;
 	await workspace
 		.getConfiguration(CONFIG_SECTION)
-		.update(REGIONS_KEY, map, ConfigurationTarget.Workspace);
+		.update(REGIONS_KEY, map, configTarget());
 }
 
 export async function removeRegion(
 	profile: string,
 	region: string,
 ): Promise<void> {
-	const map = structuredClone(regionsMap());
+	const map = cloneJson(regionsMap());
 	map[profile] = (map[profile] ?? []).filter((r) => r !== region);
 	if (map[profile].length === 0) {
 		delete map[profile];
 	}
 	await workspace
 		.getConfiguration(CONFIG_SECTION)
-		.update(REGIONS_KEY, map, ConfigurationTarget.Workspace);
+		.update(REGIONS_KEY, map, configTarget());
+}
+
+/** Replace the full set of user-added regions for a profile. */
+export async function setAddedRegions(
+	profile: string,
+	regions: string[],
+): Promise<void> {
+	const map = cloneJson(regionsMap());
+	if (regions.length === 0) {
+		delete map[profile];
+	} else {
+		map[profile] = regions;
+	}
+	await workspace
+		.getConfiguration(CONFIG_SECTION)
+		.update(REGIONS_KEY, map, configTarget());
+}
+
+/** Profile names the user has chosen to hide from the Cloud Profiles section. */
+export function getHiddenProfiles(): string[] {
+	return (
+		workspace
+			.getConfiguration(CONFIG_SECTION)
+			.get<string[]>(HIDDEN_PROFILES_KEY) ?? []
+	);
+}
+
+/** Replace the set of hidden profile names. */
+export async function setHiddenProfiles(profiles: string[]): Promise<void> {
+	await workspace
+		.getConfiguration(CONFIG_SECTION)
+		.update(HIDDEN_PROFILES_KEY, profiles, configTarget());
 }
 
 /** All filters defined for a profile. */
@@ -95,7 +148,7 @@ export async function saveFilter(
 	filter: SavedFilter,
 	originalName?: string,
 ): Promise<void> {
-	const map = structuredClone(filtersMap());
+	const map = cloneJson(filtersMap());
 	const list = map[profile] ?? [];
 	const key = originalName ?? filter.name;
 	const index = list.findIndex((f) => f.name === key);
@@ -107,19 +160,19 @@ export async function saveFilter(
 	map[profile] = list;
 	await workspace
 		.getConfiguration(CONFIG_SECTION)
-		.update(FILTERS_KEY, map, ConfigurationTarget.Workspace);
+		.update(FILTERS_KEY, map, configTarget());
 }
 
 export async function removeFilter(
 	profile: string,
 	name: string,
 ): Promise<void> {
-	const map = structuredClone(filtersMap());
+	const map = cloneJson(filtersMap());
 	map[profile] = (map[profile] ?? []).filter((f) => f.name !== name);
 	if (map[profile].length === 0) {
 		delete map[profile];
 	}
 	await workspace
 		.getConfiguration(CONFIG_SECTION)
-		.update(FILTERS_KEY, map, ConfigurationTarget.Workspace);
+		.update(FILTERS_KEY, map, configTarget());
 }

@@ -1,6 +1,6 @@
 /*
  * Translates the running emulator's pods-state metamodel into a platform-neutral
- * Focus for the LocalStack Instances "All Resources" selector.
+ * Focus for the LocalStack Instances "View All Resources" selector.
  *
  * Metamodel shape (account -> Service label -> region -> apiOperation -> response):
  *   { "000000000000": { "S3": { "us-east-1": { "listBuckets": { ... } } } } }
@@ -37,8 +37,7 @@ function serviceLabelToProviderId(label: string): string {
 	return SERVICE_LABEL_OVERRIDES[lower] ?? lower;
 }
 
-// biome-ignore lint/suspicious/noExplicitAny: arbitrary JSON payload
-type MetamodelPayload = Record<string, any>;
+type MetamodelPayload = Record<string, unknown>;
 
 /**
  * Parse the metamodel payload leniently: the live endpoint can emit raw control
@@ -51,7 +50,7 @@ export function parseMetamodel(text: string): MetamodelPayload {
 		/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g,
 		"",
 	);
-	return JSON.parse(sanitized);
+	return JSON.parse(sanitized) as MetamodelPayload;
 }
 
 /**
@@ -65,7 +64,7 @@ export function metamodelToFocus(
 	resourceTypes: Map<string, string[]>,
 	log?: LogOutputChannel,
 ): Focus {
-	const account: MetamodelPayload | undefined = payload[DEFAULT_ACCOUNT];
+	const account = payload[DEFAULT_ACCOUNT] as MetamodelPayload | undefined;
 	if (!account) {
 		/* No state for the default account: an empty (but valid) focus. */
 		return Focus.parse({

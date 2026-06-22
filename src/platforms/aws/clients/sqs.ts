@@ -4,7 +4,10 @@ import {
 	ListQueuesCommand,
 	SQSClient,
 } from "@aws-sdk/client-sqs";
-import type { ListQueuesCommandOutput } from "@aws-sdk/client-sqs";
+import type {
+	GetQueueAttributesCommandOutput,
+	ListQueuesCommandOutput,
+} from "@aws-sdk/client-sqs";
 
 import { memoize } from "../../../utils/memoize.ts";
 import type ARN from "../models/arnModel.ts";
@@ -66,7 +69,7 @@ export class Sqs {
 		profile: string,
 		region: string,
 		queueArn: ARN,
-	): Promise<any> {
+	): Promise<GetQueueAttributesCommandOutput["Attributes"]> {
 		const client = Sqs.cachedGetSqsClient(profile, region);
 
 		/*

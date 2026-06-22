@@ -13,12 +13,14 @@ import {
 import { ProviderFactory } from "../../platforms/aws/services/providerFactory.ts";
 
 import {
-	addRegion,
 	getAddedRegions,
 	getFilters,
+	getHiddenProfiles,
 	removeFilter,
 	removeRegion,
 	saveFilter,
+	setAddedRegions,
+	setHiddenProfiles,
 } from "./settings.ts";
 import type { FilterScope, SavedFilter } from "./settings.ts";
 import type { FilterTreeItem, RegionTreeItem } from "./treeItems.ts";
@@ -33,15 +35,16 @@ export function registerLocalStackCommands(
 			"localstack.addRegion",
 			(arg: { profileName: string }) => onAddRegion(provider, arg.profileName),
 		),
+		commands.registerCommand("localstack.manageProfiles", () =>
+			onManageProfiles(provider),
+		),
 		commands.registerCommand(
 			"localstack.removeRegion",
 			(item: RegionTreeItem) =>
 				onRemoveRegion(provider, item.profileName, item.regionId),
 		),
-		commands.registerCommand(
-			"localstack.addFilter",
-			(arg: { profileName: string; regionId: string }) =>
-				onAddFilter(provider, arg.profileName, arg.regionId),
+		commands.registerCommand("localstack.addFilter", (item: RegionTreeItem) =>
+			onAddFilter(provider, item.profileName, item.regionId),
 		),
 		commands.registerCommand("localstack.editFilter", (item: FilterTreeItem) =>
 			onEditFilter(provider, item),
@@ -58,28 +61,67 @@ async function onAddRegion(
 	provider: LocalStackViewProvider,
 	profile: string,
 ): Promise<void> {
-	const shown = new Set<string>(getAddedRegions(profile));
+	const added = new Set(getAddedRegions(profile));
+	/* The profile's default region is always shown and is not user-selectable. */
 	const defaultRegion = AWSConfig.getRegionForProfile(profile);
-	if (defaultRegion) {
-		shown.add(defaultRegion);
-	}
+
 	const items: QuickPickItem[] = getAllRegionCodes()
-		.filter((code) => !shown.has(code))
-		.map((code) => ({ label: code, description: safeLongName(code) }));
+		.filter((code) => code !== defaultRegion)
+		.map((code) => ({
+			label: code,
+			description: safeLongName(code),
+			picked: added.has(code),
+		}));
 
 	if (items.length === 0) {
-		window.showInformationMessage("All known regions are already shown.");
+		window.showInformationMessage("No additional regions are available.");
 		return;
 	}
 
 	const picked = await window.showQuickPick(items, {
-		title: `Add a region to profile "${profile}"`,
-		placeHolder: "Select a region to add",
+		title: `Select Regions for "${profile}"`,
+		placeHolder: "Select the regions to show (deselect to hide)",
+		canPickMany: true,
 	});
-	if (!picked) {
+	/* Undefined means cancelled; an empty array is a valid "hide all". */
+	if (picked === undefined) {
 		return;
 	}
-	await addRegion(profile, picked.label);
+	await setAddedRegions(
+		profile,
+		picked.map((p) => p.label),
+	);
+	provider.refresh();
+}
+
+/** Toggle which Cloud Profiles are shown (does not touch ~/.aws/config). */
+async function onManageProfiles(
+	provider: LocalStackViewProvider,
+): Promise<void> {
+	const hidden = new Set(getHiddenProfiles());
+	const items: QuickPickItem[] = AWSConfig.getProfileNames().map((profile) => ({
+		label: profile,
+		picked: !hidden.has(profile),
+	}));
+
+	if (items.length === 0) {
+		window.showInformationMessage("No AWS profiles were found.");
+		return;
+	}
+
+	const picked = await window.showQuickPick(items, {
+		title: "Select Profiles",
+		placeHolder: "Select the profiles to show (deselect to hide)",
+		canPickMany: true,
+	});
+	if (picked === undefined) {
+		return;
+	}
+	const visible = new Set(picked.map((p) => p.label));
+	const newHidden = AWSConfig.getProfileNames().filter(
+		(profile) => !visible.has(profile),
+	);
+	await setHiddenProfiles(newHidden);
 	provider.refresh();
 }
 
@@ -145,16 +187,16 @@ async function runFilterWizard(
 			.filter((n) => n !== existing?.name),
 	);
 	const name = await window.showInputBox({
-		title: "Filter name",
+		title: "View name",
 		value: existing?.name,
-		prompt: "A name for this filter (must be unique within the profile)",
+		prompt: "A name for this view (must be unique within the profile)",
 		validateInput: (value) => {
 			const trimmed = value.trim();
 			if (!trimmed) {
 				return "Name cannot be empty";
 			}
 			if (takenNames.has(trimmed)) {
-				return `A filter named "${trimmed}" already exists in this profile`;
+				return `A view named "${trimmed}" already exists in this profile`;
 			}
 			return undefined;
 		},
@@ -172,7 +214,7 @@ async function runFilterWizard(
 			picked: existing?.services.includes(p.getId()) ?? false,
 		}));
 	const pickedServices = await window.showQuickPick(serviceItems, {
-		title: "Select services for this filter",
+		title: "Select services for this view",
 		placeHolder: "Pick one or more services",
 		canPickMany: true,
 	});
@@ -187,7 +229,7 @@ async function runFilterWizard(
 	const allRegionsLabel = "All regions in this profile";
 	const scopeChoice = await window.showQuickPick(
 		[thisRegionLabel, allRegionsLabel],
-		{ title: "Where should this filter appear?" },
+		{ title: "Where should this view appear?" },
 	);
 	if (!scopeChoice) {
 		return undefined;

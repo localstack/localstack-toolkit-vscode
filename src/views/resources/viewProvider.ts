@@ -168,14 +168,13 @@ export class ResourceViewProvider
 		}
 
 		/* else, show only the specified regions */
-		return Promise.all(
-			regions.map(async (region) => {
-				return new ResourceRegionTreeItem(
+		return regions.map(
+			(region) =>
+				new ResourceRegionTreeItem(
 					parent,
 					region,
 					getRegionLongName(region.id),
-				);
-			}),
+				),
 		);
 	}
 
@@ -210,17 +209,15 @@ export class ResourceViewProvider
 		}
 
 		/* else, show only the specified services */
-		return Promise.all(
-			services.map(async (service) => {
-				const provider = ProviderFactory.getProviderForService(service.id);
-				return new ResourceServiceTreeItem(
-					parent,
-					service,
-					provider,
-					provider.getName(),
-				);
-			}),
-		);
+		return services.map((service) => {
+			const provider = ProviderFactory.getProviderForService(service.id);
+			return new ResourceServiceTreeItem(
+				parent,
+				service,
+				provider,
+				provider.getName(),
+			);
+		});
 	}
 
 	/**
@@ -230,14 +227,12 @@ export class ResourceViewProvider
 		parent: ResourceServiceTreeItem,
 	): vscode.ProviderResult<ResourceTreeItem[]> {
 		const serviceProvider = parent.provider;
-		return Promise.all(
-			parent.service.resourcetypes.map(async (resourcetype) => {
-				const [_, pluralName] = serviceProvider.getResourceTypeNames(
-					resourcetype.id,
-				);
-				return new ResourceTypeTreeItem(parent, resourcetype, pluralName);
-			}),
-		);
+		return parent.service.resourcetypes.map((resourcetype) => {
+			const [_, pluralName] = serviceProvider.getResourceTypeNames(
+				resourcetype.id,
+			);
+			return new ResourceTypeTreeItem(parent, resourcetype, pluralName);
+		});
 	}
 
 	/**

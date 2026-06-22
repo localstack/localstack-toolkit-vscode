@@ -1,9 +1,10 @@
-import { commands, ConfigurationTarget, window, workspace } from "vscode";
+import { commands, window, workspace } from "vscode";
 import type { Disposable, TreeView } from "vscode";
 
 import { ProviderFactory } from "../platforms/aws/services/providerFactory.ts";
 import { createPlugin } from "../plugins.ts";
 import { registerLocalStackCommands } from "../views/localstack/commands.ts";
+import { configTarget } from "../views/localstack/settings.ts";
 import type { LocalStackTreeItem } from "../views/localstack/treeItems.ts";
 import { LocalStackViewProvider } from "../views/localstack/viewProvider.ts";
 import { ResourceDetailsViewProvider } from "../views/resource-details/viewProvider.ts";
@@ -99,7 +100,7 @@ export default createPlugin(
 		const setMultiSelect = async (value: boolean) => {
 			await workspace
 				.getConfiguration("localstack")
-				.update(MULTI_SELECT_SETTING, value, ConfigurationTarget.Workspace);
+				.update(MULTI_SELECT_SETTING, value, configTarget());
 			recreateLocalStackView();
 		};
 
