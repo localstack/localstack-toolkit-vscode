@@ -26,8 +26,11 @@ export class CloudFormation {
 	);
 
 	/**
-	 * List the stacks of the specified profile. If the profile is not valid,
-	 * reject the promise and let the caller behave appropriately.
+	 * List the successfully-created stacks of the specified profile — i.e. those
+	 * in a stable, resource-bearing state. Stacks that failed, rolled back from a
+	 * failed create, or are being deleted are omitted (see the status allowlist
+	 * below). If the profile is not valid, reject the promise and let the caller
+	 * behave appropriately.
 	 */
 	public static async listStacks(
 		profile: string,
@@ -42,36 +45,28 @@ export class CloudFormation {
 		let nextToken: string | undefined;
 
 		/*
-		 * This will need to be updated if AWS adds new stack statuses. We really just want to
-		 * ignore the DELETE_COMPLETE status, but that means listing all the other statuses.
+		 * Only list stacks that have been successfully provisioned and therefore
+		 * have live, inspectable resources. Stacks that never finished creating,
+		 * failed, rolled back from a failed create, or are being deleted are
+		 * excluded: their resources either don't exist or lack the identifiers
+		 * (e.g. PhysicalResourceId) the Resources view relies on, so surfacing
+		 * them only yields empty or broken stack views. The retained states are
+		 * the stable, resource-bearing terminal states (and their transient
+		 * cleanup tails). This will need to be updated if AWS adds new statuses.
 		 */
-		const nonDeletedStatuses: StackStatus[] = [
-			"CREATE_IN_PROGRESS",
-			"CREATE_FAILED",
+		const createdStatuses: StackStatus[] = [
 			"CREATE_COMPLETE",
-			"ROLLBACK_IN_PROGRESS",
-			"ROLLBACK_FAILED",
-			"ROLLBACK_COMPLETE",
-			"DELETE_IN_PROGRESS",
-			"DELETE_FAILED",
-			"UPDATE_IN_PROGRESS",
-			"UPDATE_COMPLETE_CLEANUP_IN_PROGRESS",
 			"UPDATE_COMPLETE",
-			"UPDATE_ROLLBACK_IN_PROGRESS",
-			"UPDATE_ROLLBACK_FAILED",
-			"UPDATE_ROLLBACK_COMPLETE_CLEANUP_IN_PROGRESS",
+			"UPDATE_COMPLETE_CLEANUP_IN_PROGRESS",
 			"UPDATE_ROLLBACK_COMPLETE",
-			"REVIEW_IN_PROGRESS",
-			"IMPORT_IN_PROGRESS",
+			"UPDATE_ROLLBACK_COMPLETE_CLEANUP_IN_PROGRESS",
 			"IMPORT_COMPLETE",
-			"IMPORT_ROLLBACK_IN_PROGRESS",
-			"IMPORT_ROLLBACK_FAILED",
 			"IMPORT_ROLLBACK_COMPLETE",
 		];
 		do {
 			const command = new ListStacksCommand({
 				NextToken: nextToken,
-				StackStatusFilter: nonDeletedStatuses,
+				StackStatusFilter: createdStatuses,
 			});
 			const response: ListStacksCommandOutput = await client.send(command);
 			if (response.StackSummaries) {
