@@ -17,9 +17,6 @@ export class ResourceTreeItem extends vscode.TreeItem {
 		state?: vscode.TreeItemCollapsibleState,
 	) {
 		super(label, state);
-		/* Default to a transparent icon so rows without their own icon align
-		 * under a common icon column with the icon-bearing resource rows. */
-		this.iconPath = new vscode.ThemeIcon("blank");
 	}
 }
 
@@ -59,29 +56,23 @@ export class ResourceRegionTreeItem extends ResourceTreeItem {
 }
 
 /**
- * Represents a TreeItem for a Service
+ * Represents a single row combining a service and one of its resource types,
+ * e.g. label `SQS` with the dimmed description `Queues`. A service with several
+ * resource types yields several of these rows (sharing the service name/icon).
  */
-export class ResourceServiceTreeItem extends ResourceTreeItem {
+export class ResourceServiceTypeTreeItem extends ResourceTreeItem {
 	constructor(
 		public readonly parent: ResourceRegionTreeItem,
 		public readonly service: ServiceFocus,
 		public readonly provider: ServiceProvider,
-		public readonly name: string,
-	) {
-		super(name, vscode.TreeItemCollapsibleState.Collapsed);
-	}
-}
-
-/**
- * Represents a TreeItem for a Resource Type
- */
-export class ResourceTypeTreeItem extends ResourceTreeItem {
-	constructor(
-		public readonly parent: ResourceServiceTreeItem,
 		public readonly resourceType: ResourceTypeFocus,
-		public readonly name: string,
 	) {
-		super(name, vscode.TreeItemCollapsibleState.Expanded);
+		super(provider.getName(), vscode.TreeItemCollapsibleState.Collapsed);
+		const [, pluralName] = provider.getResourceTypeNames(resourceType.id);
+		/* Resource type shown as dimmed description after the service name. */
+		this.description = pluralName;
+		/* The service icon lives here, not on the individual resource leaves. */
+		this.iconPath = provider.getIconPath(provider.getId());
 	}
 }
 
@@ -90,11 +81,10 @@ export class ResourceTypeTreeItem extends ResourceTreeItem {
  */
 export class ResourceArnTreeItem extends ResourceTreeItem {
 	constructor(
-		public readonly parent: ResourceTypeTreeItem,
+		public readonly parent: ResourceServiceTypeTreeItem,
 		public readonly arn: string,
 		public readonly name: string,
 		public readonly tooltip: string,
-		public readonly iconPath: string,
 	) {
 		super(name);
 	}

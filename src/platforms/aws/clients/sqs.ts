@@ -11,6 +11,7 @@ import type {
 
 import { memoize } from "../../../utils/memoize.ts";
 import type ARN from "../models/arnModel.ts";
+import AWSConfig from "../models/awsConfig.ts";
 
 /**
  * Accessor functions for the AWS "SQS" (Simple Queue Service) service
@@ -18,7 +19,7 @@ import type ARN from "../models/arnModel.ts";
 export class Sqs {
 	private static cachedGetSqsClient = memoize(
 		(profile: string, region: string) => {
-			return new SQSClient({ profile, region });
+			return new SQSClient(AWSConfig.getClientConfig(profile, region));
 		},
 	);
 

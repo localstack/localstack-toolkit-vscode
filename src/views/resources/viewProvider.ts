@@ -15,8 +15,7 @@ import {
 	ResourcePlaceholderTreeItem,
 	ResourceProfileTreeItem,
 	ResourceRegionTreeItem,
-	ResourceServiceTreeItem,
-	ResourceTypeTreeItem,
+	ResourceServiceTypeTreeItem,
 } from "./treeItems.ts";
 import type { ResourceTreeItem } from "./treeItems.ts";
 
@@ -30,6 +29,13 @@ export class ResourceViewProvider
 	/** The focus that determines what is shown in this view */
 	private focus?: Focus = undefined;
 
+	/**
+	 * Produces the active focus. Stored (rather than just the resulting focus)
+	 * so a manual refresh can recompute it from scratch — re-querying the
+	 * LocalStack metamodel API to pick up resources created since the last view.
+	 */
+	private focusProducer?: () => Promise<Focus | undefined>;
+
 	/** EventEmitter we use to produce the event when the tree data changes. */
 	private _onDidChangeTreeData = new vscode.EventEmitter<
 		ResourceTreeItem | undefined | null | void
@@ -42,14 +48,60 @@ export class ResourceViewProvider
 		/* empty */
 	}
 
+	/**
+	 * Set the active focus from a producer. The producer is retained so a manual
+	 * refresh can re-run it (e.g. re-fetching the metamodel for a LocalStack
+	 * instance). A producer that resolves to `undefined` (e.g. a selection with
+	 * no focus selectors) leaves the current focus untouched.
+	 */
+	public async setFocusProducer(
+		producer: () => Promise<Focus | undefined>,
+	): Promise<void> {
+		this.focusProducer = producer;
+		await this.applyFocus(false);
+	}
+
+	/** Set the active focus directly (no producer; refresh re-renders as-is). */
 	public setFocus(focus: Focus) {
 		this.focus = focus;
+		this.focusProducer = undefined;
 		this._onDidChangeTreeData.fire(); // refresh the whole tree
 	}
 
-	/** Re-fetch and re-render the current focus (manual refresh action). */
-	public refresh() {
-		this._onDidChangeTreeData.fire();
+	/**
+	 * Manual refresh: recompute the focus from its producer (re-querying the
+	 * LocalStack API so newly-created resources appear), then re-render. With no
+	 * producer, re-render the current focus, which re-lists resources live.
+	 */
+	public async refresh(): Promise<void> {
+		await this.applyFocus(true);
+	}
+
+	/**
+	 * Recompute and apply the focus. `forceRender` re-fires the tree-change event
+	 * even when the producer yields no new focus, so a manual refresh always
+	 * re-lists resources.
+	 */
+	private async applyFocus(forceRender: boolean): Promise<void> {
+		if (!this.focusProducer) {
+			if (forceRender) {
+				this._onDidChangeTreeData.fire();
+			}
+			return;
+		}
+		try {
+			const focus = await this.focusProducer();
+			if (focus) {
+				this.focus = focus;
+				this._onDidChangeTreeData.fire();
+			} else if (forceRender) {
+				this._onDidChangeTreeData.fire();
+			}
+		} catch (error) {
+			void vscode.window.showWarningMessage(
+				`Could not load resources: ${String(error)}`,
+			);
+		}
 	}
 
 	public getTreeItem(
@@ -72,10 +124,8 @@ export class ResourceViewProvider
 		} else if (element instanceof ResourceProfileTreeItem) {
 			return this.makeResourceRegions(element);
 		} else if (element instanceof ResourceRegionTreeItem) {
-			return this.makeResourceServices(element);
-		} else if (element instanceof ResourceServiceTreeItem) {
-			return this.makeResourceTypes(element);
-		} else if (element instanceof ResourceTypeTreeItem) {
+			return this.makeResourceServiceTypes(element);
+		} else if (element instanceof ResourceServiceTypeTreeItem) {
 			return this.makeResourceArns(element);
 		}
 		return Promise.resolve([]);
@@ -184,75 +234,56 @@ export class ResourceViewProvider
 	}
 
 	/**
-	 * Create ResourceServiceTreeItems from the services in the region. If the region name is a wildcard,
-	 * then dynamically list all services available in the region. Any resourceTypes or ARNs below this
-	 * level in the focus are assumed to always be wildcards as well.
+	 * Create the combined service/resource-type rows for a region — one row per
+	 * (service, resource type) pair. If the region's service list is a wildcard,
+	 * expand it to all supported providers (each with all of its resource types).
 	 */
-	private makeResourceServices(
+	private makeResourceServiceTypes(
 		parent: ResourceRegionTreeItem,
 	): vscode.ProviderResult<ResourceTreeItem[]> {
-		/*
-		 * If there's a single service listed, and the service name is "*", then dynamically list all of
-		 * the actual services available in the current region.
-		 */
 		const services = parent.region.services;
-		if (services.length === 1 && services[0].id === "*") {
-			return ProviderFactory.getSupportedServices().map((provider) => {
-				const serviceFocus = {
-					id: provider.getId(),
-					resourcetypes: provider
-						.getResourceTypes()
-						.map((name) => ({ id: name, arns: ["*"] })),
-				};
-				return new ResourceServiceTreeItem(
-					parent,
-					serviceFocus,
-					provider,
-					provider.getName(),
+		const expanded =
+			services.length === 1 && services[0].id === "*"
+				? ProviderFactory.getSupportedServices().map((provider) => ({
+						provider,
+						service: {
+							id: provider.getId(),
+							resourcetypes: provider
+								.getResourceTypes()
+								.map((name) => ({ id: name, arns: ["*"] })),
+						},
+					}))
+				: services.map((service) => ({
+						provider: ProviderFactory.getProviderForService(service.id),
+						service,
+					}));
+
+		const rows: ResourceTreeItem[] = [];
+		for (const { provider, service } of expanded) {
+			for (const resourceType of service.resourcetypes) {
+				rows.push(
+					new ResourceServiceTypeTreeItem(
+						parent,
+						service,
+						provider,
+						resourceType,
+					),
 				);
-			});
+			}
 		}
-
-		/* else, show only the specified services */
-		return services.map((service) => {
-			const provider = ProviderFactory.getProviderForService(service.id);
-			return new ResourceServiceTreeItem(
-				parent,
-				service,
-				provider,
-				provider.getName(),
-			);
-		});
+		return rows;
 	}
 
 	/**
-	 * Create ResourceTypeTreeItems from the resource types in the service.
-	 */
-	private makeResourceTypes(
-		parent: ResourceServiceTreeItem,
-	): vscode.ProviderResult<ResourceTreeItem[]> {
-		const serviceProvider = parent.provider;
-		return parent.service.resourcetypes.map((resourcetype) => {
-			const [_, pluralName] = serviceProvider.getResourceTypeNames(
-				resourcetype.id,
-			);
-			return new ResourceTypeTreeItem(parent, resourcetype, pluralName);
-		});
-	}
-
-	/**
-	 * Create ResourceArnTreeItems from the ARNs in the resource type.
+	 * Create ResourceArnTreeItems from the ARNs in the combined service/type row.
 	 */
 	private makeResourceArns(
-		parent: ResourceTypeTreeItem,
+		parent: ResourceServiceTypeTreeItem,
 	): vscode.ProviderResult<ResourceTreeItem[]> {
-		const profile = parent.parent.parent.parent.profile.id;
-		const region = parent.parent.parent.region.id;
-		const serviceProvider = parent.parent.provider;
+		const profile = parent.parent.parent.profile.id;
+		const region = parent.parent.region.id;
+		const serviceProvider = parent.provider;
 		const serviceName = serviceProvider.getName();
-		const serviceIconPath = serviceProvider.getIconPath(
-			serviceProvider.getId(),
-		);
 		const [singularName, _] = serviceProvider.getResourceTypeNames(
 			parent.resourceType.id,
 		);
@@ -278,13 +309,7 @@ export class ResourceViewProvider
 
 					/* Tooltip has form: <Service Name> <Resource Type Name> */
 					const tooltip = `${serviceName} ${singularName}`;
-					return new ResourceArnTreeItem(
-						parent,
-						arn,
-						name,
-						tooltip,
-						serviceIconPath,
-					);
+					return new ResourceArnTreeItem(parent, arn, name, tooltip);
 				});
 			}
 		});

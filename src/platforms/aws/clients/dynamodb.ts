@@ -13,6 +13,7 @@ import type {
 
 import { memoize } from "../../../utils/memoize.ts";
 import type ARN from "../models/arnModel.ts";
+import AWSConfig from "../models/awsConfig.ts";
 
 /**
  * Accessor functions for the AWS "DynamoDB" service
@@ -20,7 +21,7 @@ import type ARN from "../models/arnModel.ts";
 export class DynamoDB {
 	private static cachedGetDynamoDBClient = memoize(
 		(profile: string, region: string) => {
-			return new DynamoDBClient({ profile, region });
+			return new DynamoDBClient(AWSConfig.getClientConfig(profile, region));
 		},
 	);
 

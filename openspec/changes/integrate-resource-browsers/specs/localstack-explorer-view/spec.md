@@ -206,11 +206,11 @@ The system SHALL let the user remove a user-added region via a `Remove Region` a
 
 ### Requirement: Add new view
 
-The system SHALL let the user define a named filter via the `Add View...` action — invoked from a region row's inline plus icon (also in the right-click context menu) — by selecting a set of services. In the UX a saved filter is labeled a "view" (the actions are `Add View...`, `Edit View...`, `Remove View`); the underlying concept and the `localstack.cloudProfiles.filters` settings key are unchanged, and the remainder of this spec refers to the concept as a "filter" for continuity with the persisted model. By default a filter is scoped to the single region it was created under; the dialog SHALL offer an "apply to all regions" option that instead makes the filter available under every region of that profile. The filter SHALL appear as a focus selector labeled `View: <name>`, scoped to the chosen services, and SHALL be persisted per profile in the workspace settings with its scope. The name SHALL be unique within the profile and SHALL NOT be `All Resources` (case-insensitive), which is reserved for the built-in all-resources selector; the dialog SHALL reject a reserved or duplicate name.
+The system SHALL let the user define a named filter via the `Add View...` action — invoked from a region row's inline plus icon (also in the right-click context menu) — by selecting a set of **service / resource-type pairs** (e.g. `SQS — Queues`, `Lambda — Functions`), not whole services. This lets a view include some resource types of a service while excluding others. In the UX a saved filter is labeled a "view" (the actions are `Add View...`, `Edit View...`, `Remove View`); the underlying concept and the `localstack.cloudProfiles.filters` settings key are unchanged (the per-filter value now stores a list of `{ service, resourceType }` pairs), and the remainder of this spec refers to the concept as a "filter" for continuity with the persisted model. By default a filter is scoped to the single region it was created under; the dialog SHALL offer an "apply to all regions" option that instead makes the filter available under every region of that profile. The filter SHALL appear as a focus selector labeled `View: <name>`, scoped to the chosen pairs, and SHALL be persisted per profile in the workspace settings with its scope. The name SHALL be unique within the profile and SHALL NOT be `All Resources` (case-insensitive), which is reserved for the built-in all-resources selector; the dialog SHALL reject a reserved or duplicate name.
 
 #### Scenario: Creating a region-scoped filter
 
-- **WHEN** the user invokes `Add View...` from a region, names it, selects one or more services, and leaves "apply to all regions" off
+- **WHEN** the user invokes `Add View...` from a region, names it, selects one or more service/resource-type pairs, and leaves "apply to all regions" off
 - **THEN** a new focus selector labeled `View: <name>` appears under that region only and is saved with a single-region scope
 
 #### Scenario: The reserved name is rejected
@@ -220,13 +220,13 @@ The system SHALL let the user define a named filter via the `Add View...` action
 
 #### Scenario: Creating a filter applied to all regions
 
-- **WHEN** the user invokes `Add View...`, selects services, and enables "apply to all regions"
+- **WHEN** the user invokes `Add View...`, selects pairs, and enables "apply to all regions"
 - **THEN** the filter appears under every region of that profile and is saved with an all-regions scope
 
-#### Scenario: Selecting a filter scopes the Resources view to its services
+#### Scenario: Selecting a filter scopes the Resources view to its resource types
 
 - **WHEN** the user selects a saved filter focus selector
-- **THEN** the Resources view shows only the services chosen for that filter
+- **THEN** the Resources view shows only the service/resource-type pairs chosen for that filter
 
 ### Requirement: Edit and remove filters
 
@@ -249,26 +249,12 @@ The system SHALL let the user edit or remove a saved filter via `Edit View...` /
 
 ### Requirement: Focus selectors drive the active focus
 
-The system SHALL treat `View: All Resources`, saved filters (`View: <name>`), and `Stack: <stack>` nodes as focus selectors. Selecting a focus selector SHALL compute its focus and set it as the active focus for the Resources view. Focus selectors SHALL carry a transparent (`blank`) icon so their labels align with icon-bearing sibling rows such as the `App Inspector` node, rather than sitting in the icon column.
+The system SHALL treat `View: All Resources`, saved filters (`View: <name>`), and `Stack: <stack>` nodes as focus selectors. Selecting a focus selector SHALL compute its focus and set it as the active focus for the Resources view. Focus selectors SHALL carry a transparent (`blank`) icon so their labels align with icon-bearing sibling rows — specifically so the instance's `View: All Resources` selector lines up with the `App Inspector` node. This is the only place a `blank` icon is used; other iconless rows render without one.
 
 #### Scenario: Selecting a focus selector updates the Resources view
 
 - **WHEN** the user clicks a focus selector
 - **THEN** the Resources view re-renders to show the resources described by that selector's focus
-
-### Requirement: Consistent icon alignment
-
-To keep the tree readable, every tree row that does not assign its own icon SHALL carry a transparent (`blank`) icon by default, so all such rows align under a common icon column rather than sitting flush-left. The three top-level **section** headers (LocalStack Instances, Cloud Profiles, Workspace IaC) are the sole exception: they SHALL NOT carry an icon (blank or otherwise) and SHALL sit flush. Rows that assign their own icon (the instance node, App Inspector, profile nodes, error nodes) keep it.
-
-#### Scenario: Iconless rows align under a blank icon column
-
-- **WHEN** the Explore view renders rows that have no assigned icon (e.g. regions, focus selectors, placeholders)
-- **THEN** each such row shows a transparent `blank` icon so its label aligns with icon-bearing sibling rows
-
-#### Scenario: Section headers sit flush
-
-- **WHEN** the three top-level section headers are rendered
-- **THEN** they carry no icon and their labels are not indented by an icon column
 
 ### Requirement: Single- and multi-select behavior
 

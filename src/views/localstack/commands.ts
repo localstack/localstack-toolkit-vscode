@@ -221,20 +221,30 @@ async function runFilterWizard(
 		return undefined;
 	}
 
-	/* Step 2: services (at least one). */
-	const serviceItems: (QuickPickItem & { id: string })[] =
-		ProviderFactory.getSupportedServices().map((p) => ({
-			label: p.getName(),
-			description: p.getId(),
-			id: p.getId(),
-			picked: existing?.services.includes(p.getId()) ?? false,
-		}));
-	const pickedServices = await window.showQuickPick(serviceItems, {
-		title: "Select services for this view",
-		placeHolder: "Pick one or more services",
+	/* Step 2: service/resource-type pairs (at least one). */
+	const resourceItems: (QuickPickItem & {
+		service: string;
+		resourceType: string;
+	})[] = ProviderFactory.getSupportedServices().flatMap((p) =>
+		p.getResourceTypes().map((resourceType) => {
+			const [, pluralName] = p.getResourceTypeNames(resourceType);
+			return {
+				label: `${p.getName()} — ${pluralName}`,
+				service: p.getId(),
+				resourceType,
+				picked:
+					existing?.resources.some(
+						(r) => r.service === p.getId() && r.resourceType === resourceType,
+					) ?? false,
+			};
+		}),
+	);
+	const pickedResources = await window.showQuickPick(resourceItems, {
+		title: "Select resource types for this view",
+		placeHolder: "Pick one or more service resource types",
 		canPickMany: true,
 	});
-	if (!pickedServices || pickedServices.length === 0) {
+	if (!pickedResources || pickedResources.length === 0) {
 		return undefined;
 	}
 
@@ -262,7 +272,10 @@ async function runFilterWizard(
 
 	return {
 		name: name.trim(),
-		services: pickedServices.map((s) => s.id),
+		resources: pickedResources.map((r) => ({
+			service: r.service,
+			resourceType: r.resourceType,
+		})),
 		scope,
 	};
 }

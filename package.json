@@ -82,10 +82,18 @@
 								"name": {
 									"type": "string"
 								},
-								"services": {
+								"resources": {
 									"type": "array",
 									"items": {
-										"type": "string"
+										"type": "object",
+										"properties": {
+											"service": {
+												"type": "string"
+											},
+											"resourceType": {
+												"type": "string"
+											}
+										}
 									}
 								},
 								"scope": {
@@ -124,6 +132,7 @@
 					"id": "localstack.resourceDetails",
 					"name": "Resource Details",
 					"icon": "resources/icons/localstack.svg",
+					"type": "webview",
 					"size": 1
 				}
 			]

@@ -26,13 +26,14 @@ export default createPlugin(
 		const resourcesProvider = new ResourceViewProvider(context);
 		const detailsProvider = new ResourceDetailsViewProvider();
 
-		/* Resources + Resource Details views are stable (no canSelectMany toggle). */
+		/* Resources is a tree view; Resource Details is a webview (table layout). */
 		const resourcesView = window.createTreeView("localstack.resources", {
 			treeDataProvider: resourcesProvider,
 		});
-		const detailsView = window.createTreeView("localstack.resourceDetails", {
-			treeDataProvider: detailsProvider,
-		});
+		const detailsView = window.registerWebviewViewProvider(
+			"localstack.resourceDetails",
+			detailsProvider,
+		);
 		context.subscriptions.push(resourcesView, detailsView);
 
 		/* Selecting a resource updates the Resource Details view. */
@@ -43,7 +44,7 @@ export default createPlugin(
 					e.selection[0] instanceof ResourceArnTreeItem
 				) {
 					const item = e.selection[0];
-					const profile = item.parent.parent.parent.parent.profile.id;
+					const profile = item.parent.parent.parent.profile.id;
 					detailsProvider.setArn(profile, item.arn);
 				}
 			}),
@@ -74,17 +75,14 @@ export default createPlugin(
 				canSelectMany: multi,
 				showCollapseAll: true,
 			});
-			selectionListener = view.onDidChangeSelection(async (e) => {
-				try {
-					const focus = await localStackProvider.computeFocus(e.selection);
-					if (focus) {
-						resourcesProvider.setFocus(focus);
-					}
-				} catch (error) {
-					window.showWarningMessage(
-						`Could not load resources: ${String(error)}`,
-					);
-				}
+			selectionListener = view.onDidChangeSelection((e) => {
+				/* Retain a producer (not just the computed focus) so the Resources
+				 * view's refresh button can recompute it — re-querying the metamodel
+				 * for the current selection. */
+				const selection = e.selection;
+				void resourcesProvider.setFocusProducer(() =>
+					localStackProvider.computeFocus(selection),
+				);
 			});
 			localStackView = view;
 		};

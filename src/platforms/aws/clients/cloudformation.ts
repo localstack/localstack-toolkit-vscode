@@ -14,6 +14,7 @@ import type {
 import { InternalError } from "../../../utils/errors.ts";
 import { memoize } from "../../../utils/memoize.ts";
 import type ARN from "../models/arnModel.ts";
+import AWSConfig from "../models/awsConfig.ts";
 
 /**
  * Accessor functions for the AWS "cloudformation" service
@@ -21,7 +22,7 @@ import type ARN from "../models/arnModel.ts";
 export class CloudFormation {
 	private static cachedGetCloudFormationClient = memoize(
 		(profile: string, region: string) =>
-			new CloudFormationClient({ profile, region }),
+			new CloudFormationClient(AWSConfig.getClientConfig(profile, region)),
 	);
 
 	/**

@@ -11,15 +11,7 @@ function capitalizeStatus(status: LocalStackStatus): string {
 }
 
 /** Root class for every node in the LocalStack view. */
-export class LocalStackTreeItem extends TreeItem {
-	constructor(label: string, state?: TreeItemCollapsibleState) {
-		super(label, state);
-		/* Default to a transparent icon so rows without their own icon still
-		 * align under a common icon column. Subclasses that assign a real icon
-		 * (or explicitly clear it, like section headers) override this. */
-		this.iconPath = new ThemeIcon("blank");
-	}
-}
+export class LocalStackTreeItem extends TreeItem {}
 
 /** The three top-level sections. */
 export type SectionKind = "instances" | "profiles" | "workspace";
@@ -31,8 +23,6 @@ export class SectionTreeItem extends LocalStackTreeItem {
 	) {
 		super(label, TreeItemCollapsibleState.Expanded);
 		this.contextValue = `localstackSection:${kind}`;
-		/* Top-level section headers sit flush — no icon column. */
-		this.iconPath = undefined;
 	}
 }
 
@@ -114,8 +104,10 @@ export class FocusSelectorTreeItem extends LocalStackTreeItem {
 		super(label, TreeItemCollapsibleState.None);
 		this.contextValue = "localstackFocusSelector";
 		this.tooltip = `Select to focus on: ${label}`;
-		/* The transparent (blank) icon is inherited from LocalStackTreeItem so
-		 * the label aligns with icon-bearing siblings (e.g. the App Inspector). */
+		/* Transparent icon so the label aligns with icon-bearing siblings —
+		 * specifically the `App Inspector` node alongside the instance's
+		 * `View: All Resources` selector. */
+		this.iconPath = new ThemeIcon("blank");
 	}
 }
 

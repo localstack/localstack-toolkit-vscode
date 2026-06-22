@@ -15,6 +15,7 @@ import type {
 } from "@aws-sdk/client-sfn";
 
 import { memoize } from "../../../utils/memoize.ts";
+import AWSConfig from "../models/awsConfig.ts";
 
 /**
  * Accessor functions for the AWS "states" (Step Functions) service
@@ -22,7 +23,7 @@ import { memoize } from "../../../utils/memoize.ts";
 export class States {
 	private static cachedGetStatesClient = memoize(
 		(profile: string, region: string) => {
-			return new SFNClient({ profile, region });
+			return new SFNClient(AWSConfig.getClientConfig(profile, region));
 		},
 	);
 
