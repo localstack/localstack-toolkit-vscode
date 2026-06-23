@@ -1,9 +1,5 @@
-# resource-browser Specification
+## ADDED Requirements
 
-## Purpose
-The **Resources** and **Resource Details** views driven by the active focus, the target-aware (LocalStack vs AWS) row icon, and the AWS platform service providers that list and describe resources via the AWS SDK against a profile's endpoint.
-
-## Requirements
 ### Requirement: Resources view renders the active focus
 
 The system SHALL provide a "Resources" tree view that renders the active focus as a hierarchy of profile → region → **service-and-resource-type** → resource (ARN). The service and resource type SHALL be combined into a single row rather than two nested levels: the row's label is the service name and its description (dimmed) is the resource type's plural name (e.g. label `SQS` / description `Queues`). A service with multiple resource types SHALL render one row per resource type, each sharing the service name (e.g. `Lambda — Functions` and `Lambda — Event Source Mappings`). When no focus is active, the view SHALL show a placeholder prompting the user to select a focus.
