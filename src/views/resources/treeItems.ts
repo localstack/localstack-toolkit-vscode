@@ -25,12 +25,15 @@ export class ResourceTreeItem extends vscode.TreeItem {
  * @param profile The ProfileFocus object providing Profile details.
  * @param accountId The AWS account ID associated with the profile.
  * @param accountName The name of the AWS account associated with the profile.
+ * @param isLocalStack Whether this profile targets a LocalStack emulator (vs real AWS).
+ *   Determines the target-aware icon shown on the service rows beneath it.
  */
 export class ResourceProfileTreeItem extends ResourceTreeItem {
 	constructor(
 		public readonly profile: ProfileFocus,
 		public readonly accountId: string,
 		public readonly accountName: string,
+		public readonly isLocalStack: boolean,
 	) {
 		super(`Profile: ${profile.id}`, vscode.TreeItemCollapsibleState.Expanded);
 		/* Only render the alias (and its separator) when one is set, otherwise
@@ -71,8 +74,11 @@ export class ResourceServiceTypeTreeItem extends ResourceTreeItem {
 		const [, pluralName] = provider.getResourceTypeNames(resourceType.id);
 		/* Resource type shown as dimmed description after the service name. */
 		this.description = pluralName;
-		/* The service icon lives here, not on the individual resource leaves. */
-		this.iconPath = provider.getIconPath(provider.getId());
+		/* The icon denotes the profile's target (LocalStack vs AWS), not the
+		 * service. It lives on this combined row, not on the resource leaves. */
+		this.iconPath = new vscode.ThemeIcon(
+			parent.parent.isLocalStack ? "localstack-logo" : "cloud",
+		);
 	}
 }
 

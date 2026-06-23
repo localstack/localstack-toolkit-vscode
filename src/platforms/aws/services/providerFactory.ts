@@ -1,5 +1,3 @@
-import type * as vscode from "vscode";
-
 import { InternalError } from "../../../utils/errors.ts";
 
 import { CloudFormationServiceProvider } from "./cloudformation/provider.ts";
@@ -50,20 +48,20 @@ export class ProviderFactory {
 	 * instances. Both declarative definitions and imperative subclasses are
 	 * registered into the same map, keyed by their service id.
 	 */
-	public static initialize(context: vscode.ExtensionContext) {
+	public static initialize() {
 		const providers = new Map<string, ServiceProvider>();
 
 		/* Declarative providers (data-authored, executed by the engine). */
 		for (const definition of serviceDefinitions) {
 			providers.set(
 				definition.id,
-				new DeclarativeServiceProvider(context, definition),
+				new DeclarativeServiceProvider(definition),
 			);
 		}
 
 		/* Imperative providers (escape hatch). */
 		for (const Provider of IMPERATIVE_PROVIDERS) {
-			const provider = new Provider(context);
+			const provider = new Provider();
 			providers.set(provider.getId(), provider);
 		}
 

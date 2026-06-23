@@ -7,7 +7,6 @@
  * against the LocalStack emulator and real AWS.
  */
 import type { StackResourceSummary } from "@aws-sdk/client-cloudformation";
-import type * as vscode from "vscode";
 
 import { InternalError } from "../../../../utils/errors.ts";
 import { memoize } from "../../../../utils/memoize.ts";
@@ -95,11 +94,8 @@ export class DeclarativeServiceProvider<TClient> extends ServiceProvider {
 
 	private readonly getClient: (profile: string, region: string) => TClient;
 
-	constructor(
-		context: vscode.ExtensionContext,
-		private readonly definition: ServiceDefinition<TClient>,
-	) {
-		super(context);
+	constructor(private readonly definition: ServiceDefinition<TClient>) {
+		super();
 		this.resourceTypes = Object.fromEntries(
 			Object.entries(definition.resourceTypes).map(([id, def]) => [
 				id,

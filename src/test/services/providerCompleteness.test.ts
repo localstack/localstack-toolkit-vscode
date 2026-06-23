@@ -1,7 +1,5 @@
 import assert from "node:assert";
 
-import type { ExtensionContext } from "vscode";
-
 import { ProviderFactory } from "../../platforms/aws/services/providerFactory.ts";
 import { getAllServiceIds } from "../../platforms/aws/services/serviceManifest.ts";
 
@@ -18,7 +16,7 @@ import { getAllServiceIds } from "../../platforms/aws/services/serviceManifest.t
  */
 suite("provider completeness", () => {
 	suiteSetup(() => {
-		ProviderFactory.initialize({} as unknown as ExtensionContext);
+		ProviderFactory.initialize();
 	});
 
 	test("every registered provider maps to a real manifest service id", () => {

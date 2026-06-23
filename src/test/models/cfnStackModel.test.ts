@@ -1,7 +1,7 @@
 import assert from "node:assert";
 
 import type { StackResourceSummary } from "@aws-sdk/client-cloudformation";
-import type { ExtensionContext, LogOutputChannel } from "vscode";
+import type { LogOutputChannel } from "vscode";
 
 import { CloudFormation } from "../../platforms/aws/clients/cloudformation.ts";
 import ARN from "../../platforms/aws/models/arnModel.ts";
@@ -53,7 +53,7 @@ suite("CfnStackModel", () => {
 	let originalListStackResources: typeof cfnHandle.listStackResources;
 
 	suiteSetup(() => {
-		ProviderFactory.initialize({} as unknown as ExtensionContext);
+		ProviderFactory.initialize();
 		originalListStackResources = cfnHandle.listStackResources;
 	});
 

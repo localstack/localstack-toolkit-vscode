@@ -62,9 +62,18 @@ export default class AWSConfig {
 	 */
 	public static getClientConfig(profile: string, region?: string): object {
 		/* use endpoint from profile, if it's defined */
-		const endpointUrl = AWSConfig.getSectionForProfile(profile)?.endpoint_url;
-		const endpoint = typeof endpointUrl === "string" ? endpointUrl : undefined;
+		const endpoint = AWSConfig.getEndpointForProfile(profile);
 		return { profile, region, endpoint };
+	}
+
+	/**
+	 * Return the custom `endpoint_url` configured for a profile, or `undefined`
+	 * when the profile targets real AWS (no override). A custom endpoint is the
+	 * signal that a profile points at LocalStack (or another local emulator).
+	 */
+	public static getEndpointForProfile(profile: string): string | undefined {
+		const endpointUrl = AWSConfig.getSectionForProfile(profile)?.endpoint_url;
+		return typeof endpointUrl === "string" ? endpointUrl : undefined;
 	}
 
 	/** Read and parse the AWS config file */
