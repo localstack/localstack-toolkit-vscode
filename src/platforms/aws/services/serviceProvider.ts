@@ -1,10 +1,5 @@
-import * as fs from "node:fs";
-import * as path from "node:path";
-
 import { Stack } from "@aws-sdk/client-cloudformation";
 import type { StackResourceSummary } from "@aws-sdk/client-cloudformation";
-import { ThemeIcon } from "vscode";
-import type * as vscode from "vscode";
 
 import { InternalError } from "../../../utils/errors.ts";
 import type ARN from "../models/arnModel.ts";
@@ -37,10 +32,6 @@ export type ServiceResourceArnTuple = {
  * Abstract parent class for all service providers.
  */
 export abstract class ServiceProvider {
-	constructor(private readonly context: vscode.ExtensionContext) {
-		/* empty */
-	}
-
 	/**
 	 * Map of the provider's resource types to their human-facing names [singular, plural].
 	 * Must be overidden by subclasses
@@ -98,26 +89,5 @@ export abstract class ServiceProvider {
 	 */
 	public getResourceTypes(): string[] {
 		return Object.keys(this.resourceTypes);
-	}
-
-	/**
-	 * Return the relevant icon for this AWS service: the bundled per-service SVG
-	 * when one exists, otherwise a generic fallback icon. With 100+ services,
-	 * most have no bundled icon yet, so the fallback keeps the tree consistent.
-	 */
-	public getIconPath(serviceId: string): string | ThemeIcon {
-		// TODO: return both light and dark variants.
-		const extensionPath = this.context?.extensionPath;
-		if (!extensionPath) {
-			return new ThemeIcon("symbol-misc");
-		}
-		const iconPath = path.join(
-			extensionPath,
-			"resources",
-			"icons",
-			"services",
-			`${serviceId}.svg`,
-		);
-		return fs.existsSync(iconPath) ? iconPath : new ThemeIcon("symbol-misc");
 	}
 }

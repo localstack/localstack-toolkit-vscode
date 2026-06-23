@@ -1,7 +1,5 @@
 import assert from "node:assert";
 
-import type { ExtensionContext } from "vscode";
-
 import ARN from "../../platforms/aws/models/arnModel.ts";
 import { DeclarativeServiceProvider } from "../../platforms/aws/services/declarative/engine.ts";
 import type { ServiceDefinition } from "../../platforms/aws/services/declarative/types.ts";
@@ -47,7 +45,7 @@ function providerWith<TClient>(
 	definition: ServiceDefinition<TClient>,
 	client: unknown,
 ) {
-	return new DeclarativeServiceProvider({} as unknown as ExtensionContext, {
+	return new DeclarativeServiceProvider({
 		...definition,
 		client: () => client as TClient,
 	});

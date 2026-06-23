@@ -90,6 +90,17 @@ suite("AWSConfig", () => {
 		});
 	});
 
+	test("getEndpointForProfile returns the endpoint_url when present", () => {
+		assert.strictEqual(
+			AWSConfig.getEndpointForProfile("default"),
+			"http://localhost:4566",
+		);
+	});
+
+	test("getEndpointForProfile returns undefined when not configured", () => {
+		assert.strictEqual(AWSConfig.getEndpointForProfile("staging"), undefined);
+	});
+
 	test("returns safe empty values when the config file is missing", () => {
 		const previous = configHandle.AWS_CONFIG_FILE;
 		configHandle.AWS_CONFIG_FILE = path.join(tempDir, "does-not-exist");

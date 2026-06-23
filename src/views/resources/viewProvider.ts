@@ -19,6 +19,22 @@ import {
 } from "./treeItems.ts";
 import type { ResourceTreeItem } from "./treeItems.ts";
 
+/** The synthetic profile id used for the LocalStack emulator instance. */
+const LOCALSTACK_PROFILE_ID = "localstack";
+
+/**
+ * Whether a profile targets a LocalStack emulator rather than real AWS. A
+ * profile is treated as LocalStack when it resolves to a custom `endpoint_url`
+ * (LocalStack profiles are configured with one) or when it is the synthetic
+ * `localstack` instance profile. Profiles without a custom endpoint target AWS.
+ */
+function isLocalStackProfile(profileId: string): boolean {
+	return (
+		profileId === LOCALSTACK_PROFILE_ID ||
+		AWSConfig.getEndpointForProfile(profileId) !== undefined
+	);
+}
+
 /**
  * Provider for a view that shows all the profile/region/service/resource information
  * that is in focus
@@ -168,7 +184,12 @@ export class ResourceViewProvider
 					IAM.getAccountAlias(profile.id),
 				])
 					.then(([{ account }, alias]) => {
-						return new ResourceProfileTreeItem(profile, account, alias);
+						return new ResourceProfileTreeItem(
+							profile,
+							account,
+							alias,
+							isLocalStackProfile(profile.id),
+						);
 					})
 					.catch((error) => {
 						/* error communicating with AWS, possibly bad credentials */

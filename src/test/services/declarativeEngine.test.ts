@@ -1,7 +1,6 @@
 import assert from "node:assert";
 
 import type { StackResourceSummary } from "@aws-sdk/client-cloudformation";
-import type { ExtensionContext } from "vscode";
 
 import ARN from "../../platforms/aws/models/arnModel.ts";
 import {
@@ -74,10 +73,7 @@ const fakeDefinition = defineService<FakeClient>({
 });
 
 function makeProvider() {
-	return new DeclarativeServiceProvider(
-		{} as unknown as ExtensionContext,
-		fakeDefinition,
-	);
+	return new DeclarativeServiceProvider(fakeDefinition);
 }
 
 suite("declarative engine: getByPath", () => {

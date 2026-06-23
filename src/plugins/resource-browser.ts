@@ -17,7 +17,7 @@ export default createPlugin(
 	"resource-browser",
 	({ context, localStackStatusTracker, outputChannel }) => {
 		/* Service providers give access to AWS resource information. */
-		ProviderFactory.initialize(context);
+		ProviderFactory.initialize();
 
 		const localStackProvider = new LocalStackViewProvider(
 			localStackStatusTracker,
