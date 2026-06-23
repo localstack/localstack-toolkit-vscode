@@ -115,6 +115,18 @@ export class DeclarativeServiceProvider<TClient> extends ServiceProvider {
 		return this.definition.name;
 	}
 
+	override getMetamodelOperationMap(): Map<string, string> {
+		const map = new Map<string, string>();
+		for (const [resourceType, def] of Object.entries(
+			this.definition.resourceTypes,
+		)) {
+			if (def.metamodelOp) {
+				map.set(def.metamodelOp, resourceType);
+			}
+		}
+		return map;
+	}
+
 	async getResourceArns(
 		profile: string,
 		region: string,

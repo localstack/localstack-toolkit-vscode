@@ -32,6 +32,7 @@ export const eventsDefinition = defineService<EventBridgeClient>({
 		eventbus: {
 			singular: "Event Bus",
 			plural: "Event Buses",
+			metamodelOp: "listEventBuses",
 			cfn: "AWS::Events::EventBus",
 			matchArn: (identifier) => identifier.arn.includes(":event-bus/"),
 			list: async (client): Promise<EventBus[]> => {
@@ -56,6 +57,7 @@ export const eventsDefinition = defineService<EventBridgeClient>({
 		rule: {
 			singular: "Rule",
 			plural: "Rules",
+			metamodelOp: "listRules",
 			cfn: "AWS::Events::Rule",
 			matchArn: (identifier) => identifier.arn.includes(":rule/"),
 			list: async (client): Promise<Rule[]> => {
@@ -111,6 +113,7 @@ export const eventsDefinition = defineService<EventBridgeClient>({
 		apidestination: {
 			singular: "API Destination",
 			plural: "API Destinations",
+			metamodelOp: "listApiDestinations",
 			cfn: "AWS::Events::ApiDestination",
 			matchArn: (identifier) => identifier.arn.includes(":api-destination/"),
 			list: async (client): Promise<ApiDestination[]> => {
@@ -143,6 +146,7 @@ export const eventsDefinition = defineService<EventBridgeClient>({
 		connection: {
 			singular: "Connection",
 			plural: "Connections",
+			metamodelOp: "listConnections",
 			cfn: "AWS::Events::Connection",
 			matchArn: (identifier) => identifier.arn.includes(":connection/"),
 			list: async (client): Promise<Connection[]> => {
@@ -174,6 +178,7 @@ export const eventsDefinition = defineService<EventBridgeClient>({
 		archive: {
 			singular: "Archive",
 			plural: "Archives",
+			metamodelOp: "listArchives",
 			cfn: "AWS::Events::Archive",
 			matchArn: (identifier) => identifier.arn.includes(":archive/"),
 			list: async (client): Promise<Archive[]> => {

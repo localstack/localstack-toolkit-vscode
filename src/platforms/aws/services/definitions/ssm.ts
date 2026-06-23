@@ -32,6 +32,7 @@ export const ssmDefinition = defineService<SSMClient>({
 		parameter: {
 			singular: "Parameter",
 			plural: "Parameters",
+			metamodelOp: "describeParameters",
 			cfn: "AWS::SSM::Parameter",
 			matchArn: (identifier) => identifier.arn.includes(":parameter/"),
 			list: async (client): Promise<ParameterMetadata[]> => {
@@ -78,6 +79,7 @@ export const ssmDefinition = defineService<SSMClient>({
 		document: {
 			singular: "Document",
 			plural: "Documents",
+			metamodelOp: "listDocuments",
 			cfn: "AWS::SSM::Document",
 			matchArn: (identifier) => identifier.arn.includes(":document/"),
 			list: async (client): Promise<DocumentIdentifier[]> => {
@@ -118,6 +120,7 @@ export const ssmDefinition = defineService<SSMClient>({
 		maintenancewindow: {
 			singular: "Maintenance Window",
 			plural: "Maintenance Windows",
+			metamodelOp: "describeMaintenanceWindows",
 			cfn: "AWS::SSM::MaintenanceWindow",
 			matchArn: (identifier) => identifier.arn.includes(":maintenancewindow/"),
 			list: async (client): Promise<MaintenanceWindowIdentity[]> => {
@@ -150,6 +153,7 @@ export const ssmDefinition = defineService<SSMClient>({
 		association: {
 			singular: "Association",
 			plural: "Associations",
+			metamodelOp: "listAssociations",
 			cfn: "AWS::SSM::Association",
 			matchArn: (identifier) => identifier.arn.includes(":association/"),
 			list: async (client): Promise<Association[]> => {
@@ -193,6 +197,7 @@ export const ssmDefinition = defineService<SSMClient>({
 		patchbaseline: {
 			singular: "Patch Baseline",
 			plural: "Patch Baselines",
+			metamodelOp: "describePatchBaselines",
 			cfn: "AWS::SSM::PatchBaseline",
 			matchArn: (identifier) => identifier.arn.includes(":patchbaseline/"),
 			list: async (client): Promise<PatchBaselineIdentity[]> => {

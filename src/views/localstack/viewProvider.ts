@@ -6,7 +6,7 @@ import type {
 	TreeDataProvider,
 } from "vscode";
 
-import { makeWildcardFocus, mergeFocuses } from "../../models/focus.ts";
+import { makeWildcardFocus } from "../../models/focus.ts";
 import type { Focus } from "../../models/focus.ts";
 import { CloudFormation } from "../../platforms/aws/clients/cloudformation.ts";
 import ARN from "../../platforms/aws/models/arnModel.ts";
@@ -22,15 +22,17 @@ import type { LocalStackStatusTracker } from "../../utils/localstack-status.ts";
 import {
 	getAddedRegions,
 	getFiltersForRegion,
+	getInstanceViews,
 	resolveShownProfiles,
 } from "./settings.ts";
-import type { SavedFilter } from "./settings.ts";
+import type { ResourcePair, SavedFilter } from "./settings.ts";
 import {
 	AppInspectorTreeItem,
 	ErrorTreeItem,
 	FilterTreeItem,
 	FocusSelectorTreeItem,
 	InstanceTreeItem,
+	InstanceViewTreeItem,
 	PlaceholderTreeItem,
 	ProfileTreeItem,
 	RegionTreeItem,
@@ -113,19 +115,19 @@ export class LocalStackViewProvider
 		return [];
 	}
 
-	/** Compute the focus for the current selection, merging when multiple. */
+	/**
+	 * Compute the focus for the current selection. The view is single-select, so
+	 * at most one focus selector is active; return its focus (or undefined when
+	 * the selection contains no focus selector).
+	 */
 	async computeFocus(
 		selection: readonly LocalStackTreeItem[],
 	): Promise<Focus | undefined> {
-		const selectors = selection.filter(
+		const selector = selection.find(
 			(item): item is FocusSelectorTreeItem =>
 				item instanceof FocusSelectorTreeItem,
 		);
-		if (selectors.length === 0) {
-			return undefined;
-		}
-		const focuses = await Promise.all(selectors.map((s) => s.getFocus()));
-		return mergeFocuses(focuses);
+		return selector ? selector.getFocus() : undefined;
 	}
 
 	private async makeInstances(): Promise<LocalStackTreeItem[]> {
@@ -152,7 +154,21 @@ export class LocalStackViewProvider
 			},
 		);
 
-		return [new AppInspectorTreeItem(), allResources];
+		/* Saved instance views: the metamodel focus narrowed to the view's chosen
+		 * pairs. Resolved live by name so edits/removes propagate on refresh. */
+		const views = getInstanceViews().map(
+			(view) =>
+				new InstanceViewTreeItem(view, async () => {
+					const endpoint = await getLocalStackEndpointUrl();
+					const metamodel = await computeMetamodelFocus(endpoint, this.log);
+					const live = getInstanceViews().find((v) => v.name === view.name);
+					return live
+						? intersectMetamodelWithPairs(metamodel, live.resources)
+						: undefined;
+				}),
+		);
+
+		return [new AppInspectorTreeItem(), allResources, ...views];
 	}
 
 	private makeProfiles(): LocalStackTreeItem[] {
@@ -197,7 +213,17 @@ export class LocalStackViewProvider
 		for (const filter of getFiltersForRegion(profile, region)) {
 			children.push(
 				new FilterTreeItem(profile, filter, () =>
-					Promise.resolve(makeFilterFocus(profile, region, filter)),
+					/* Resolve the filter live so an edit to the active view is
+					 * reflected on refresh, and a removed view yields no focus
+					 * (clearing the Resources view) rather than stale content. */
+					Promise.resolve(
+						resolveRegionFilterFocus(
+							profile,
+							region,
+							filter.name,
+							getFiltersForRegion(profile, region),
+						),
+					),
 				),
 			);
 		}
@@ -226,6 +252,59 @@ export class LocalStackViewProvider
 
 		return children;
 	}
+}
+
+/**
+ * Resolve a region filter's focus live from the given filter list, by name.
+ * Returns `undefined` when no filter with that name exists (e.g. it was removed
+ * or renamed), so the Resources view clears rather than showing stale content.
+ * Pure (the filter list is passed in) so the live-resolution behavior is
+ * testable; the caller passes the current `getFiltersForRegion(...)` result.
+ */
+export function resolveRegionFilterFocus(
+	profile: string,
+	region: string,
+	name: string,
+	filters: SavedFilter[],
+): Focus | undefined {
+	const live = filters.find((f) => f.name === name);
+	return live ? makeFilterFocus(profile, region, live) : undefined;
+}
+
+/**
+ * Narrow a metamodel-derived focus to a set of chosen service/resource-type
+ * pairs (an instance view). Keeps only the pairs that are actually present in
+ * the metamodel, so a view never lists a type with nothing deployed; services
+ * and regions left empty are dropped. Exported for testing.
+ */
+export function intersectMetamodelWithPairs(
+	metamodel: Focus,
+	pairs: ResourcePair[],
+): Focus {
+	const wantedServices = new Set(pairs.map((p) => p.service));
+	const wantedPairs = new Set(
+		pairs.map((p) => `${p.service} ${p.resourceType}`),
+	);
+	const profile = metamodel.profiles[0];
+	const regions = (profile?.regions ?? [])
+		.map((region) => ({
+			id: region.id,
+			services: region.services
+				.filter((s) => wantedServices.has(s.id))
+				.map((s) => ({
+					id: s.id,
+					resourcetypes: s.resourcetypes.filter((rt) =>
+						wantedPairs.has(`${s.id} ${rt.id}`),
+					),
+				}))
+				.filter((s) => s.resourcetypes.length > 0),
+		}))
+		.filter((region) => region.services.length > 0);
+
+	return {
+		version: "1.0",
+		profiles: [{ id: profile?.id ?? "localstack", regions }],
+	};
 }
 
 /** Build a focus for a region scoped to a filter's chosen service/type pairs. */

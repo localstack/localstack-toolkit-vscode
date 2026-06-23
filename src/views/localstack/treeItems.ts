@@ -99,7 +99,7 @@ export class RegionTreeItem extends LocalStackTreeItem {
 export class FocusSelectorTreeItem extends LocalStackTreeItem {
 	constructor(
 		label: string,
-		public readonly getFocus: () => Promise<Focus>,
+		public readonly getFocus: () => Promise<Focus | undefined>,
 	) {
 		super(label, TreeItemCollapsibleState.None);
 		this.contextValue = "localstackFocusSelector";
@@ -116,10 +116,25 @@ export class FilterTreeItem extends FocusSelectorTreeItem {
 	constructor(
 		public readonly profileName: string,
 		public readonly filter: SavedFilter,
-		getFocus: () => Promise<Focus>,
+		getFocus: () => Promise<Focus | undefined>,
 	) {
 		super(`View: ${filter.name}`, getFocus);
 		this.contextValue = "localstackFilter";
+	}
+}
+
+/**
+ * A user-defined view for the LocalStack instance (supports Edit/Remove).
+ * Distinct from `FilterTreeItem` (cloud-profile views) so its menus and storage
+ * stay separate; its focus intersects the live metamodel with the chosen pairs.
+ */
+export class InstanceViewTreeItem extends FocusSelectorTreeItem {
+	constructor(
+		public readonly view: SavedFilter,
+		getFocus: () => Promise<Focus | undefined>,
+	) {
+		super(`View: ${view.name}`, getFocus);
+		this.contextValue = "localstackInstanceView";
 	}
 }
 

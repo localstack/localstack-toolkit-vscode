@@ -90,6 +90,23 @@ suite("AWSConfig", () => {
 		});
 	});
 
+	test("getClientConfig falls back to the profile's region when none is given", () => {
+		/* A region-less ARN (e.g. S3) passes no region; use the profile default. */
+		assert.deepStrictEqual(AWSConfig.getClientConfig("staging"), {
+			profile: "staging",
+			region: "eu-west-1",
+			endpoint: undefined,
+		});
+	});
+
+	test("getClientConfig falls back to us-east-1 when the profile has no region", () => {
+		assert.deepStrictEqual(AWSConfig.getClientConfig("unknown-profile"), {
+			profile: "unknown-profile",
+			region: "us-east-1",
+			endpoint: undefined,
+		});
+	});
+
 	test("getEndpointForProfile returns the endpoint_url when present", () => {
 		assert.strictEqual(
 			AWSConfig.getEndpointForProfile("default"),

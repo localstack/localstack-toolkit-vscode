@@ -1,17 +1,12 @@
 import { commands, window, workspace } from "vscode";
-import type { Disposable, TreeView } from "vscode";
 
 import { ProviderFactory } from "../platforms/aws/services/providerFactory.ts";
 import { createPlugin } from "../plugins.ts";
 import { registerLocalStackCommands } from "../views/localstack/commands.ts";
-import { configTarget } from "../views/localstack/settings.ts";
-import type { LocalStackTreeItem } from "../views/localstack/treeItems.ts";
 import { LocalStackViewProvider } from "../views/localstack/viewProvider.ts";
 import { ResourceDetailsViewProvider } from "../views/resource-details/viewProvider.ts";
 import { ResourceArnTreeItem } from "../views/resources/treeItems.ts";
 import { ResourceViewProvider } from "../views/resources/viewProvider.ts";
-
-const MULTI_SELECT_SETTING = "focus.multiSelect";
 
 export default createPlugin(
 	"resource-browser",
@@ -50,32 +45,16 @@ export default createPlugin(
 			}),
 		);
 
-		/*
-		 * The LocalStack view's canSelectMany is fixed at registration, so the
-		 * multi-select toggle re-registers it in place.
-		 */
-		let localStackView: TreeView<LocalStackTreeItem> | undefined;
-		let selectionListener: Disposable | undefined;
-
-		const isMultiSelect = () =>
-			workspace
-				.getConfiguration("localstack")
-				.get<boolean>(MULTI_SELECT_SETTING, false);
-
-		const createLocalStackView = () => {
-			const multi = isMultiSelect();
-			void commands.executeCommand(
-				"setContext",
-				"localstack.multiSelect",
-				multi,
-			);
-
-			const view = window.createTreeView("localstack.instances", {
-				treeDataProvider: localStackProvider,
-				canSelectMany: multi,
-				showCollapseAll: true,
-			});
-			selectionListener = view.onDidChangeSelection((e) => {
+		/* The LocalStack view is single-select: activating one focus selector
+		 * deactivates any other. */
+		const localStackView = window.createTreeView("localstack.instances", {
+			treeDataProvider: localStackProvider,
+			canSelectMany: false,
+			showCollapseAll: true,
+		});
+		context.subscriptions.push(
+			localStackView,
+			localStackView.onDidChangeSelection((e) => {
 				/* Retain a producer (not just the computed focus) so the Resources
 				 * view's refresh button can recompute it — re-querying the metamodel
 				 * for the current selection. */
@@ -83,39 +62,19 @@ export default createPlugin(
 				void resourcesProvider.setFocusProducer(() =>
 					localStackProvider.computeFocus(selection),
 				);
-			});
-			localStackView = view;
-		};
-
-		const recreateLocalStackView = () => {
-			selectionListener?.dispose();
-			localStackView?.dispose();
-			createLocalStackView();
-		};
-
-		createLocalStackView();
-
-		const setMultiSelect = async (value: boolean) => {
-			await workspace
-				.getConfiguration("localstack")
-				.update(MULTI_SELECT_SETTING, value, configTarget());
-			recreateLocalStackView();
-		};
+			}),
+		);
 
 		context.subscriptions.push(
-			commands.registerCommand("localstack.enableMultiSelect", () =>
-				setMultiSelect(true),
-			),
-			commands.registerCommand("localstack.disableMultiSelect", () =>
-				setMultiSelect(false),
-			),
 			commands.registerCommand("localstack.refreshResources", () =>
 				resourcesProvider.refresh(),
 			),
 			commands.registerCommand("localstack.refreshResourceDetails", () =>
 				detailsProvider.refresh(),
 			),
-			...registerLocalStackCommands(localStackProvider),
+			...registerLocalStackCommands(localStackProvider, () => {
+				void resourcesProvider.refresh();
+			}),
 		);
 
 		/* Refresh the LocalStack view when its backing settings change. */
@@ -125,12 +84,6 @@ export default createPlugin(
 					localStackProvider.refresh();
 				}
 			}),
-			{
-				dispose: () => {
-					selectionListener?.dispose();
-					localStackView?.dispose();
-				},
-			},
 		);
 	},
 );

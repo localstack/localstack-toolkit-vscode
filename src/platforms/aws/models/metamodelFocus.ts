@@ -42,13 +42,22 @@ export function parseMetamodel(text: string): MetamodelPayload {
 
 /**
  * Pure translation of a parsed metamodel payload into a Focus. `resourceTypes`
- * maps each supported provider id to its resource-type ids; services whose
- * mapped id is absent from this map are omitted (and logged). The global-service
- * mirror region ("") is skipped. Exported for testing.
+ * maps each supported provider id to its resource-type ids; `operationMaps` maps
+ * each provider id to its metamodel-operation → resource-type map. Services whose
+ * mapped id is absent from `resourceTypes` are omitted (and logged). The
+ * global-service mirror region ("") is skipped. Exported for testing.
+ *
+ * For each present service/region the focus names only the resource types whose
+ * metamodel list-operation key is present (so a service with one deployed type
+ * does not render its other types). When a present operation maps to no known
+ * resource type — or the provider declares no operation map — the service falls
+ * back to its full resource-type set (and the gap is logged), so a missing
+ * mapping never hides resources that exist.
  */
 export function metamodelToFocus(
 	payload: MetamodelPayload,
 	resourceTypes: Map<string, string[]>,
+	operationMaps: Map<string, Map<string, string>>,
 	log?: LogOutputChannel,
 ): Focus {
 	const account = payload[DEFAULT_ACCOUNT] as MetamodelPayload | undefined;
@@ -60,27 +69,60 @@ export function metamodelToFocus(
 		});
 	}
 
-	/* region id -> set of provider ids present in that region */
-	const regionServices = new Map<string, Set<string>>();
+	/* region id -> provider id -> set of present resource-type ids */
+	const regionServices = new Map<string, Map<string, Set<string>>>();
 	const dropped = new Set<string>();
+	const fellBack = new Set<string>();
 
 	for (const [serviceLabel, regions] of Object.entries(account)) {
 		const providerId = mapLabelToServiceId(serviceLabel);
-		if (!resourceTypes.has(providerId)) {
+		const allTypes = resourceTypes.get(providerId);
+		if (!allTypes) {
 			dropped.add(serviceLabel);
 			continue;
 		}
-		for (const region of Object.keys(regions as MetamodelPayload)) {
+		const opMap = operationMaps.get(providerId) ?? new Map<string, string>();
+
+		for (const [region, opsByName] of Object.entries(
+			regions as MetamodelPayload,
+		)) {
 			/* Skip the global-service mirror ("") to avoid an empty region node. */
 			if (region === "") {
 				continue;
 			}
-			let set = regionServices.get(region);
-			if (!set) {
-				set = new Set<string>();
-				regionServices.set(region, set);
+
+			/* The metamodel records one list-operation key per present resource
+			 * type. Map those to resource types; fall back to the full set when an
+			 * operation is unmapped (or none map), so resources are never hidden. */
+			const present = new Set<string>();
+			let unmappedOp = false;
+			for (const op of Object.keys((opsByName as MetamodelPayload) ?? {})) {
+				const resourceType = opMap.get(op);
+				if (resourceType) {
+					present.add(resourceType);
+				} else {
+					unmappedOp = true;
+				}
 			}
-			set.add(providerId);
+			const types =
+				unmappedOp || present.size === 0 ? allTypes : [...present];
+			if (unmappedOp) {
+				fellBack.add(serviceLabel);
+			}
+
+			let svcMap = regionServices.get(region);
+			if (!svcMap) {
+				svcMap = new Map<string, Set<string>>();
+				regionServices.set(region, svcMap);
+			}
+			const existing = svcMap.get(providerId);
+			if (existing) {
+				for (const t of types) {
+					existing.add(t);
+				}
+			} else {
+				svcMap.set(providerId, new Set(types));
+			}
 		}
 	}
 
@@ -91,13 +133,22 @@ export function metamodelToFocus(
 				.join(", ")}`,
 		);
 	}
+	if (fellBack.size > 0) {
+		log?.info(
+			`[metamodel] Listed all resource types (unmapped operation) for: ${[
+				...fellBack,
+			]
+				.sort()
+				.join(", ")}`,
+		);
+	}
 
 	const focusRegions = [...regionServices.entries()].map(
-		([regionId, serviceIds]) => ({
+		([regionId, svcMap]) => ({
 			id: regionId,
-			services: [...serviceIds].map((serviceId) => ({
+			services: [...svcMap.entries()].map(([serviceId, typeIds]) => ({
 				id: serviceId,
-				resourcetypes: (resourceTypes.get(serviceId) ?? []).map((rt) => ({
+				resourcetypes: [...typeIds].map((rt) => ({
 					id: rt,
 					arns: ["*"],
 				})),
@@ -127,12 +178,13 @@ export async function computeMetamodelFocus(
 	}
 	const payload = parseMetamodel(await response.text());
 
+	const services = ProviderFactory.getSupportedServices();
 	const resourceTypes = new Map<string, string[]>(
-		ProviderFactory.getSupportedServices().map((p) => [
-			p.getId(),
-			p.getResourceTypes(),
-		]),
+		services.map((p) => [p.getId(), p.getResourceTypes()]),
+	);
+	const operationMaps = new Map<string, Map<string, string>>(
+		services.map((p) => [p.getId(), p.getMetamodelOperationMap()]),
 	);
 
-	return metamodelToFocus(payload, resourceTypes, log);
+	return metamodelToFocus(payload, resourceTypes, operationMaps, log);
 }

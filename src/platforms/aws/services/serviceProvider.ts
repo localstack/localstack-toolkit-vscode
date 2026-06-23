@@ -90,4 +90,17 @@ export abstract class ServiceProvider {
 	public getResourceTypes(): string[] {
 		return Object.keys(this.resourceTypes);
 	}
+
+	/**
+	 * Map of metamodel API-operation name -> resource type id, used to narrow the
+	 * LocalStack "View: All Resources" focus to the resource types actually
+	 * present (the metamodel records one list-operation key per present type).
+	 * Empty by default: a single-type service needs no map (the metamodel focus
+	 * falls back to its sole type), and providers that have not declared their
+	 * operations fall back to their full type set. Multi-type providers SHOULD
+	 * override (or, for declarative services, annotate each type's `metamodelOp`).
+	 */
+	public getMetamodelOperationMap(): Map<string, string> {
+		return new Map();
+	}
 }

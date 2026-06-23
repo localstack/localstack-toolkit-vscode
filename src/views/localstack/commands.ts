@@ -15,20 +15,33 @@ import { ProviderFactory } from "../../platforms/aws/services/providerFactory.ts
 import {
 	getAddedRegions,
 	getFilters,
+	getInstanceViews,
 	removeFilter,
+	removeInstanceView,
 	removeRegion,
 	resolveShownProfiles,
 	saveFilter,
+	saveInstanceView,
 	setAddedRegions,
 	setShownProfiles,
 } from "./settings.ts";
 import type { FilterScope, SavedFilter } from "./settings.ts";
-import type { FilterTreeItem, RegionTreeItem } from "./treeItems.ts";
+import type {
+	FilterTreeItem,
+	InstanceViewTreeItem,
+	RegionTreeItem,
+} from "./treeItems.ts";
 import type { LocalStackViewProvider } from "./viewProvider.ts";
 
-/** Register the region/filter CRUD commands; returns their disposables. */
+/**
+ * Register the region/filter CRUD commands; returns their disposables.
+ * `refreshResources` re-renders the Resources view after a view (filter) is
+ * added/edited/removed, so an active view reflects the change (or clears when
+ * removed) without the user reselecting it.
+ */
 export function registerLocalStackCommands(
 	provider: LocalStackViewProvider,
+	refreshResources: () => void,
 ): Disposable[] {
 	return [
 		commands.registerCommand(
@@ -44,17 +57,80 @@ export function registerLocalStackCommands(
 				onRemoveRegion(provider, item.profileName, item.regionId),
 		),
 		commands.registerCommand("localstack.addFilter", (item: RegionTreeItem) =>
-			onAddFilter(provider, item.profileName, item.regionId),
+			onAddFilter(provider, refreshResources, item.profileName, item.regionId),
 		),
 		commands.registerCommand("localstack.editFilter", (item: FilterTreeItem) =>
-			onEditFilter(provider, item),
+			onEditFilter(provider, refreshResources, item),
 		),
 		commands.registerCommand(
 			"localstack.removeFilter",
 			(item: FilterTreeItem) =>
-				onRemoveFilter(provider, item.profileName, item.filter.name),
+				onRemoveFilter(
+					provider,
+					refreshResources,
+					item.profileName,
+					item.filter.name,
+				),
+		),
+		commands.registerCommand("localstack.addInstanceView", () =>
+			onAddInstanceView(provider, refreshResources),
+		),
+		commands.registerCommand(
+			"localstack.editInstanceView",
+			(item: InstanceViewTreeItem) =>
+				onEditInstanceView(provider, refreshResources, item),
+		),
+		commands.registerCommand(
+			"localstack.removeInstanceView",
+			(item: InstanceViewTreeItem) =>
+				onRemoveInstanceView(provider, refreshResources, item.view.name),
 		),
 	];
+}
+
+async function onAddInstanceView(
+	provider: LocalStackViewProvider,
+	refreshResources: () => void,
+): Promise<void> {
+	const result = await runFilterWizard(undefined, undefined, undefined, true);
+	if (!result) {
+		return;
+	}
+	await saveInstanceView(result);
+	provider.refresh();
+	refreshResources();
+}
+
+async function onEditInstanceView(
+	provider: LocalStackViewProvider,
+	refreshResources: () => void,
+	item: InstanceViewTreeItem,
+): Promise<void> {
+	const result = await runFilterWizard(undefined, undefined, item.view, true);
+	if (!result) {
+		return;
+	}
+	await saveInstanceView(result, item.view.name);
+	provider.refresh();
+	refreshResources();
+}
+
+async function onRemoveInstanceView(
+	provider: LocalStackViewProvider,
+	refreshResources: () => void,
+	name: string,
+): Promise<void> {
+	const confirmed = await window.showWarningMessage(
+		`Remove view "${name}" from the LocalStack instance?`,
+		{ modal: true },
+		"Remove",
+	);
+	if (confirmed !== "Remove") {
+		return;
+	}
+	await removeInstanceView(name);
+	provider.refresh();
+	refreshResources();
 }
 
 async function onAddRegion(
@@ -141,6 +217,7 @@ async function onRemoveRegion(
 
 async function onAddFilter(
 	provider: LocalStackViewProvider,
+	refreshResources: () => void,
 	profile: string,
 	region: string,
 ): Promise<void> {
@@ -150,10 +227,12 @@ async function onAddFilter(
 	}
 	await saveFilter(profile, result);
 	provider.refresh();
+	refreshResources();
 }
 
 async function onEditFilter(
 	provider: LocalStackViewProvider,
+	refreshResources: () => void,
 	item: FilterTreeItem,
 ): Promise<void> {
 	const region =
@@ -164,10 +243,12 @@ async function onEditFilter(
 	}
 	await saveFilter(item.profileName, result, item.filter.name);
 	provider.refresh();
+	refreshResources();
 }
 
 async function onRemoveFilter(
 	provider: LocalStackViewProvider,
+	refreshResources: () => void,
 	profile: string,
 	name: string,
 ): Promise<void> {
@@ -181,28 +262,32 @@ async function onRemoveFilter(
 	}
 	await removeFilter(profile, name);
 	provider.refresh();
+	refreshResources();
 }
 
 /**
- * The 3-step filter wizard: name -> services -> scope. Returns the new filter,
- * or undefined if the user cancelled at any step. `existing` pre-populates the
- * fields for an edit.
+ * The filter wizard: name -> services -> scope. Returns the new filter, or
+ * undefined if the user cancelled at any step. `existing` pre-populates the
+ * fields for an edit. For an instance view (`isInstance`), the scope step is
+ * skipped (instance views always apply to the running instance) and the name
+ * must be unique among instance views rather than a profile's filters.
  */
 async function runFilterWizard(
-	profile: string,
+	profile: string | undefined,
 	region: string | undefined,
 	existing?: SavedFilter,
+	isInstance = false,
 ): Promise<SavedFilter | undefined> {
-	/* Step 1: name (unique within the profile). */
+	/* Step 1: name (unique within the profile, or among instance views). */
+	const siblings = isInstance ? getInstanceViews() : getFilters(profile ?? "");
 	const takenNames = new Set(
-		getFilters(profile)
-			.map((f) => f.name)
-			.filter((n) => n !== existing?.name),
+		siblings.map((f) => f.name).filter((n) => n !== existing?.name),
 	);
+	const scopeLabel = isInstance ? "the instance" : "the profile";
 	const name = await window.showInputBox({
 		title: "View name",
 		value: existing?.name,
-		prompt: "A name for this view (must be unique within the profile)",
+		prompt: `A name for this view (must be unique within ${scopeLabel})`,
 		validateInput: (value) => {
 			const trimmed = value.trim();
 			if (!trimmed) {
@@ -212,7 +297,7 @@ async function runFilterWizard(
 				return `"All Resources" is a reserved view name`;
 			}
 			if (takenNames.has(trimmed)) {
-				return `A view named "${trimmed}" already exists in this profile`;
+				return `A view named "${trimmed}" already exists in ${scopeLabel}`;
 			}
 			return undefined;
 		},
@@ -248,26 +333,28 @@ async function runFilterWizard(
 		return undefined;
 	}
 
-	/* Step 3: scope. */
-	const thisRegionLabel = region
-		? `This region only (${region})`
-		: "This region only";
-	const allRegionsLabel = "All regions in this profile";
-	const scopeChoice = await window.showQuickPick(
-		[thisRegionLabel, allRegionsLabel],
-		{ title: "Where should this view appear?" },
-	);
-	if (!scopeChoice) {
-		return undefined;
-	}
-
-	let scope: FilterScope;
-	if (scopeChoice === allRegionsLabel) {
-		scope = { allRegions: true };
-	} else if (region) {
-		scope = { region };
-	} else {
-		scope = { allRegions: true };
+	/* Step 3: scope. Instance views always apply to the running instance, so the
+	 * scope step is skipped and a placeholder scope is stored (unused there). */
+	let scope: FilterScope = { allRegions: true };
+	if (!isInstance) {
+		const thisRegionLabel = region
+			? `This region only (${region})`
+			: "This region only";
+		const allRegionsLabel = "All regions in this profile";
+		const scopeChoice = await window.showQuickPick(
+			[thisRegionLabel, allRegionsLabel],
+			{ title: "Where should this view appear?" },
+		);
+		if (!scopeChoice) {
+			return undefined;
+		}
+		if (scopeChoice === allRegionsLabel) {
+			scope = { allRegions: true };
+		} else if (region) {
+			scope = { region };
+		} else {
+			scope = { allRegions: true };
+		}
 	}
 
 	return {

@@ -32,6 +32,7 @@ export const logsDefinition = defineService<CloudWatchLogsClient>({
 		loggroup: {
 			singular: "Log Group",
 			plural: "Log Groups",
+			metamodelOp: "describeLogGroups",
 			cfn: "AWS::Logs::LogGroup",
 			matchArn: (identifier) =>
 				identifier.arn.includes(":log-group:") &&
@@ -69,6 +70,7 @@ export const logsDefinition = defineService<CloudWatchLogsClient>({
 		logstream: {
 			singular: "Log Stream",
 			plural: "Log Streams",
+			metamodelOp: "describeLogStreams",
 			matchArn: (identifier) => identifier.arn.includes(":log-stream:"),
 			list: async (client): Promise<LogStream[]> => {
 				const groupNames = await listLogGroupNames(client);
@@ -100,6 +102,7 @@ export const logsDefinition = defineService<CloudWatchLogsClient>({
 		metricfilter: {
 			singular: "Metric Filter",
 			plural: "Metric Filters",
+			metamodelOp: "describeMetricFilters",
 			cfn: "AWS::Logs::MetricFilter",
 			matchArn: (identifier) => identifier.arn.includes(":metric-filter:"),
 			list: async (client): Promise<MetricFilter[]> => {
@@ -126,6 +129,7 @@ export const logsDefinition = defineService<CloudWatchLogsClient>({
 		subscriptionfilter: {
 			singular: "Subscription Filter",
 			plural: "Subscription Filters",
+			metamodelOp: "describeSubscriptionFilters",
 			cfn: "AWS::Logs::SubscriptionFilter",
 			matchArn: (identifier) =>
 				identifier.arn.includes(":subscription-filter:"),
@@ -164,6 +168,7 @@ export const logsDefinition = defineService<CloudWatchLogsClient>({
 		destination: {
 			singular: "Destination",
 			plural: "Destinations",
+			metamodelOp: "describeDestinations",
 			cfn: "AWS::Logs::Destination",
 			matchArn: (identifier) => identifier.arn.includes(":destination:"),
 			list: async (client): Promise<Destination[]> => {

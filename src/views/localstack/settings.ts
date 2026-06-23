@@ -10,6 +10,9 @@ const CONFIG_SECTION = "localstack";
 const REGIONS_KEY = "cloudProfiles.regions";
 const FILTERS_KEY = "cloudProfiles.filters";
 const SHOWN_PROFILES_KEY = "cloudProfiles.shown";
+/* Instance views are stored separately from cloud-profile filters so they never
+ * collide with the bundled `localstack` cloud profile's region views. */
+const INSTANCE_VIEWS_KEY = "instanceViews";
 
 /**
  * Deep-clone plain JSON config data. We cannot use `structuredClone` on the
@@ -208,4 +211,47 @@ export async function removeFilter(
 	await workspace
 		.getConfiguration(CONFIG_SECTION)
 		.update(FILTERS_KEY, map, configTarget());
+}
+
+/* ── Instance views ───────────────────────────────────────────────────────
+ * Saved views for the running LocalStack instance. They reuse the SavedFilter
+ * shape (with a placeholder scope that instance rendering ignores) but live
+ * under their own key, separate from cloud-profile filters. */
+
+function instanceViews(): SavedFilter[] {
+	return (
+		workspace
+			.getConfiguration(CONFIG_SECTION)
+			.get<SavedFilter[]>(INSTANCE_VIEWS_KEY) ?? []
+	);
+}
+
+/** All saved views for the LocalStack instance. */
+export function getInstanceViews(): SavedFilter[] {
+	return instanceViews();
+}
+
+/** Add a new instance view, or overwrite one by name (`originalName` on edit). */
+export async function saveInstanceView(
+	view: SavedFilter,
+	originalName?: string,
+): Promise<void> {
+	const list = cloneJson(instanceViews());
+	const key = originalName ?? view.name;
+	const index = list.findIndex((v) => v.name === key);
+	if (index >= 0) {
+		list[index] = view;
+	} else {
+		list.push(view);
+	}
+	await workspace
+		.getConfiguration(CONFIG_SECTION)
+		.update(INSTANCE_VIEWS_KEY, list, configTarget());
+}
+
+export async function removeInstanceView(name: string): Promise<void> {
+	const list = instanceViews().filter((v) => v.name !== name);
+	await workspace
+		.getConfiguration(CONFIG_SECTION)
+		.update(INSTANCE_VIEWS_KEY, list, configTarget());
 }

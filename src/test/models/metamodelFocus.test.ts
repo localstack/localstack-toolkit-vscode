@@ -28,7 +28,8 @@ suite("metamodel -> Focus", () => {
 			["iam", ["role"]],
 		]);
 
-		const focus = metamodelToFocus(payload, resourceTypes);
+		/* Single-type services with no operation map fall back to their sole type. */
+		const focus = metamodelToFocus(payload, resourceTypes, new Map());
 
 		assert.strictEqual(focus.profiles.length, 1);
 		assert.strictEqual(focus.profiles[0].id, "localstack");
@@ -59,15 +60,80 @@ suite("metamodel -> Focus", () => {
 			["states", ["statemachine"]],
 		]);
 
-		const focus = metamodelToFocus(payload, resourceTypes);
+		const focus = metamodelToFocus(payload, resourceTypes, new Map());
 
 		const serviceIds = focus.profiles[0].regions[0].services.map((s) => s.id);
 		assert.deepStrictEqual(serviceIds, ["states"]);
 	});
 
 	test("returns an empty focus when the default account is absent", () => {
-		const focus = metamodelToFocus({ "999999999999": {} }, new Map());
+		const focus = metamodelToFocus(
+			{ "999999999999": {} },
+			new Map(),
+			new Map(),
+		);
 		assert.strictEqual(focus.profiles[0].id, "localstack");
 		assert.strictEqual(focus.profiles[0].regions.length, 0);
+	});
+
+	test("names only the resource types whose metamodel operation is present", () => {
+		/* SSM has five types but only a Parameter is deployed: the focus must list
+		 * Parameters alone, not the other four types. */
+		const payload = {
+			"000000000000": {
+				SSM: { "us-east-1": { describeParameters: {} } },
+			},
+		};
+		const resourceTypes = new Map<string, string[]>([
+			[
+				"ssm",
+				["parameter", "document", "maintenancewindow", "association", "patchbaseline"],
+			],
+		]);
+		const operationMaps = new Map<string, Map<string, string>>([
+			[
+				"ssm",
+				new Map([
+					["describeParameters", "parameter"],
+					["listDocuments", "document"],
+					["describeMaintenanceWindows", "maintenancewindow"],
+					["listAssociations", "association"],
+					["describePatchBaselines", "patchbaseline"],
+				]),
+			],
+		]);
+
+		const focus = metamodelToFocus(payload, resourceTypes, operationMaps);
+
+		const ssm = focus.profiles[0].regions[0].services.find((s) => s.id === "ssm");
+		assert.ok(ssm);
+		assert.deepStrictEqual(ssm.resourcetypes, [
+			{ id: "parameter", arns: ["*"] },
+		]);
+	});
+
+	test("falls back to the full type set when an operation is unmapped", () => {
+		/* A present operation that maps to no known type must not hide resources:
+		 * the service falls back to listing all its types. */
+		const payload = {
+			"000000000000": {
+				SSM: { "us-east-1": { someUnknownOperation: {} } },
+			},
+		};
+		const resourceTypes = new Map<string, string[]>([
+			["ssm", ["parameter", "document"]],
+		]);
+		const operationMaps = new Map<string, Map<string, string>>([
+			["ssm", new Map([["describeParameters", "parameter"]])],
+		]);
+
+		const focus = metamodelToFocus(payload, resourceTypes, operationMaps);
+
+		const ssm = focus.profiles[0].regions[0].services.find((s) => s.id === "ssm");
+		assert.ok(ssm);
+		assert.deepStrictEqual(
+			ssm.resourcetypes.map((rt) => rt.id).sort(),
+			["document", "parameter"],
+		);
 	});
 });
