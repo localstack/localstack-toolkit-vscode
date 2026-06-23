@@ -3,9 +3,9 @@ import assert from "node:assert";
 import type { StackResourceSummary } from "@aws-sdk/client-cloudformation";
 import type { ExtensionContext, LogOutputChannel } from "vscode";
 
+import { CloudFormation } from "../../platforms/aws/clients/cloudformation.ts";
 import ARN from "../../platforms/aws/models/arnModel.ts";
 import CfnStackModel from "../../platforms/aws/models/cfnStackModel.ts";
-import { CloudFormation } from "../../platforms/aws/clients/cloudformation.ts";
 import { ProviderFactory } from "../../platforms/aws/services/providerFactory.ts";
 
 /**
@@ -106,9 +106,7 @@ suite("CfnStackModel", () => {
 		assert.deepStrictEqual(lambda.resourcetypes, [
 			{
 				id: "function",
-				arns: [
-					"arn:aws:lambda:us-east-1:000000000000:function:my-function",
-				],
+				arns: ["arn:aws:lambda:us-east-1:000000000000:function:my-function"],
 			},
 		]);
 	});
@@ -154,11 +152,11 @@ suite("CfnStackModel", () => {
 				PhysicalResourceId:
 					"https://sqs.us-east-1.amazonaws.com/000000000000/my-queue",
 			},
-			/* Unsupported service: no provider is registered for "s3". */
+			/* Unsupported service: no provider is registered for "ec2". */
 			{
-				LogicalResourceId: "MyBucket",
-				ResourceType: "AWS::S3::Bucket",
-				PhysicalResourceId: "my-bucket",
+				LogicalResourceId: "MyInstance",
+				ResourceType: "AWS::EC2::Instance",
+				PhysicalResourceId: "i-1234567890abcdef0",
 			},
 			/* Malformed summary: a missing ResourceType used to throw a
 			 * TypeError ("Cannot read properties of undefined (reading 'split')")
@@ -182,16 +180,41 @@ suite("CfnStackModel", () => {
 
 		/* Both unmappable resources were reported, identified by logical id. */
 		assert.strictEqual(warnings.length, 2);
-		assert.ok(warnings.some((w) => w.includes("MyBucket")));
+		assert.ok(warnings.some((w) => w.includes("MyInstance")));
 		assert.ok(warnings.some((w) => w.includes("Mystery")));
+	});
+
+	test("routes a StepFunctions CFN namespace to the states provider via label mapping", async () => {
+		stubResources([
+			{
+				LogicalResourceId: "MyStateMachine",
+				ResourceType: "AWS::StepFunctions::StateMachine",
+				PhysicalResourceId: "my-state-machine",
+			},
+		]);
+
+		const { log, warnings } = makeLogStub();
+		const focus = await new CfnStackModel(
+			"default",
+			new ARN(STACK_ARN),
+			log,
+		).toFocusModel();
+
+		/* The `states` provider does not yet implement CloudFormation mapping, so
+		 * the resource is skipped — but the warning originates from the states
+		 * provider, proving the label mapping routed `StepFunctions` to `states`
+		 * rather than failing earlier at provider lookup. */
+		assert.deepStrictEqual(focus.profiles[0].regions[0].services, []);
+		assert.strictEqual(warnings.length, 1);
+		assert.ok(warnings[0].includes("Step Functions"));
 	});
 
 	test("does not require a log channel", async () => {
 		stubResources([
 			{
-				LogicalResourceId: "MyBucket",
-				ResourceType: "AWS::S3::Bucket",
-				PhysicalResourceId: "my-bucket",
+				LogicalResourceId: "MyInstance",
+				ResourceType: "AWS::EC2::Instance",
+				PhysicalResourceId: "i-1234567890abcdef0",
 			},
 		]);
 

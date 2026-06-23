@@ -7,6 +7,7 @@ import type { ServiceFocus } from "../../../models/focus.ts";
 import { InternalError } from "../../../utils/errors.ts";
 import { CloudFormation } from "../clients/cloudformation.ts";
 import { ProviderFactory } from "../services/providerFactory.ts";
+import { mapLabelToServiceId } from "../services/serviceManifest.ts";
 import type { ServiceResourceArnTuple } from "../services/serviceProvider.ts";
 
 import type ARN from "./arnModel.ts";
@@ -163,21 +164,31 @@ export default class CfnStackModel {
 	private convertToTuple(
 		stackResourceSummary: StackResourceSummary,
 	): ServiceResourceArnTuple {
-		const [aws, service, _resourceTypeName] =
-			stackResourceSummary.ResourceType!.split("::"); // e.g. ["SQS", "Queue"]
-		const serviceId = service.toLowerCase();
+		const cfnType = stackResourceSummary.ResourceType;
+		if (!cfnType) {
+			throw new InternalError(
+				"CloudFormation resource is missing a ResourceType",
+			);
+		}
+		const [aws, service] = cfnType.split("::"); // e.g. ["AWS", "SQS", "Queue"]
 
 		/* We only support CloudFormation resources that start with AWS:: */
 		if (aws !== "AWS") {
 			throw new InternalError(
-				`Unsupported CloudFormation resource: ${stackResourceSummary.ResourceType}`,
+				`Unsupported CloudFormation resource: ${cfnType}`,
 			);
 		}
 
-		/* look up the service handler for the AWS service */
-		const serviceHandler = ProviderFactory.getProviderForService(serviceId);
+		/* Map the CloudFormation namespace (e.g. "StepFunctions") to a manifest
+		 * service id (e.g. "states"), then look up its provider. A service with no
+		 * registered provider — not yet curated — is treated as unrepresentable:
+		 * the caller skips and logs it rather than aborting the whole stack. */
+		const serviceId = mapLabelToServiceId(service);
+		const serviceHandler = ProviderFactory.tryGetProviderForService(serviceId);
 		if (!serviceHandler) {
-			throw new InternalError(`Unsupported service: ${serviceId}`);
+			throw new InternalError(
+				`No registered provider for service: ${serviceId}`,
+			);
 		}
 
 		/*

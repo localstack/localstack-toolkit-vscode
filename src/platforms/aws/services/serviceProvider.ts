@@ -1,7 +1,9 @@
+import * as fs from "node:fs";
 import * as path from "node:path";
 
 import { Stack } from "@aws-sdk/client-cloudformation";
 import type { StackResourceSummary } from "@aws-sdk/client-cloudformation";
+import { ThemeIcon } from "vscode";
 import type * as vscode from "vscode";
 
 import { InternalError } from "../../../utils/errors.ts";
@@ -99,16 +101,23 @@ export abstract class ServiceProvider {
 	}
 
 	/**
-	 * Return the relevant icon path for this AWS service.
+	 * Return the relevant icon for this AWS service: the bundled per-service SVG
+	 * when one exists, otherwise a generic fallback icon. With 100+ services,
+	 * most have no bundled icon yet, so the fallback keeps the tree consistent.
 	 */
-	public getIconPath(serviceId: string): string {
+	public getIconPath(serviceId: string): string | ThemeIcon {
 		// TODO: return both light and dark variants.
-		return path.join(
-			this.context.extensionPath,
+		const extensionPath = this.context?.extensionPath;
+		if (!extensionPath) {
+			return new ThemeIcon("symbol-misc");
+		}
+		const iconPath = path.join(
+			extensionPath,
 			"resources",
 			"icons",
 			"services",
 			`${serviceId}.svg`,
 		);
+		return fs.existsSync(iconPath) ? iconPath : new ThemeIcon("symbol-misc");
 	}
 }
