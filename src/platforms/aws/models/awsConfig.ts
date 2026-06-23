@@ -7,7 +7,7 @@ import type { IIniObject, IIniObjectSection } from "js-ini";
 
 import { UserConfigurationError } from "../../../utils/errors.ts";
 
-const AWS_CONFIG_FILE = path.join(os.homedir(), ".aws", "config");
+const DEFAULT_AWS_CONFIG_FILE = path.join(os.homedir(), ".aws", "config");
 
 /** Last-resort region when neither the call nor the profile supplies one. */
 const DEFAULT_REGION = "us-east-1";
@@ -15,7 +15,7 @@ const DEFAULT_REGION = "us-east-1";
 /** Read and parse the AWS config file */
 function readAWSConfigFile(): IIniObject {
 	try {
-		const configContent = fs.readFileSync(AWS_CONFIG_FILE, "utf-8");
+		const configContent = fs.readFileSync(AWSConfig.AWS_CONFIG_FILE, "utf-8");
 		return parse(configContent, { comment: [";", "#"] });
 	} catch (error: unknown) {
 		if ((error as NodeJS.ErrnoException).code === "ENOENT") {
@@ -48,6 +48,12 @@ function getSectionForProfile(profile: string): IIniObjectSection | undefined {
  * profiles and regions.
  */
 const AWSConfig = {
+	/**
+	 * Path to the AWS config file. Exposed as a mutable property so tests can
+	 * repoint it at a fixture file instead of the developer's real config.
+	 */
+	AWS_CONFIG_FILE: DEFAULT_AWS_CONFIG_FILE,
+
 	/**
 	 * Return the names of profiles found in the AWS config file. This will include 'default'
 	 * as the name of the default profile.

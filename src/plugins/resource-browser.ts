@@ -18,7 +18,7 @@ export default createPlugin(
 			localStackStatusTracker,
 			outputChannel,
 		);
-		const resourcesProvider = new ResourceViewProvider(context);
+		const resourcesProvider = new ResourceViewProvider();
 		const detailsProvider = new ResourceDetailsViewProvider();
 
 		/* Resources is a tree view; Resource Details is a webview (table layout). */
