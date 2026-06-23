@@ -81,14 +81,14 @@ export class SqsServiceProvider extends ServiceProvider {
 			{
 				field: "Created Timestamp",
 				value: new Date(
-					parseInt(attributes.CreatedTimestamp ?? ""),
+					parseInt(attributes.CreatedTimestamp ?? "", 10),
 				).toISOString(),
 				type: FieldType.DATE,
 			},
 			{
 				field: "Last Modified Timestamp",
 				value: new Date(
-					parseInt(attributes.LastModifiedTimestamp ?? ""),
+					parseInt(attributes.LastModifiedTimestamp ?? "", 10),
 				).toISOString(),
 				type: FieldType.DATE,
 			},
@@ -104,9 +104,16 @@ export class SqsServiceProvider extends ServiceProvider {
 				`Unsupported resource type for SQS service: ${resourceType}`,
 			);
 		}
+		const physicalResourceId = stackResourceSummary.PhysicalResourceId;
+		const resourceName = physicalResourceId?.split("/").pop();
+		if (!resourceName) {
+			throw new Error(
+				`Could not derive queue name from PhysicalResourceId: ${physicalResourceId}`,
+			);
+		}
 		return {
 			resourceType: "queue",
-			resourceName: stackResourceSummary.PhysicalResourceId!.split("/").pop()!,
+			resourceName,
 		};
 	}
 

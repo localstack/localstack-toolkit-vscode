@@ -104,8 +104,7 @@ export function metamodelToFocus(
 					unmappedOp = true;
 				}
 			}
-			const types =
-				unmappedOp || present.size === 0 ? allTypes : [...present];
+			const types = unmappedOp || present.size === 0 ? allTypes : [...present];
 			if (unmappedOp) {
 				fellBack.add(serviceLabel);
 			}

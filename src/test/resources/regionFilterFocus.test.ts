@@ -45,9 +45,14 @@ suite("resolveRegionFilterFocus", () => {
 	});
 
 	test("yields undefined when the named filter is absent (removed/renamed)", () => {
-		const focus = resolveRegionFilterFocus(profile, region, "My View", [
-			filter([{ service: "sqs", resourceType: "queue" }]),
-		].filter((f) => f.name !== "My View"));
+		const focus = resolveRegionFilterFocus(
+			profile,
+			region,
+			"My View",
+			[filter([{ service: "sqs", resourceType: "queue" }])].filter(
+				(f) => f.name !== "My View",
+			),
+		);
 		assert.strictEqual(focus, undefined);
 	});
 });

@@ -13,25 +13,20 @@ import { memoize } from "../../../utils/memoize.ts";
 import type ARN from "../models/arnModel.ts";
 import AWSConfig from "../models/awsConfig.ts";
 
+const cachedGetSqsClient = memoize((profile: string, region: string) => {
+	return new SQSClient(AWSConfig.getClientConfig(profile, region));
+});
+
 /**
  * Accessor functions for the AWS "SQS" (Simple Queue Service) service
  */
-export class Sqs {
-	private static cachedGetSqsClient = memoize(
-		(profile: string, region: string) => {
-			return new SQSClient(AWSConfig.getClientConfig(profile, region));
-		},
-	);
-
+export const Sqs = {
 	/**
 	 * List the SQS queues in the specified profile/region. If the profile is not valid,
 	 * reject the promise and let the caller behave appropriately.
 	 */
-	public static async listQueues(
-		profile: string,
-		region: string,
-	): Promise<string[]> {
-		const client = Sqs.cachedGetSqsClient(profile, region);
+	async listQueues(profile: string, region: string): Promise<string[]> {
+		const client = cachedGetSqsClient(profile, region);
 
 		const queueUrls: string[] = [];
 		let nextToken: string | undefined;
@@ -56,22 +51,26 @@ export class Sqs {
 					AttributeNames: ["QueueArn"],
 				});
 				const attributes = await client.send(command);
-				return attributes.Attributes!.QueueArn!;
+				const queueArn = attributes.Attributes?.QueueArn;
+				if (!queueArn) {
+					throw new Error(`Failed to resolve ARN for SQS queue: ${url}`);
+				}
+				return queueArn;
 			}),
 		);
 
 		return queueArns;
-	}
+	},
 
 	/**
 	 * Get the all attributes of an SQS queue.
 	 */
-	public static async getQueueAttributes(
+	async getQueueAttributes(
 		profile: string,
 		region: string,
 		queueArn: ARN,
 	): Promise<GetQueueAttributesCommandOutput["Attributes"]> {
-		const client = Sqs.cachedGetSqsClient(profile, region);
+		const client = cachedGetSqsClient(profile, region);
 
 		/*
 		 * Convert the ARN to a queue URL by calling getQueueUrl. This is necessary because SQS doesn't use
@@ -80,14 +79,17 @@ export class Sqs {
 		const getUrlCommand = new GetQueueUrlCommand({
 			QueueName: queueArn.resourceName,
 		});
-		const queueUrl = await client
-			.send(getUrlCommand)
-			.then((response) => response.QueueUrl!);
+		const { QueueUrl: queueUrl } = await client.send(getUrlCommand);
+		if (!queueUrl) {
+			throw new Error(
+				`Failed to resolve URL for SQS queue: ${queueArn.resourceName}`,
+			);
+		}
 
 		const command = new GetQueueAttributesCommand({
 			QueueUrl: queueUrl,
 			AttributeNames: ["All"],
 		});
 		return (await client.send(command)).Attributes;
-	}
-}
+	},
+};

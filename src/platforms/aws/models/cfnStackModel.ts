@@ -111,14 +111,17 @@ export default class CfnStackModel {
 		/* group the ARNs by service and resource type, so we end up with a hierarchical map */
 		const servicesMap = new Map<string, Map<string, string[]>>();
 		tuples.forEach(({ serviceId, resourceType, arn }) => {
-			if (!servicesMap.has(serviceId)) {
-				servicesMap.set(serviceId, new Map<string, string[]>());
+			let resourceMap = servicesMap.get(serviceId);
+			if (!resourceMap) {
+				resourceMap = new Map<string, string[]>();
+				servicesMap.set(serviceId, resourceMap);
 			}
-			const resourceMap = servicesMap.get(serviceId)!;
-			if (!resourceMap.has(resourceType)) {
-				resourceMap.set(resourceType, []);
+			let arns = resourceMap.get(resourceType);
+			if (!arns) {
+				arns = [];
+				resourceMap.set(resourceType, arns);
 			}
-			resourceMap.get(resourceType)!.push(arn);
+			arns.push(arn);
 		});
 
 		/*

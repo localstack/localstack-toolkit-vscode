@@ -17,25 +17,23 @@ import type {
 import { memoize } from "../../../utils/memoize.ts";
 import AWSConfig from "../models/awsConfig.ts";
 
+const cachedGetStatesClient = memoize((profile: string, region: string) => {
+	return new SFNClient(AWSConfig.getClientConfig(profile, region));
+});
+
 /**
  * Accessor functions for the AWS "states" (Step Functions) service
  */
-export class States {
-	private static cachedGetStatesClient = memoize(
-		(profile: string, region: string) => {
-			return new SFNClient(AWSConfig.getClientConfig(profile, region));
-		},
-	);
-
+export const States = {
 	/**
 	 * List the state machines in the specified profile/region. If the profile is not valid,
 	 * reject the promise and let the caller behave appropriately.
 	 */
-	public static async listStateMachines(
+	async listStateMachines(
 		profile: string,
 		region: string,
 	): Promise<StateMachineListItem[]> {
-		const client = States.cachedGetStatesClient(profile, region);
+		const client = cachedGetStatesClient(profile, region);
 
 		const stateMachines: StateMachineListItem[] = [];
 		let nextToken: string | undefined;
@@ -50,31 +48,31 @@ export class States {
 		} while (nextToken);
 
 		return stateMachines;
-	}
+	},
 
 	/**
 	 * Describe the state machine with the specified ARN. If the profile is not valid,
 	 * reject the promise and let the caller behave appropriately.
 	 */
-	public static async describeStateMachine(
+	async describeStateMachine(
 		profile: string,
 		region: string,
 		arn: string,
 	): Promise<DescribeStateMachineCommandOutput> {
-		const client = States.cachedGetStatesClient(profile, region);
+		const client = cachedGetStatesClient(profile, region);
 		const command = new DescribeStateMachineCommand({ stateMachineArn: arn });
 		return await client.send(command);
-	}
+	},
 
 	/**
 	 * List the activities of the specified profile. If the profile is not valid,
 	 * reject the promise and let the caller behave appropriately.
 	 */
-	public static async listActivities(
+	async listActivities(
 		profile: string,
 		region: string,
 	): Promise<ActivityListItem[]> {
-		const client = States.cachedGetStatesClient(profile, region);
+		const client = cachedGetStatesClient(profile, region);
 
 		const activities: ActivityListItem[] = [];
 		let nextToken: string | undefined;
@@ -89,20 +87,20 @@ export class States {
 		} while (nextToken);
 
 		return activities;
-	}
+	},
 
 	/**
 	 * Describe an activity in the specified profile/region. If the profile is not valid,
 	 * reject the promise and let the caller behave appropriately.
 	 */
-	public static async describeActivity(
+	async describeActivity(
 		profile: string,
 		region: string,
 		arn: string,
 	): Promise<DescribeActivityCommandOutput> {
-		const client = States.cachedGetStatesClient(profile, region);
+		const client = cachedGetStatesClient(profile, region);
 
 		const command = new DescribeActivityCommand({ activityArn: arn });
 		return await client.send(command);
-	}
-}
+	},
+};

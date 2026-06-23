@@ -20,12 +20,13 @@ export class StatesServiceProvider extends ServiceProvider {
 		resourceType: string,
 	): Promise<string[]> {
 		if (resourceType === "activity") {
-			return (await States.listActivities(profile, region)).map(
-				(activity) => activity.activityArn!,
+			return (await States.listActivities(profile, region)).flatMap(
+				(activity) => (activity.activityArn ? [activity.activityArn] : []),
 			);
 		} else if (resourceType === "statemachine") {
-			return (await States.listStateMachines(profile, region)).map(
-				(stateMachine) => stateMachine.stateMachineArn!,
+			return (await States.listStateMachines(profile, region)).flatMap(
+				(stateMachine) =>
+					stateMachine.stateMachineArn ? [stateMachine.stateMachineArn] : [],
 			);
 		} else {
 			throw new Error(`Unknown resource type: ${resourceType}`);
@@ -46,7 +47,7 @@ export class StatesServiceProvider extends ServiceProvider {
 			);
 			return [
 				{ field: "Resource Type", value: "Activity", type: FieldType.NAME },
-				{ field: "Name", value: details.name!, type: FieldType.NAME },
+				{ field: "Name", value: details.name ?? "N/A", type: FieldType.NAME },
 				{
 					field: "Creation Date",
 					value: details.creationDate?.toISOString() || "",
@@ -68,7 +69,7 @@ export class StatesServiceProvider extends ServiceProvider {
 					value: "State Machine",
 					type: FieldType.NAME,
 				},
-				{ field: "Name", value: details.name!, type: FieldType.NAME },
+				{ field: "Name", value: details.name ?? "N/A", type: FieldType.NAME },
 				{
 					field: "Description",
 					value: details.description || "",
@@ -76,10 +77,14 @@ export class StatesServiceProvider extends ServiceProvider {
 				},
 				{
 					field: "State Machine Type",
-					value: details.type!,
+					value: details.type ?? "N/A",
 					type: FieldType.NAME,
 				},
-				{ field: "Status", value: details.status!, type: FieldType.NAME },
+				{
+					field: "Status",
+					value: details.status ?? "N/A",
+					type: FieldType.NAME,
+				},
 				{
 					field: "Creation Date",
 					value: details.creationDate?.toISOString() || "",

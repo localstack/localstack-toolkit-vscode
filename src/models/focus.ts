@@ -61,26 +61,28 @@ type StandardModelType = {
 	key: string;
 	name: string;
 };
-export class StandardModel {
-	static EVERYTHING_IN_DEFAULT_REGION: StandardModelType = {
+export const StandardModel = {
+	EVERYTHING_IN_DEFAULT_REGION: {
 		key: "everything-in-default-region",
 		name: "All Services in Default Region",
-	};
-	static EVERYTHING_IN_DEFAULT_PROFILE: StandardModelType = {
+	} satisfies StandardModelType,
+	EVERYTHING_IN_DEFAULT_PROFILE: {
 		key: "everything-in-default-profile",
 		name: "All Regions in Default Profile",
-	};
-	static EVERYTHING_IN_ALL_PROFILES: StandardModelType = {
+	} satisfies StandardModelType,
+	EVERYTHING_IN_ALL_PROFILES: {
 		key: "everything-in-all-profiles",
 		name: "Everything in all Profiles",
-	};
+	} satisfies StandardModelType,
 
-	static all = [
-		StandardModel.EVERYTHING_IN_DEFAULT_REGION,
-		StandardModel.EVERYTHING_IN_DEFAULT_PROFILE,
-		StandardModel.EVERYTHING_IN_ALL_PROFILES,
-	];
-}
+	get all(): StandardModelType[] {
+		return [
+			StandardModel.EVERYTHING_IN_DEFAULT_REGION,
+			StandardModel.EVERYTHING_IN_DEFAULT_PROFILE,
+			StandardModel.EVERYTHING_IN_ALL_PROFILES,
+		];
+	},
+};
 
 /**
  * Load one of the standard (pre-defined, unmodifiable) focuses. The

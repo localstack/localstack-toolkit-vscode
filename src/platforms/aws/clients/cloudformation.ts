@@ -16,15 +16,15 @@ import { memoize } from "../../../utils/memoize.ts";
 import type ARN from "../models/arnModel.ts";
 import AWSConfig from "../models/awsConfig.ts";
 
+const cachedGetCloudFormationClient = memoize(
+	(profile: string, region: string) =>
+		new CloudFormationClient(AWSConfig.getClientConfig(profile, region)),
+);
+
 /**
  * Accessor functions for the AWS "cloudformation" service
  */
-export class CloudFormation {
-	private static cachedGetCloudFormationClient = memoize(
-		(profile: string, region: string) =>
-			new CloudFormationClient(AWSConfig.getClientConfig(profile, region)),
-	);
-
+export const CloudFormation = {
 	/**
 	 * List the successfully-created stacks of the specified profile — i.e. those
 	 * in a stable, resource-bearing state. Stacks that failed, rolled back from a
@@ -32,14 +32,8 @@ export class CloudFormation {
 	 * below). If the profile is not valid, reject the promise and let the caller
 	 * behave appropriately.
 	 */
-	public static async listStacks(
-		profile: string,
-		region: string,
-	): Promise<StackSummary[]> {
-		const client = CloudFormation.cachedGetCloudFormationClient(
-			profile,
-			region,
-		);
+	async listStacks(profile: string, region: string): Promise<StackSummary[]> {
+		const client = cachedGetCloudFormationClient(profile, region);
 
 		const stacks: StackSummary[] = [];
 		let nextToken: string | undefined;
@@ -76,20 +70,13 @@ export class CloudFormation {
 		} while (nextToken);
 
 		return stacks;
-	}
+	},
 
 	/**
 	 * Describe a specific CloudFormation stack.
 	 */
-	public static async describeStacks(
-		profile: string,
-		region: string,
-		arn: ARN,
-	) {
-		const client = CloudFormation.cachedGetCloudFormationClient(
-			profile,
-			region,
-		);
+	async describeStacks(profile: string, region: string, arn: ARN) {
+		const client = cachedGetCloudFormationClient(profile, region);
 
 		/*
 		 * Note: although there might be many 'deleted' stacks with the same name
@@ -106,16 +93,13 @@ export class CloudFormation {
 		} else {
 			throw new InternalError(`No stack found with name: ${arn.resourceName}`);
 		}
-	}
+	},
 
 	/**
 	 * Invoke the listStackResources API call.
 	 */
-	public static async listStackResources(profile: string, arn: ARN) {
-		const client = CloudFormation.cachedGetCloudFormationClient(
-			profile,
-			arn.region,
-		);
+	async listStackResources(profile: string, arn: ARN) {
+		const client = cachedGetCloudFormationClient(profile, arn.region);
 
 		const resources: StackResourceSummary[] = [];
 		let nextToken: string | undefined;
@@ -133,5 +117,5 @@ export class CloudFormation {
 		} while (nextToken);
 
 		return resources;
-	}
-}
+	},
+};

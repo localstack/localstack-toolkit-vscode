@@ -63,7 +63,7 @@ suite("CfnStackModel", () => {
 
 	function stubResources(resources: Partial<StackResourceSummary>[]) {
 		const full = resources.map(res);
-		cfnHandle.listStackResources = async () => full;
+		cfnHandle.listStackResources = () => Promise.resolve(full);
 	}
 
 	test("maps supported resources into a grouped Focus", async () => {

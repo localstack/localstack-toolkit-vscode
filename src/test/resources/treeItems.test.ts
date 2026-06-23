@@ -39,7 +39,11 @@ suite("resource browser tree item icons", () => {
 			"",
 			isLocalStack,
 		);
-		const regionItem = new ResourceRegionTreeItem(profileItem, region, "US East");
+		const regionItem = new ResourceRegionTreeItem(
+			profileItem,
+			region,
+			"US East",
+		);
 		return new ResourceServiceTypeTreeItem(
 			regionItem,
 			service,

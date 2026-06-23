@@ -32,28 +32,32 @@ export class DynamoDBServiceProvider extends ServiceProvider {
 
 			const attributeFields = (tableInfo.AttributeDefinitions || []).map(
 				(attr) => ({
-					field: ` - ${attr.AttributeName!}`,
-					value: attr.AttributeType!,
+					field: ` - ${attr.AttributeName ?? "N/A"}`,
+					value: attr.AttributeType ?? "N/A",
 					type: FieldType.NAME,
 				}),
 			);
 			const keySchemaFields = (tableInfo.KeySchema || []).map((key) => ({
-				field: ` - ${key.AttributeName!}`,
-				value: key.KeyType!,
+				field: ` - ${key.AttributeName ?? "N/A"}`,
+				value: key.KeyType ?? "N/A",
 				type: FieldType.NAME,
 			}));
 
 			return [
 				{ field: "Resource Type", value: "Table", type: FieldType.NAME },
-				{ field: "Name", value: tableInfo.TableName!, type: FieldType.NAME },
+				{
+					field: "Name",
+					value: tableInfo.TableName ?? "N/A",
+					type: FieldType.NAME,
+				},
 				{
 					field: "Table Status",
-					value: tableInfo.TableStatus!,
+					value: tableInfo.TableStatus ?? "N/A",
 					type: FieldType.NAME,
 				},
 				{
 					field: "Item Count",
-					value: tableInfo.ItemCount!.toString(),
+					value: tableInfo.ItemCount?.toString() ?? "N/A",
 					type: FieldType.NUMBER,
 				},
 				{
@@ -63,7 +67,7 @@ export class DynamoDBServiceProvider extends ServiceProvider {
 				},
 				{
 					field: "Creation Date",
-					value: tableInfo.CreationDateTime!.toISOString(),
+					value: tableInfo.CreationDateTime?.toISOString() ?? "N/A",
 					type: FieldType.DATE,
 				},
 				{
