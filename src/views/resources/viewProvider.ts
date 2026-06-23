@@ -305,7 +305,15 @@ export class ResourceViewProvider
 				return [new ResourcePlaceholderTreeItem()];
 			} else {
 				return arns.map((arn) => {
-					const name = new ARN(arn).resourceName || "Unknown Resource Name";
+					/* Most providers return ARNs, but some return a primary identifier
+					 * that isn't a parseable ARN. Fall back to showing the identifier
+					 * verbatim rather than failing the whole row. */
+					let name: string;
+					try {
+						name = new ARN(arn).resourceName || arn;
+					} catch {
+						name = arn;
+					}
 
 					/* Tooltip has form: <Service Name> <Resource Type Name> */
 					const tooltip = `${serviceName} ${singularName}`;

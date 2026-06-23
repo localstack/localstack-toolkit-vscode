@@ -47,6 +47,24 @@ suite("metamodel -> Focus", () => {
 		assert.deepStrictEqual(iam.resourcetypes, [{ id: "role", arns: ["*"] }]);
 	});
 
+	test("applies the StepFunctions -> states label override", () => {
+		const payload = {
+			"000000000000": {
+				StepFunctions: { "us-east-1": { listStateMachines: {} } },
+			},
+		};
+		/* The provider registers under the AWS service code `states`, not the
+		 * metamodel label `StepFunctions`; the shared label mapping must bridge them. */
+		const resourceTypes = new Map<string, string[]>([
+			["states", ["statemachine"]],
+		]);
+
+		const focus = metamodelToFocus(payload, resourceTypes);
+
+		const serviceIds = focus.profiles[0].regions[0].services.map((s) => s.id);
+		assert.deepStrictEqual(serviceIds, ["states"]);
+	});
+
 	test("returns an empty focus when the default account is absent", () => {
 		const focus = metamodelToFocus({ "999999999999": {} }, new Map());
 		assert.strictEqual(focus.profiles[0].id, "localstack");

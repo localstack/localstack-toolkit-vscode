@@ -14,6 +14,7 @@ import type { LogOutputChannel } from "vscode";
 
 import { Focus } from "../../../models/focus.ts";
 import { ProviderFactory } from "../services/providerFactory.ts";
+import { mapLabelToServiceId } from "../services/serviceManifest.ts";
 
 const METAMODEL_PATH = "/_localstack/pods/state/metamodel";
 
@@ -22,20 +23,6 @@ const DEFAULT_ACCOUNT = "000000000000";
 
 /** The LocalStack profile that backs the instance section. */
 const LOCALSTACK_PROFILE = "localstack";
-
-/**
- * Map a metamodel service label to a provider id. Empirically `toLowerCase()`
- * is correct for every supported service except Step Functions; keep a small
- * override map for exceptions.
- */
-const SERVICE_LABEL_OVERRIDES: Record<string, string> = {
-	stepfunctions: "states",
-};
-
-function serviceLabelToProviderId(label: string): string {
-	const lower = label.toLowerCase();
-	return SERVICE_LABEL_OVERRIDES[lower] ?? lower;
-}
 
 type MetamodelPayload = Record<string, unknown>;
 
@@ -78,7 +65,7 @@ export function metamodelToFocus(
 	const dropped = new Set<string>();
 
 	for (const [serviceLabel, regions] of Object.entries(account)) {
-		const providerId = serviceLabelToProviderId(serviceLabel);
+		const providerId = mapLabelToServiceId(serviceLabel);
 		if (!resourceTypes.has(providerId)) {
 			dropped.add(serviceLabel);
 			continue;
