@@ -114,7 +114,7 @@ export async function saveAuthToken(
 
 		outputChannel.error(error);
 
-		window
+		void window
 			.showErrorMessage(
 				`Failed to save auth token to ${LOCALSTACK_AUTH_FILENAME_READABLE}`,
 				"View Logs",

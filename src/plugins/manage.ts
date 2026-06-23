@@ -13,7 +13,7 @@ export default createPlugin(
 		context.subscriptions.push(
 			commands.registerCommand("localstack.start", async () => {
 				if (localStackStatusTracker.status() !== "stopped") {
-					window.showInformationMessage("LocalStack is already running.");
+					void window.showInformationMessage("LocalStack is already running.");
 					return;
 				}
 				localStackStatusTracker.forceContainerStatus("running");
@@ -28,7 +28,7 @@ export default createPlugin(
 		context.subscriptions.push(
 			commands.registerCommand("localstack.stop", () => {
 				if (localStackStatusTracker.status() !== "running") {
-					window.showInformationMessage("LocalStack is not running.");
+					void window.showInformationMessage("LocalStack is not running.");
 					return;
 				}
 				localStackStatusTracker.forceContainerStatus("stopping");

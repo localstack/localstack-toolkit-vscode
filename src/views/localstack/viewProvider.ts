@@ -232,11 +232,15 @@ export class LocalStackViewProvider
 		try {
 			const stacks = await CloudFormation.listStacks(profile, region);
 			for (const stack of stacks) {
+				const stackId = stack.StackId;
+				if (!stackId) {
+					continue;
+				}
 				children.push(
 					new FocusSelectorTreeItem(`Stack: ${stack.StackName}`, () =>
 						new CfnStackModel(
 							profile,
-							new ARN(stack.StackId!),
+							new ARN(stackId),
 							this.log,
 						).toFocusModel(),
 					),

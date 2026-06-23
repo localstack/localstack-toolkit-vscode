@@ -35,9 +35,17 @@ export class IAMServiceProvider extends ServiceProvider {
 
 			return [
 				{ field: "Resource Type", value: "Role", type: FieldType.NAME },
-				{ field: "Role Name", value: role.RoleName!, type: FieldType.NAME },
-				{ field: "Role ID", value: role.RoleId!, type: FieldType.NAME },
-				{ field: "Path", value: role.Path!, type: FieldType.SHORT_TEXT },
+				{
+					field: "Role Name",
+					value: role.RoleName ?? "N/A",
+					type: FieldType.NAME,
+				},
+				{ field: "Role ID", value: role.RoleId ?? "N/A", type: FieldType.NAME },
+				{
+					field: "Path",
+					value: role.Path ?? "N/A",
+					type: FieldType.SHORT_TEXT,
+				},
 				{
 					field: "Description",
 					value: role.Description || "",
@@ -52,7 +60,7 @@ export class IAMServiceProvider extends ServiceProvider {
 				},
 				{
 					field: "Created",
-					value: role.CreateDate!.toISOString(),
+					value: role.CreateDate?.toISOString() ?? "N/A",
 					type: FieldType.DATE,
 				},
 				{
@@ -79,10 +87,16 @@ export class IAMServiceProvider extends ServiceProvider {
 		stackResourceSummary: StackResourceSummary,
 	): { resourceType: string; resourceName: string } {
 		const resourceType = stackResourceSummary.ResourceType;
+		const physicalResourceId = stackResourceSummary.PhysicalResourceId;
 		if (resourceType === "AWS::IAM::Role") {
+			if (!physicalResourceId) {
+				throw new Error(
+					`Missing PhysicalResourceId for IAM resource type: ${resourceType}`,
+				);
+			}
 			return {
 				resourceType: "role",
-				resourceName: `role/${stackResourceSummary.PhysicalResourceId!}`,
+				resourceName: `role/${physicalResourceId}`,
 			};
 		} else {
 			throw new Error(`Unsupported IAM resource type: ${resourceType}`);

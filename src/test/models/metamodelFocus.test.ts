@@ -87,7 +87,13 @@ suite("metamodel -> Focus", () => {
 		const resourceTypes = new Map<string, string[]>([
 			[
 				"ssm",
-				["parameter", "document", "maintenancewindow", "association", "patchbaseline"],
+				[
+					"parameter",
+					"document",
+					"maintenancewindow",
+					"association",
+					"patchbaseline",
+				],
 			],
 		]);
 		const operationMaps = new Map<string, Map<string, string>>([
@@ -105,7 +111,9 @@ suite("metamodel -> Focus", () => {
 
 		const focus = metamodelToFocus(payload, resourceTypes, operationMaps);
 
-		const ssm = focus.profiles[0].regions[0].services.find((s) => s.id === "ssm");
+		const ssm = focus.profiles[0].regions[0].services.find(
+			(s) => s.id === "ssm",
+		);
 		assert.ok(ssm);
 		assert.deepStrictEqual(ssm.resourcetypes, [
 			{ id: "parameter", arns: ["*"] },
@@ -129,11 +137,13 @@ suite("metamodel -> Focus", () => {
 
 		const focus = metamodelToFocus(payload, resourceTypes, operationMaps);
 
-		const ssm = focus.profiles[0].regions[0].services.find((s) => s.id === "ssm");
-		assert.ok(ssm);
-		assert.deepStrictEqual(
-			ssm.resourcetypes.map((rt) => rt.id).sort(),
-			["document", "parameter"],
+		const ssm = focus.profiles[0].regions[0].services.find(
+			(s) => s.id === "ssm",
 		);
+		assert.ok(ssm);
+		assert.deepStrictEqual(ssm.resourcetypes.map((rt) => rt.id).sort(), [
+			"document",
+			"parameter",
+		]);
 	});
 });

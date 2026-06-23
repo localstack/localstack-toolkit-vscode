@@ -15,8 +15,8 @@ export class SnsServiceProvider extends ServiceProvider {
 		resourceType: string,
 	): Promise<string[]> {
 		if (resourceType === "topic") {
-			return (await Sns.listTopics(profile, region)).map(
-				(topic) => topic.TopicArn!,
+			return (await Sns.listTopics(profile, region)).flatMap((topic) =>
+				topic.TopicArn ? [topic.TopicArn] : [],
 			);
 		} else {
 			throw new Error(`Unknown resource type: ${resourceType}`);

@@ -15,25 +15,23 @@ import { memoize } from "../../../utils/memoize.ts";
 import type ARN from "../models/arnModel.ts";
 import AWSConfig from "../models/awsConfig.ts";
 
+const cachedGetLambdaClient = memoize((profile: string, region: string) => {
+	return new LambdaClient(AWSConfig.getClientConfig(profile, region));
+});
+
 /**
  * Accessor functions for the AWS "Lambda" service
  */
-export class Lambda {
-	private static cachedGetLambdaClient = memoize(
-		(profile: string, region: string) => {
-			return new LambdaClient(AWSConfig.getClientConfig(profile, region));
-		},
-	);
-
+export const Lambda = {
 	/**
 	 * List the Lambda functions in the specified profile/region. If the profile is not valid,
 	 * reject the promise and let the caller behave appropriately.
 	 */
-	public static async listFunctions(
+	async listFunctions(
 		profile: string,
 		region: string,
 	): Promise<FunctionConfiguration[]> {
-		const client = Lambda.cachedGetLambdaClient(profile, region);
+		const client = cachedGetLambdaClient(profile, region);
 
 		const functions: FunctionConfiguration[] = [];
 		let nextToken: string | undefined;
@@ -47,17 +45,17 @@ export class Lambda {
 		} while (nextToken);
 
 		return functions;
-	}
+	},
 
 	/**
 	 * Get details of a specific Lambda function
 	 */
-	public static async getFunction(
+	async getFunction(
 		profile: string,
 		region: string,
 		functionArn: ARN,
 	): Promise<FunctionConfiguration> {
-		const client = Lambda.cachedGetLambdaClient(profile, region);
+		const client = cachedGetLambdaClient(profile, region);
 		const command = new GetFunctionCommand({
 			FunctionName: functionArn.resourceName,
 		});
@@ -69,16 +67,16 @@ export class Lambda {
 				`Failed to get Lambda function: ${functionArn.resourceName}`,
 			);
 		}
-	}
+	},
 
 	/**
 	 * List all the event source mappings in the account/region.
 	 */
-	public static async listEventSourceMappings(
+	async listEventSourceMappings(
 		profile: string,
 		region: string,
 	): Promise<EventSourceMappingConfiguration[]> {
-		const client = Lambda.cachedGetLambdaClient(profile, region);
+		const client = cachedGetLambdaClient(profile, region);
 
 		const mappings: EventSourceMappingConfiguration[] = [];
 		let nextToken: string | undefined;
@@ -93,21 +91,21 @@ export class Lambda {
 		} while (nextToken);
 
 		return mappings;
-	}
+	},
 
 	/**
 	 * Get details of a specific event source mapping
 	 */
-	public static async getEventSourceMapping(
+	async getEventSourceMapping(
 		profile: string,
 		region: string,
 		mappingArn: ARN,
 	): Promise<EventSourceMappingConfiguration> {
-		const client = Lambda.cachedGetLambdaClient(profile, region);
+		const client = cachedGetLambdaClient(profile, region);
 
 		const command = new GetEventSourceMappingCommand({
 			UUID: mappingArn.resourceName,
 		});
 		return await client.send(command);
-	}
-}
+	},
+};

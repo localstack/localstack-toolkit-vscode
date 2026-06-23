@@ -16,9 +16,9 @@ export class CloudFormationServiceProvider extends ServiceProvider {
 		resourceType: string,
 	): Promise<string[]> {
 		if (resourceType === "stack") {
-			const stackIds = (await CloudFormation.listStacks(profile, region)).map(
-				(stack) => stack.StackId!,
-			);
+			const stackIds = (
+				await CloudFormation.listStacks(profile, region)
+			).flatMap((stack) => (stack.StackId ? [stack.StackId] : []));
 			stackIds.sort();
 			return stackIds;
 		} else {
@@ -62,12 +62,12 @@ export class CloudFormationServiceProvider extends ServiceProvider {
 				{ field: "Resource Type", value: "Stack", type: FieldType.NAME },
 				{
 					field: "Stack Name",
-					value: details.StackName!,
+					value: details.StackName ?? "N/A",
 					type: FieldType.NAME,
 				},
 				{
 					field: "Stack Status",
-					value: details.StackStatus!,
+					value: details.StackStatus ?? "N/A",
 					type: FieldType.NAME,
 				},
 				{

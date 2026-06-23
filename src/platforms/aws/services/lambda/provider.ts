@@ -15,12 +15,13 @@ export class LambdaServiceProvider extends ServiceProvider {
 		resourceType: string,
 	): Promise<string[]> {
 		if (resourceType === "function") {
-			return (await Lambda.listFunctions(profile, region)).map(
-				(func) => func.FunctionArn!,
+			return (await Lambda.listFunctions(profile, region)).flatMap((func) =>
+				func.FunctionArn ? [func.FunctionArn] : [],
 			);
 		} else if (resourceType === "event-source-mapping") {
-			return (await Lambda.listEventSourceMappings(profile, region)).map(
-				(mapping) => mapping.EventSourceMappingArn!,
+			return (await Lambda.listEventSourceMappings(profile, region)).flatMap(
+				(mapping) =>
+					mapping.EventSourceMappingArn ? [mapping.EventSourceMappingArn] : [],
 			);
 		} else {
 			throw new Error(`Unknown resource type: ${resourceType}`);
@@ -38,10 +39,14 @@ export class LambdaServiceProvider extends ServiceProvider {
 				{ field: "Resource Type", value: "Function", type: FieldType.NAME },
 				{
 					field: "Name",
-					value: functionInfo.FunctionName!,
+					value: functionInfo.FunctionName ?? "N/A",
 					type: FieldType.NAME,
 				},
-				{ field: "State", value: functionInfo.State!, type: FieldType.NAME },
+				{
+					field: "State",
+					value: functionInfo.State ?? "N/A",
+					type: FieldType.NAME,
+				},
 				{
 					field: "Description",
 					value: functionInfo.Description || "N/A",
@@ -49,48 +54,52 @@ export class LambdaServiceProvider extends ServiceProvider {
 				},
 				{
 					field: "Runtime",
-					value: functionInfo.Runtime!,
+					value: functionInfo.Runtime ?? "N/A",
 					type: FieldType.NAME,
 				},
 				{
 					field: "Handler",
-					value: functionInfo.Handler!,
+					value: functionInfo.Handler ?? "N/A",
 					type: FieldType.NAME,
 				},
 				{
 					field: "Version",
-					value: functionInfo.Version!,
+					value: functionInfo.Version ?? "N/A",
 					type: FieldType.NAME,
 				},
-				{ field: "Role", value: functionInfo.Role!, type: FieldType.ARN },
+				{
+					field: "Role",
+					value: functionInfo.Role ?? "N/A",
+					type: FieldType.ARN,
+				},
 				{
 					field: "Code Size (bytes)",
-					value: functionInfo.CodeSize!.toString(),
+					value: functionInfo.CodeSize?.toString() ?? "N/A",
 					type: FieldType.NUMBER,
 				},
 				{
 					field: "Memory Size (MB)",
-					value: functionInfo.MemorySize!.toString(),
+					value: functionInfo.MemorySize?.toString() ?? "N/A",
 					type: FieldType.NUMBER,
 				},
 				{
 					field: "Timeout (seconds)",
-					value: functionInfo.Timeout!.toString(),
+					value: functionInfo.Timeout?.toString() ?? "N/A",
 					type: FieldType.NUMBER,
 				},
 				{
 					field: "Last Modified",
-					value: functionInfo.LastModified!,
+					value: functionInfo.LastModified ?? "N/A",
 					type: FieldType.DATE,
 				},
 				{
 					field: "Last Update Status",
-					value: functionInfo.LastUpdateStatus!,
+					value: functionInfo.LastUpdateStatus ?? "N/A",
 					type: FieldType.NAME,
 				},
 				{
 					field: "Package Type",
-					value: functionInfo.PackageType!,
+					value: functionInfo.PackageType ?? "N/A",
 					type: FieldType.NAME,
 				},
 				{
@@ -121,10 +130,14 @@ export class LambdaServiceProvider extends ServiceProvider {
 					value: "Event Source Mapping",
 					type: FieldType.NAME,
 				},
-				{ field: "UUID", value: mappingInfo.UUID!, type: FieldType.NAME },
+				{
+					field: "UUID",
+					value: mappingInfo.UUID ?? "N/A",
+					type: FieldType.NAME,
+				},
 				{
 					field: "Function ARN",
-					value: mappingInfo.FunctionArn!,
+					value: mappingInfo.FunctionArn ?? "N/A",
 					type: FieldType.ARN,
 				},
 				{
@@ -144,17 +157,18 @@ export class LambdaServiceProvider extends ServiceProvider {
 				},
 				{
 					field: "Batch Size",
-					value: mappingInfo.BatchSize!.toString(),
+					value: mappingInfo.BatchSize?.toString() ?? "N/A",
 					type: FieldType.NUMBER,
 				},
 				{
 					field: "Maximum Batching Window (seconds)",
-					value: mappingInfo.MaximumBatchingWindowInSeconds!.toString(),
+					value:
+						mappingInfo.MaximumBatchingWindowInSeconds?.toString() ?? "N/A",
 					type: FieldType.NUMBER,
 				},
 				{
 					field: "Last Modified",
-					value: mappingInfo.LastModified!.toISOString(),
+					value: mappingInfo.LastModified?.toISOString() ?? "N/A",
 					type: FieldType.DATE,
 				},
 				{
@@ -178,16 +192,22 @@ export class LambdaServiceProvider extends ServiceProvider {
 	public getArnResourceNameForCloudFormationResource(
 		stackResourceSummary: StackResourceSummary,
 	): { resourceType: string; resourceName: string } {
-		const resourceType = stackResourceSummary.ResourceType!;
+		const resourceType = stackResourceSummary.ResourceType;
+		const physicalResourceId = stackResourceSummary.PhysicalResourceId;
+		if (!physicalResourceId) {
+			throw new Error(
+				`Missing PhysicalResourceId for Lambda resource type: ${resourceType}`,
+			);
+		}
 		if (resourceType === "AWS::Lambda::Function") {
 			return {
 				resourceType: "function",
-				resourceName: `function:${stackResourceSummary.PhysicalResourceId!}`,
+				resourceName: `function:${physicalResourceId}`,
 			};
 		} else if (resourceType === "AWS::Lambda::EventSourceMapping") {
 			return {
 				resourceType: "event-source-mapping",
-				resourceName: `event-source-mapping:${stackResourceSummary.PhysicalResourceId!}`,
+				resourceName: `event-source-mapping:${physicalResourceId}`,
 			};
 		} else {
 			throw new Error(`Unsupported Lambda resource type: ${resourceType}`);

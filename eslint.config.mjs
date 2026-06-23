@@ -8,6 +8,11 @@ import tseslint from "typescript-eslint";
 export default defineConfig(
 	includeIgnoreFile(fileURLToPath(new URL(".gitignore", import.meta.url))),
 	{
+		// Built webview assets are ignored via a nested .gitignore that
+		// includeIgnoreFile() above does not pick up.
+		ignores: ["resources/app-inspector/dist/"],
+	},
+	{
 		rules: {
 			"object-shorthand": ["error", "always"],
 		},

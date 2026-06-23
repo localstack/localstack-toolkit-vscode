@@ -107,7 +107,9 @@ export async function runInstallProcess(
 		);
 
 		if (!installScope) {
-			window.showErrorMessage("The installation was cancelled by the user");
+			void window.showErrorMessage(
+				"The installation was cancelled by the user",
+			);
 			return { cancelled: true };
 		}
 
@@ -466,12 +468,12 @@ fi
 					profileFile,
 					`\n# Added by LocalStack installer\n${sourceLocalstackInShellProfile}\n`,
 				);
-				window.showInformationMessage(
+				void window.showInformationMessage(
 					`Updated your shell profile (${profileFile}) to include ~/.local/bin in PATH. Restart your terminal to apply changes.`,
 				);
 			}
 		} else {
-			window.showInformationMessage(
+			void window.showInformationMessage(
 				`Could not detect your shell profile. To use localstack CLI from terminal ensure ~/.local/bin is in your PATH.`,
 			);
 		}
@@ -483,7 +485,7 @@ fi
 			process.env.PATH = `${localBinPath}:${currentPath}`;
 		}
 	} catch (err) {
-		window.showInformationMessage(
+		void window.showInformationMessage(
 			`Could not update your shell profile. To use localstack CLI from terminal ensure ~/.local/bin is in your PATH.`,
 		);
 	}
@@ -514,7 +516,9 @@ async function installLocalDarwinLinux(temporaryDirname: string) {
 
 	await ensureLocalBinInPath();
 
-	window.showInformationMessage("LocalStack CLI installed for current user.");
+	void window.showInformationMessage(
+		"LocalStack CLI installed for current user.",
+	);
 }
 
 async function installLocalWindows(temporaryDirname: string) {
@@ -522,7 +526,9 @@ async function installLocalWindows(temporaryDirname: string) {
 	await move(`${temporaryDirname}/localstack`, LOCAL_CLI_INSTALLATION_DIRNAME);
 	await exec(`setx PATH "%PATH%;${LOCAL_CLI_INSTALLATION_DIRNAME}"`);
 
-	window.showInformationMessage("LocalStack CLI installed for current user.");
+	void window.showInformationMessage(
+		"LocalStack CLI installed for current user.",
+	);
 }
 
 async function installGlobalDarwin(
@@ -542,7 +548,7 @@ async function installGlobalDarwin(
 	});
 	if (cancelled) {
 		//TODO check if progress can be used instead of window
-		window.showErrorMessage("The installation was cancelled by the user");
+		void window.showErrorMessage("The installation was cancelled by the user");
 		return { cancelled: true };
 	}
 }
@@ -565,12 +571,14 @@ async function installGlobalLinux(
 		});
 		if (cancelled) {
 			//TODO check if progress can be used instead of window
-			window.showErrorMessage("The installation was cancelled by the user");
+			void window.showErrorMessage(
+				"The installation was cancelled by the user",
+			);
 			return { cancelled: true };
 		}
 	} catch (error) {
 		const message = error instanceof Error ? error.message : String(error);
-		window.showErrorMessage(`Installation failed: ${message}`);
+		void window.showErrorMessage(`Installation failed: ${message}`);
 		throw error;
 	}
 }
@@ -636,7 +644,7 @@ async function installGlobalWindows(
 		cancellationToken,
 	});
 
-	window.showInformationMessage(
+	void window.showInformationMessage(
 		"LocalStack CLI installed globally for all users.",
 	);
 }

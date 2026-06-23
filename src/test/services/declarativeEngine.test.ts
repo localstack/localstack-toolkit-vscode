@@ -38,14 +38,15 @@ const fakeDefinition = defineService<FakeClient>({
 			singular: "Widget",
 			plural: "Widgets",
 			cfn: "AWS::Fake::Widget",
-			list: async (): Promise<Widget[]> => [
-				{
-					Arn: WIDGET_ARN,
-					Name: "w1",
-					State: "ACTIVE",
-					Created: new Date(0),
-				},
-			],
+			list: (): Promise<Widget[]> =>
+				Promise.resolve([
+					{
+						Arn: WIDGET_ARN,
+						Name: "w1",
+						State: "ACTIVE",
+						Created: new Date(0),
+					},
+				]),
 			id: (item: Widget) => item.Arn,
 			/* no `describe`: detail is read from the matching list item ("self") */
 			detail: [
@@ -58,12 +59,13 @@ const fakeDefinition = defineService<FakeClient>({
 			singular: "Gadget",
 			plural: "Gadgets",
 			cfn: "AWS::Fake::Gadget",
-			list: async (): Promise<Gadget[]> => [{ Arn: GADGET_ARN }],
+			list: (): Promise<Gadget[]> => Promise.resolve([{ Arn: GADGET_ARN }]),
 			id: (item: Gadget) => item.Arn,
-			describe: async () => ({
-				Config: { Size: 5 },
-				Nested: { Deep: "value" },
-			}),
+			describe: () =>
+				Promise.resolve({
+					Config: { Size: 5 },
+					Nested: { Deep: "value" },
+				}),
 			detail: [
 				{ label: "Size", path: "Config.Size", type: FieldType.NUMBER },
 				{ label: "Deep", path: "Nested.Deep", type: FieldType.SHORT_TEXT },

@@ -54,15 +54,11 @@ export class ResourceViewProvider
 
 	/** EventEmitter we use to produce the event when the tree data changes. */
 	private _onDidChangeTreeData = new vscode.EventEmitter<
-		ResourceTreeItem | undefined | null | void
+		ResourceTreeItem | undefined | null
 	>();
 
 	/** The event that is fired when the tree data changes. For notifying listeners */
 	public readonly onDidChangeTreeData = this._onDidChangeTreeData.event;
-
-	constructor(private readonly context: vscode.ExtensionContext) {
-		/* empty */
-	}
 
 	/**
 	 * Set the active focus from a producer. The producer is retained so a manual
@@ -81,7 +77,7 @@ export class ResourceViewProvider
 	public setFocus(focus: Focus) {
 		this.focus = focus;
 		this.focusProducer = undefined;
-		this._onDidChangeTreeData.fire(); // refresh the whole tree
+		this._onDidChangeTreeData.fire(undefined); // refresh the whole tree
 	}
 
 	/**
@@ -101,7 +97,7 @@ export class ResourceViewProvider
 	private async applyFocus(forceRender: boolean): Promise<void> {
 		if (!this.focusProducer) {
 			if (forceRender) {
-				this._onDidChangeTreeData.fire();
+				this._onDidChangeTreeData.fire(undefined);
 			}
 			return;
 		}
@@ -109,7 +105,7 @@ export class ResourceViewProvider
 			const focus = await this.focusProducer();
 			if (focus) {
 				this.focus = focus;
-				this._onDidChangeTreeData.fire();
+				this._onDidChangeTreeData.fire(undefined);
 			} else if (forceRender) {
 				/* A forced refresh whose producer now yields no focus means the
 				 * active focus selector no longer resolves — e.g. its saved view was
@@ -117,7 +113,7 @@ export class ResourceViewProvider
 				 * stale content. (A plain selection change that yields no focus, with
 				 * forceRender false, leaves the current focus untouched.) */
 				this.focus = undefined;
-				this._onDidChangeTreeData.fire();
+				this._onDidChangeTreeData.fire(undefined);
 			}
 		} catch (error) {
 			void vscode.window.showWarningMessage(
@@ -132,7 +128,9 @@ export class ResourceViewProvider
 		return element;
 	}
 
-	public getChildren(element?: any): vscode.ProviderResult<ResourceTreeItem[]> {
+	public getChildren(
+		element?: ResourceTreeItem,
+	): vscode.ProviderResult<ResourceTreeItem[]> {
 		if (!element) {
 			if (!this.focus) {
 				return Promise.resolve([

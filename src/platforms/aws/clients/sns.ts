@@ -12,25 +12,20 @@ import type {
 import { memoize } from "../../../utils/memoize.ts";
 import AWSConfig from "../models/awsConfig.ts";
 
+const cachedGetSnsClient = memoize((profile: string, region: string) => {
+	return new SNSClient(AWSConfig.getClientConfig(profile, region));
+});
+
 /**
  * Accessor functions for the AWS "SNS" (Simple Notification Service) service
  */
-export class Sns {
-	private static cachedGetSnsClient = memoize(
-		(profile: string, region: string) => {
-			return new SNSClient(AWSConfig.getClientConfig(profile, region));
-		},
-	);
-
+export const Sns = {
 	/**
 	 * List the SNS topics in the specified profile/region. If the profile is not valid,
 	 * reject the promise and let the caller behave appropriately.
 	 */
-	public static async listTopics(
-		profile: string,
-		region: string,
-	): Promise<Topic[]> {
-		const client = Sns.cachedGetSnsClient(profile, region);
+	async listTopics(profile: string, region: string): Promise<Topic[]> {
+		const client = cachedGetSnsClient(profile, region);
 
 		const topics: Topic[] = [];
 		let nextToken: string | undefined;
@@ -44,18 +39,18 @@ export class Sns {
 		} while (nextToken);
 
 		return topics;
-	}
+	},
 
 	/**
 	 * Get the attributes of an SNS topic.
 	 */
-	public static getTopicAttributes(
+	getTopicAttributes(
 		profile: string,
 		region: string,
 		topicArn: string,
 	): Promise<GetTopicAttributesCommandOutput> {
-		const client = Sns.cachedGetSnsClient(profile, region);
+		const client = cachedGetSnsClient(profile, region);
 		const command = new GetTopicAttributesCommand({ TopicArn: topicArn });
 		return client.send(command);
-	}
-}
+	},
+};

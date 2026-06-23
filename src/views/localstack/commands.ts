@@ -150,7 +150,7 @@ async function onAddRegion(
 		}));
 
 	if (items.length === 0) {
-		window.showInformationMessage("No additional regions are available.");
+		void window.showInformationMessage("No additional regions are available.");
 		return;
 	}
 
@@ -182,7 +182,7 @@ async function onManageProfiles(
 	}));
 
 	if (items.length === 0) {
-		window.showInformationMessage("No AWS profiles were found.");
+		void window.showInformationMessage("No AWS profiles were found.");
 		return;
 	}
 
