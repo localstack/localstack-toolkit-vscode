@@ -43,6 +43,9 @@ const STYLES = `
 	table {
 		border-collapse: collapse;
 		width: 100%;
+		/* Fixed layout makes the column widths below hard caps, so a long field
+		 * label wraps within its 33% column instead of stretching it. */
+		table-layout: fixed;
 	}
 	td {
 		padding: 3px 8px;
@@ -51,10 +54,12 @@ const STYLES = `
 	}
 	td.field {
 		color: var(--vscode-descriptionForeground);
-		white-space: nowrap;
-		width: 1%;
+		width: 33%;
+		white-space: normal;
+		overflow-wrap: break-word;
 	}
 	td.value {
+		width: 67%;
 		word-break: break-word;
 	}
 	.mono {

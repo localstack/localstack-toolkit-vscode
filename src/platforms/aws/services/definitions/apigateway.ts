@@ -37,6 +37,7 @@ export const apiGatewayDefinition = defineService<APIGatewayClient>({
 		restapi: {
 			singular: "REST API",
 			plural: "REST APIs",
+			metamodelOp: "getRestApis",
 			cfn: "AWS::ApiGateway::RestApi",
 			matchArn: (identifier) =>
 				identifier.arn.includes("/restapis/") &&
@@ -70,6 +71,7 @@ export const apiGatewayDefinition = defineService<APIGatewayClient>({
 		stage: {
 			singular: "Stage",
 			plural: "Stages",
+			metamodelOp: "getStages",
 			cfn: "AWS::ApiGateway::Stage",
 			matchArn: (identifier) => identifier.arn.includes("/stages/"),
 			list: async (client): Promise<StageWithApi[]> => {
@@ -100,6 +102,7 @@ export const apiGatewayDefinition = defineService<APIGatewayClient>({
 		apikey: {
 			singular: "API Key",
 			plural: "API Keys",
+			metamodelOp: "getApiKeys",
 			cfn: "AWS::ApiGateway::ApiKey",
 			matchArn: (identifier) => identifier.arn.includes("/apikeys/"),
 			list: async (client): Promise<ApiKey[]> => {
@@ -129,6 +132,7 @@ export const apiGatewayDefinition = defineService<APIGatewayClient>({
 		usageplan: {
 			singular: "Usage Plan",
 			plural: "Usage Plans",
+			metamodelOp: "getUsagePlans",
 			cfn: "AWS::ApiGateway::UsagePlan",
 			matchArn: (identifier) => identifier.arn.includes("/usageplans/"),
 			list: async (client): Promise<UsagePlan[]> => {
@@ -157,6 +161,7 @@ export const apiGatewayDefinition = defineService<APIGatewayClient>({
 		authorizer: {
 			singular: "Authorizer",
 			plural: "Authorizers",
+			metamodelOp: "getAuthorizers",
 			cfn: "AWS::ApiGateway::Authorizer",
 			matchArn: (identifier) => identifier.arn.includes("/authorizers/"),
 			list: async (client): Promise<AuthorizerWithApi[]> => {

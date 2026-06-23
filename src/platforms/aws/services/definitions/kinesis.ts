@@ -24,6 +24,7 @@ export const kinesisDefinition = defineService<KinesisClient>({
 		stream: {
 			singular: "Stream",
 			plural: "Streams",
+			metamodelOp: "listStreams",
 			cfn: "AWS::Kinesis::Stream",
 			matchArn: (identifier) => !identifier.arn.includes("/consumer/"),
 			list: async (client): Promise<StreamSummary[]> => {
@@ -81,6 +82,7 @@ export const kinesisDefinition = defineService<KinesisClient>({
 		streamconsumer: {
 			singular: "Stream Consumer",
 			plural: "Stream Consumers",
+			metamodelOp: "listStreamConsumers",
 			cfn: "AWS::Kinesis::StreamConsumer",
 			matchArn: (identifier) => identifier.arn.includes("/consumer/"),
 			list: async (client): Promise<Consumer[]> => {

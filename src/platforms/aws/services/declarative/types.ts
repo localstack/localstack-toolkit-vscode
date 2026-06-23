@@ -66,6 +66,16 @@ export type ResourceTypeDefinition<TClient = unknown, TItem = unknown> = {
 	 * stream vs. its consumer, both under `stream/`). Checked before `arnType`.
 	 */
 	matchArn?: (identifier: ARN) => boolean;
+	/**
+	 * The metamodel API-operation name that signals this resource type's presence
+	 * (the camelCase list operation, e.g. `"describeParameters"`, `"listKeys"`).
+	 * Used to narrow the LocalStack "View: All Resources" focus to the resource
+	 * types actually deployed. Annotate every type of a multi-type service so the
+	 * narrowing is precise; omit for single-type services (the metamodel focus
+	 * falls back to the sole type). When omitted, the type cannot be matched and
+	 * the service falls back to its full type set if any present op is unmapped.
+	 */
+	metamodelOp?: string;
 	/** List the live resources for a profile/region. Returns raw API items. */
 	list: (client: TClient, ctx: ListContext) => Promise<TItem[]>;
 	/**

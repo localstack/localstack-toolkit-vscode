@@ -111,6 +111,12 @@ export class ResourceViewProvider
 				this.focus = focus;
 				this._onDidChangeTreeData.fire();
 			} else if (forceRender) {
+				/* A forced refresh whose producer now yields no focus means the
+				 * active focus selector no longer resolves — e.g. its saved view was
+				 * removed (or renamed). Clear to the placeholder rather than leaving
+				 * stale content. (A plain selection change that yields no focus, with
+				 * forceRender false, leaves the current focus untouched.) */
+				this.focus = undefined;
 				this._onDidChangeTreeData.fire();
 			}
 		} catch (error) {

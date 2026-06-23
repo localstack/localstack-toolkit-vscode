@@ -55,15 +55,26 @@ export default class AWSConfig {
 		return typeof region === "string" ? region : undefined;
 	}
 
+	/** Last-resort region when neither the call nor the profile supplies one. */
+	private static DEFAULT_REGION = "us-east-1";
+
 	/**
 	 * Return a configuration object suitable for passing to an AWS SDK client constructor. This
 	 * is necessary to ensure the endpoint is set correctly when using a non-standard endpoint
 	 * (such as LocalStack).
+	 *
+	 * When no region is supplied, fall back to the profile's default region and
+	 * then a built-in default. Some resources have region-less ARNs (e.g. an S3
+	 * bucket `arn:aws:s3:::name`); describing one passes the empty ARN region
+	 * here, and the SDK rejects an empty region with "Region is missing". Listing
+	 * is unaffected because it always passes the focus region.
 	 */
 	public static getClientConfig(profile: string, region?: string): object {
 		/* use endpoint from profile, if it's defined */
 		const endpoint = AWSConfig.getEndpointForProfile(profile);
-		return { profile, region, endpoint };
+		const resolvedRegion =
+			region || AWSConfig.getRegionForProfile(profile) || AWSConfig.DEFAULT_REGION;
+		return { profile, region: resolvedRegion, endpoint };
 	}
 
 	/**

@@ -199,6 +199,13 @@ export class LambdaServiceProvider extends ServiceProvider {
 		"event-source-mapping": ["Event Source Mapping", "Event Source Mappings"],
 	};
 
+	override getMetamodelOperationMap(): Map<string, string> {
+		return new Map([
+			["listFunctions", "function"],
+			["listEventSourceMappings", "event-source-mapping"],
+		]);
+	}
+
 	getId(): string {
 		return "lambda";
 	}

@@ -22,6 +22,7 @@ export const kmsDefinition = defineService<KMSClient>({
 		key: {
 			singular: "Key",
 			plural: "Keys",
+			metamodelOp: "listKeys",
 			cfn: "AWS::KMS::Key",
 			list: async (client): Promise<KeyListEntry[]> => {
 				const keys: KeyListEntry[] = [];
@@ -59,6 +60,7 @@ export const kmsDefinition = defineService<KMSClient>({
 		alias: {
 			singular: "Alias",
 			plural: "Aliases",
+			metamodelOp: "listAliases",
 			cfn: "AWS::KMS::Alias",
 			list: async (client): Promise<AliasListEntry[]> => {
 				const aliases: AliasListEntry[] = [];

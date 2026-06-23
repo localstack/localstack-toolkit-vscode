@@ -138,6 +138,13 @@ export class StatesServiceProvider extends ServiceProvider {
 		statemachine: ["State Machine", "State Machines"],
 	};
 
+	public override getMetamodelOperationMap(): Map<string, string> {
+		return new Map([
+			["listActivities", "activity"],
+			["listStateMachines", "statemachine"],
+		]);
+	}
+
 	public getId(): string {
 		return "states";
 	}
