@@ -1,9 +1,5 @@
-# localstack-metamodel Specification
+## ADDED Requirements
 
-## Purpose
-Translating the running emulator's `/_localstack/pods/state/metamodel` endpoint into a `Focus` for the LocalStack Instances section — naming the services and resource types actually present, scoped to the bundled LocalStack profile.
-
-## Requirements
 ### Requirement: Compute a focus from the emulator metamodel
 
 The `All Resources` selector under **LocalStack Instances** SHALL compute its focus from the running emulator's `/_localstack/pods/state/metamodel` endpoint, reached at the endpoint the Toolkit is configured to use (the `localstack` profile's `endpoint_url`) rather than a hardcoded URL. The payload is nested as account → service label → region → API operation → raw response. The system SHALL fetch that endpoint and translate (transpose) its JSON into a Focus that names the services and regions actually present in the emulator state, scoped to the bundled LocalStack profile.

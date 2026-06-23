@@ -25,7 +25,9 @@ When the LocalStack activity-bar container is first opened, the system SHALL all
 
 ### Requirement: LocalStack Instances section
 
-Under **LocalStack Instances**, the system SHALL show an instance node labeled `AWS (<Status>): <host:port>`, where the endpoint is derived from the endpoint the Toolkit is configured to use (the `localstack` profile's `endpoint_url` in `~/.aws/config`) rather than a hardcoded value, and `<Status>` is the live emulator status with its first letter capitalized (e.g. `Running`, `Stopped`). The status SHALL be presented on the same line as the endpoint, NOT as a separate `Status` child node. The instance node SHALL show child nodes only when the emulator is running: an `App Inspector` node that opens the App Inspector when clicked, and a `View: All Resources` focus selector. When the emulator is not running, the instance node SHALL have no children and SHALL render as a non-expandable line (no twistie).
+Under **LocalStack Instances**, the system SHALL show an instance node labeled `AWS (<Status>): <host:port>`, where the endpoint is derived from the endpoint the Toolkit is configured to use (the `localstack` profile's `endpoint_url` in `~/.aws/config`) rather than a hardcoded value, and `<Status>` is the live emulator status with its first letter capitalized (e.g. `Running`, `Stopped`). The status SHALL be presented on the same line as the endpoint, NOT as a separate `Status` child node. The instance node SHALL show child nodes only when the emulator is running: an `App Inspector` node that opens the App Inspector when clicked, a `View: All Resources` focus selector, and one `View: <name>` focus selector per user-defined view saved for the instance. When the emulator is not running, the instance node SHALL have no children and SHALL render as a non-expandable line (no twistie).
+
+The instance node SHALL offer an `Add View...` action (matching the Cloud Profiles region affordance); each instance `View: <name>` row SHALL offer `Edit View...` / `Remove View` actions. Instance views SHALL be persisted in a dedicated saved-view store (separate from the Cloud Profiles per-region views, to avoid colliding with the bundled `localstack` cloud profile) and SHALL NOT carry a region scope (the region-scope step is omitted for instance views). Selecting an instance view SHALL produce a focus that **intersects the live metamodel**: starting from the resources actually deployed in the running instance (the same source as `View: All Resources`) and keeping only the chosen service/resource-type pairs, so an instance view never lists a type with nothing deployed.
 
 #### Scenario: Stopped instance shows the status line and no children
 
@@ -56,6 +58,16 @@ Under **LocalStack Instances**, the system SHALL show an instance node labeled `
 
 - **WHEN** the emulator container is started by the `lstk` CLI under the name `localstack-aws` (rather than `localstack-main`)
 - **THEN** the status reflects `Running` once the emulator is healthy, because the status tracker watches all known emulator container names — `localstack-main` and `localstack-aws` — for both the initial `docker inspect`/`ps` check and the live `docker events` stream
+
+#### Scenario: Adding a view to the instance
+
+- **WHEN** the emulator is running and the user invokes `Add View...` on the instance node, names the view, and selects one or more service/resource-type pairs
+- **THEN** a `View: <name>` focus selector appears under the instance node and is saved for the instance (no region-scope step is shown)
+
+#### Scenario: An instance view shows only deployed resources of the chosen types
+
+- **WHEN** the user selects an instance view whose chosen pairs include a resource type with nothing deployed in the running instance
+- **THEN** the Resources view shows only the deployed resources among the chosen pairs, consistent with `View: All Resources`, and does not list the empty type
 
 ### Requirement: App Inspector node
 
@@ -126,7 +138,7 @@ By default, only the profile named `default` SHALL be shown under Cloud Profiles
 
 ### Requirement: Settings persistence target
 
-All view-state writes (added regions, saved filters/views, hidden profiles, and the multi-select toggle) SHALL persist to Workspace settings when a workspace folder is open, and SHALL fall back to Global (User) settings when no workspace folder is open. Writing SHALL NOT fail when no folder is open.
+All view-state writes (added regions, saved filters/views, instance views, and shown profiles) SHALL persist to Workspace settings when a workspace folder is open, and SHALL fall back to Global (User) settings when no workspace folder is open. Writing SHALL NOT fail when no folder is open.
 
 #### Scenario: Persists per-workspace when a folder is open
 
@@ -149,7 +161,7 @@ Under **Workspace IaC**, the system SHALL show a single placeholder child with t
 
 ### Requirement: Row actions are shown as inline icons and in the context menu
 
-The per-row actions in the Explore view SHALL be shown as inline action icons on the row (a hover toolbar) AND remain available in the row's right-click context menu. (VS Code only renders a tree row's `...` overflow alongside an inline action, so a row with no inline action has no `...` button at all; the actions are therefore contributed inline so they are always visible.) The inline icons SHALL be: an edit (pencil) icon for `Select Profiles...` (Cloud Profiles section row) and `Select Regions...` (profile row), a plus icon for `Add View...` (region rows), a trash icon for `Remove Region` (user-added region rows), and a pencil icon for `Edit View...` plus a trash icon for `Remove View` (saved-view rows). Each of these SHALL also be contributed as a non-inline `view/item/context` item so it appears in the right-click menu.
+The per-row actions in the Explore view SHALL be shown as inline action icons on the row (a hover toolbar) AND remain available in the row's right-click context menu. (VS Code only renders a tree row's `...` overflow alongside an inline action, so a row with no inline action has no `...` button at all; the actions are therefore contributed inline so they are always visible.) The inline icons SHALL be: an edit (pencil) icon for `Select Profiles...` (Cloud Profiles section row) and `Select Regions...` (profile row), a plus icon for `Add View...` (region rows and the instance node), a trash icon for `Remove Region` (user-added region rows), and a pencil icon for `Edit View...` plus a trash icon for `Remove View` (saved-view rows). Each of these SHALL also be contributed as a non-inline `view/item/context` item so it appears in the right-click menu.
 
 #### Scenario: Row actions show an inline icon
 
@@ -206,7 +218,7 @@ The system SHALL let the user remove a user-added region via a `Remove Region` a
 
 ### Requirement: Add new view
 
-The system SHALL let the user define a named filter via the `Add View...` action — invoked from a region row's inline plus icon (also in the right-click context menu) — by selecting a set of **service / resource-type pairs** (e.g. `SQS — Queues`, `Lambda — Functions`), not whole services. This lets a view include some resource types of a service while excluding others. In the UX a saved filter is labeled a "view" (the actions are `Add View...`, `Edit View...`, `Remove View`); the underlying concept and the `localstack.cloudProfiles.filters` settings key are unchanged (the per-filter value now stores a list of `{ service, resourceType }` pairs), and the remainder of this spec refers to the concept as a "filter" for continuity with the persisted model. By default a filter is scoped to the single region it was created under; the dialog SHALL offer an "apply to all regions" option that instead makes the filter available under every region of that profile. The filter SHALL appear as a focus selector labeled `View: <name>`, scoped to the chosen pairs, and SHALL be persisted per profile in the workspace settings with its scope. The name SHALL be unique within the profile and SHALL NOT be `All Resources` (case-insensitive), which is reserved for the built-in all-resources selector; the dialog SHALL reject a reserved or duplicate name.
+The system SHALL let the user define a named filter via the `Add View...` action — invoked from a region row's inline plus icon (also in the right-click context menu) and from the LocalStack Instance node — by selecting a set of **service / resource-type pairs** (e.g. `SQS — Queues`, `Lambda — Functions`), not whole services. This lets a view include some resource types of a service while excluding others. In the UX a saved filter is labeled a "view" (the actions are `Add View...`, `Edit View...`, `Remove View`); the underlying concept and the `localstack.cloudProfiles.filters` settings key are unchanged (the per-filter value stores a list of `{ service, resourceType }` pairs), and the remainder of this spec refers to the concept as a "filter" for continuity with the persisted model. For a **Cloud Profiles** region, a filter is by default scoped to the single region it was created under; the dialog SHALL offer an "apply to all regions" option that instead makes the filter available under every region of that profile. For a **LocalStack Instance** view, the region-scope step SHALL be omitted (instance views always apply to the running instance) and the view is stored in the dedicated instance-view store. The filter SHALL appear as a focus selector labeled `View: <name>`, scoped to the chosen pairs, and SHALL be persisted with its scope. The name SHALL be unique within the profile (or instance) and SHALL NOT be `All Resources` (case-insensitive), which is reserved for the built-in all-resources selector; the dialog SHALL reject a reserved or duplicate name.
 
 #### Scenario: Creating a region-scoped filter
 
@@ -223,6 +235,11 @@ The system SHALL let the user define a named filter via the `Add View...` action
 - **WHEN** the user invokes `Add View...`, selects pairs, and enables "apply to all regions"
 - **THEN** the filter appears under every region of that profile and is saved with an all-regions scope
 
+#### Scenario: Creating an instance view omits the region-scope step
+
+- **WHEN** the user invokes `Add View...` on the LocalStack Instance node and selects pairs
+- **THEN** no region-scope choice is presented and the view is saved for the instance
+
 #### Scenario: Selecting a filter scopes the Resources view to its resource types
 
 - **WHEN** the user selects a saved filter focus selector
@@ -230,17 +247,22 @@ The system SHALL let the user define a named filter via the `Add View...` action
 
 ### Requirement: Edit and remove filters
 
-The system SHALL let the user edit or remove a saved filter via `Edit View...` / `Remove View` actions on the filter row (an inline gear icon for `Edit View...` and a trash icon for `Remove View`, also in the right-click context menu). The `Edit View...` icon SHALL be the same gear (settings) icon used by `Select Profiles...` / `Select Regions...`. Editing SHALL reopen the filter wizard pre-populated with the filter's current name, services, and scope, and overwrite the saved filter with the new values. Removing SHALL first present a modal confirmation dialog and SHALL delete the filter from the workspace settings only when the user confirms.
+The system SHALL let the user edit or remove a saved filter via `Edit View...` / `Remove View` actions on the filter row (an inline gear icon for `Edit View...` and a trash icon for `Remove View`, also in the right-click context menu), for both Cloud Profiles region views and LocalStack Instance views. The `Edit View...` icon SHALL be the same gear (settings) icon used by `Select Profiles...` / `Select Regions...`. Editing SHALL reopen the filter wizard pre-populated with the filter's current name, services, and scope, and overwrite the saved filter with the new values. Removing SHALL first present a modal confirmation dialog and SHALL delete the filter from the workspace settings only when the user confirms. After a successful add, edit, or remove, the system SHALL refresh the Resources view so that, when the affected view is the active focus, the Resources view reflects the change (or reverts to its placeholder if the active view was removed) without the user reselecting it.
 
 #### Scenario: Editing a filter updates it
 
 - **WHEN** the user invokes Edit on a filter, changes its services, and confirms
 - **THEN** the filter's saved services are updated and the focus selector reflects the new scope
 
+#### Scenario: Editing the active filter refreshes the Resources view
+
+- **WHEN** the user edits the filter that is currently the active focus
+- **THEN** the Resources view refreshes to reflect the new definition without the user reselecting the view
+
 #### Scenario: Removing a filter deletes it
 
 - **WHEN** the user invokes Remove on a filter and confirms the dialog
-- **THEN** the filter no longer appears under any region and is deleted from workspace settings
+- **THEN** the filter no longer appears under any region (or under the instance) and is deleted from workspace settings
 
 #### Scenario: Cancelling the confirmation keeps the filter
 
@@ -256,28 +278,16 @@ The system SHALL treat `View: All Resources`, saved filters (`View: <name>`), an
 - **WHEN** the user clicks a focus selector
 - **THEN** the Resources view re-renders to show the resources described by that selector's focus
 
-### Requirement: Single- and multi-select behavior
+### Requirement: Single-select behavior
 
-The system SHALL default to single-select, where activating one focus selector deactivates any other. The system SHALL let the user enable multi-select, in which multiple focus selectors can be active simultaneously and their focuses are merged into one for the Resources view. The multi-select preference SHALL persist across reloads.
+The system SHALL use single-select for focus selectors: activating one focus selector SHALL deactivate any other, and the Resources view SHALL reflect exactly the most recently selected focus. The system SHALL NOT provide a multi-select mode or a toggle for one.
 
-The toggle SHALL be accessible directly from the LocalStack view's title (`...`) menu — not only via the Settings UI. The menu SHALL show the action that applies to the current state (an enable action when off, a disable action when on). Toggling SHALL take effect immediately without requiring a window reload.
+#### Scenario: Selecting a focus selector replaces the active focus
 
-#### Scenario: Toggle is available in the view title menu
+- **WHEN** the user selects a focus selector and then selects a different one
+- **THEN** only the most recently selected focus is active and the Resources view reflects it alone
 
-- **WHEN** the user opens the LocalStack view's `...` title menu while single-select is active
-- **THEN** an "Enable multi-select" action is shown, and invoking it switches the view to multi-select immediately
+#### Scenario: No multi-select toggle is present
 
-#### Scenario: Single-select replaces the active focus
-
-- **WHEN** multi-select is disabled and the user selects a second focus selector
-- **THEN** only the newly selected focus is active and the Resources view reflects it alone
-
-#### Scenario: Multi-select merges active focuses
-
-- **WHEN** multi-select is enabled and the user activates two focus selectors
-- **THEN** the Resources view shows the merged union of both focuses
-
-#### Scenario: Preference persists across reloads
-
-- **WHEN** the user enables multi-select and reloads the workspace
-- **THEN** multi-select is still enabled
+- **WHEN** the user opens the LocalStack view's `...` title menu
+- **THEN** no enable/disable multi-select action is shown

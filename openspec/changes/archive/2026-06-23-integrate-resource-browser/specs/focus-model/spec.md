@@ -32,17 +32,3 @@ The system SHALL support wildcard (`*`) selectors for profiles, regions, service
 
 - **WHEN** a resource type's arns list is exactly `["*"]`
 - **THEN** consumers SHALL list the actual ARNs from the platform rather than using literal values
-
-### Requirement: Merging multiple focuses
-
-The system SHALL merge a set of selected focuses into a single focus such that the union of all selected profiles/regions/services/resource types/ARNs is represented, with duplicate ids collapsed and child lists combined. Merging an empty set SHALL yield no focus.
-
-#### Scenario: Two focuses on the same profile and region are unioned
-
-- **WHEN** two focuses each select the same profile and region but different services are merged
-- **THEN** the result contains that single profile and region with both services present
-
-#### Scenario: Merging an empty selection yields nothing
-
-- **WHEN** an empty set of focuses is merged
-- **THEN** the result is undefined and the Resources view shows its empty-state placeholder
