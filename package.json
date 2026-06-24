@@ -46,6 +46,87 @@
 					"type": "string",
 					"default": "",
 					"markdownDescription": "Location of LocalStack CLI."
+				},
+				"localstack.cloudProfiles.regions": {
+					"type": "object",
+					"default": {},
+					"markdownDescription": "User-added regions per AWS profile shown under Cloud Profiles. Managed via the profile row's \"Select Regions...\" / \"Remove Region\" actions.",
+					"additionalProperties": {
+						"type": "array",
+						"items": {
+							"type": "string"
+						}
+					}
+				},
+				"localstack.cloudProfiles.shown": {
+					"type": "array",
+					"markdownDescription": "AWS profile names shown under the Cloud Profiles section. Managed via the section's \"Select Profiles...\" action; does not modify `~/.aws/config`. When unset, only the `default` profile is shown (or the first discovered profile if none is named `default`); an empty list explicitly shows no profiles.",
+					"items": {
+						"type": "string"
+					}
+				},
+				"localstack.cloudProfiles.views": {
+					"type": "object",
+					"default": {},
+					"markdownDescription": "User-defined resource views per AWS profile. Managed via the view's \"Add View...\" / \"Edit View...\" / \"Remove View\" actions.",
+					"additionalProperties": {
+						"type": "array",
+						"items": {
+							"type": "object",
+							"properties": {
+								"name": {
+									"type": "string"
+								},
+								"resources": {
+									"type": "array",
+									"items": {
+										"type": "object",
+										"properties": {
+											"service": {
+												"type": "string"
+											},
+											"resourceType": {
+												"type": "string"
+											}
+										}
+									}
+								},
+								"scope": {
+									"type": "object"
+								}
+							}
+						}
+					}
+				},
+				"localstack.instanceViews": {
+					"type": "array",
+					"default": [],
+					"markdownDescription": "User-defined resource views for the running LocalStack instance. Managed via the instance's \"Add View...\" / \"Edit View...\" / \"Remove View\" actions. Stored separately from Cloud Profiles views.",
+					"items": {
+						"type": "object",
+						"properties": {
+							"name": {
+								"type": "string"
+							},
+							"resources": {
+								"type": "array",
+								"items": {
+									"type": "object",
+									"properties": {
+										"service": {
+											"type": "string"
+										},
+										"resourceType": {
+											"type": "string"
+										}
+									}
+								}
+							},
+							"scope": {
+								"type": "object"
+							}
+						}
+					}
 				}
 			}
 		},
@@ -56,14 +137,36 @@
 					"title": "LocalStack",
 					"icon": "resources/icons/localstack.svg"
 				}
+			],
+			"panel": [
+				{
+					"id": "localstackPanel",
+					"title": "Resource Details",
+					"icon": "resources/icons/localstack.svg"
+				}
 			]
 		},
 		"views": {
 			"localstackActivityBar": [
 				{
 					"id": "localstack.instances",
-					"name": "LocalStack",
-					"icon": "resources/icons/localstack.svg"
+					"name": "Explore",
+					"icon": "resources/icons/localstack.svg",
+					"size": 1
+				},
+				{
+					"id": "localstack.resources",
+					"name": "Resources",
+					"icon": "resources/icons/localstack.svg",
+					"size": 1
+				}
+			],
+			"localstackPanel": [
+				{
+					"id": "localstack.resourceDetails",
+					"name": "Resource Details",
+					"icon": "resources/icons/localstack.svg",
+					"type": "webview"
 				}
 			]
 		},
@@ -114,8 +217,215 @@
 				"command": "localstack.openAppInspector",
 				"title": "Open App Inspector",
 				"category": "LocalStack"
+			},
+			{
+				"command": "localstack.addRegion",
+				"title": "Select Regions...",
+				"category": "LocalStack",
+				"icon": "$(settings-gear)"
+			},
+			{
+				"command": "localstack.removeRegion",
+				"title": "Remove Region",
+				"category": "LocalStack",
+				"icon": "$(trash)"
+			},
+			{
+				"command": "localstack.manageProfiles",
+				"title": "Select Profiles...",
+				"category": "LocalStack",
+				"icon": "$(settings-gear)"
+			},
+			{
+				"command": "localstack.addProfileView",
+				"title": "Add View...",
+				"category": "LocalStack",
+				"icon": "$(add)"
+			},
+			{
+				"command": "localstack.editProfileView",
+				"title": "Edit View...",
+				"category": "LocalStack",
+				"icon": "$(settings-gear)"
+			},
+			{
+				"command": "localstack.removeProfileView",
+				"title": "Remove View",
+				"category": "LocalStack",
+				"icon": "$(trash)"
+			},
+			{
+				"command": "localstack.addInstanceView",
+				"title": "Add View...",
+				"category": "LocalStack",
+				"icon": "$(add)"
+			},
+			{
+				"command": "localstack.editInstanceView",
+				"title": "Edit View...",
+				"category": "LocalStack",
+				"icon": "$(settings-gear)"
+			},
+			{
+				"command": "localstack.removeInstanceView",
+				"title": "Remove View",
+				"category": "LocalStack",
+				"icon": "$(trash)"
+			},
+			{
+				"command": "localstack.refreshResources",
+				"title": "Refresh Resources",
+				"category": "LocalStack",
+				"icon": "$(refresh)"
+			},
+			{
+				"command": "localstack.refreshResourceDetails",
+				"title": "Refresh Resource Details",
+				"category": "LocalStack",
+				"icon": "$(refresh)"
 			}
 		],
+		"menus": {
+			"view/title": [
+				{
+					"command": "localstack.refreshResources",
+					"when": "view == localstack.resources",
+					"group": "navigation"
+				},
+				{
+					"command": "localstack.refreshResourceDetails",
+					"when": "view == localstack.resourceDetails",
+					"group": "navigation"
+				}
+			],
+			"view/item/context": [
+				{
+					"command": "localstack.manageProfiles",
+					"when": "view == localstack.instances && viewItem == localstackSection:profiles"
+				},
+				{
+					"command": "localstack.manageProfiles",
+					"when": "view == localstack.instances && viewItem == localstackSection:profiles",
+					"group": "inline"
+				},
+				{
+					"command": "localstack.addRegion",
+					"when": "view == localstack.instances && viewItem == localstackProfile"
+				},
+				{
+					"command": "localstack.addRegion",
+					"when": "view == localstack.instances && viewItem == localstackProfile",
+					"group": "inline"
+				},
+				{
+					"command": "localstack.addProfileView",
+					"when": "view == localstack.instances && (viewItem == localstackDefaultRegion || viewItem == localstackUserRegion)",
+					"group": "1_region@1"
+				},
+				{
+					"command": "localstack.addProfileView",
+					"when": "view == localstack.instances && (viewItem == localstackDefaultRegion || viewItem == localstackUserRegion)",
+					"group": "inline@1"
+				},
+				{
+					"command": "localstack.removeRegion",
+					"when": "view == localstack.instances && viewItem == localstackUserRegion",
+					"group": "1_region@2"
+				},
+				{
+					"command": "localstack.removeRegion",
+					"when": "view == localstack.instances && viewItem == localstackUserRegion",
+					"group": "inline@2"
+				},
+				{
+					"command": "localstack.editProfileView",
+					"when": "view == localstack.instances && viewItem == localstackProfileView",
+					"group": "1_modify@1"
+				},
+				{
+					"command": "localstack.editProfileView",
+					"when": "view == localstack.instances && viewItem == localstackProfileView",
+					"group": "inline@1"
+				},
+				{
+					"command": "localstack.removeProfileView",
+					"when": "view == localstack.instances && viewItem == localstackProfileView",
+					"group": "1_modify@2"
+				},
+				{
+					"command": "localstack.removeProfileView",
+					"when": "view == localstack.instances && viewItem == localstackProfileView",
+					"group": "inline@2"
+				},
+				{
+					"command": "localstack.addInstanceView",
+					"when": "view == localstack.instances && viewItem == localstackInstance"
+				},
+				{
+					"command": "localstack.addInstanceView",
+					"when": "view == localstack.instances && viewItem == localstackInstance",
+					"group": "inline"
+				},
+				{
+					"command": "localstack.editInstanceView",
+					"when": "view == localstack.instances && viewItem == localstackInstanceView",
+					"group": "1_modify@1"
+				},
+				{
+					"command": "localstack.editInstanceView",
+					"when": "view == localstack.instances && viewItem == localstackInstanceView",
+					"group": "inline@1"
+				},
+				{
+					"command": "localstack.removeInstanceView",
+					"when": "view == localstack.instances && viewItem == localstackInstanceView",
+					"group": "1_modify@2"
+				},
+				{
+					"command": "localstack.removeInstanceView",
+					"when": "view == localstack.instances && viewItem == localstackInstanceView",
+					"group": "inline@2"
+				}
+			],
+			"commandPalette": [
+				{
+					"command": "localstack.addRegion",
+					"when": "false"
+				},
+				{
+					"command": "localstack.removeRegion",
+					"when": "false"
+				},
+				{
+					"command": "localstack.manageProfiles",
+					"when": "false"
+				},
+				{
+					"command": "localstack.addProfileView",
+					"when": "false"
+				},
+				{
+					"command": "localstack.editProfileView",
+					"when": "false"
+				},
+				{
+					"command": "localstack.removeProfileView",
+					"when": "false"
+				},
+				{
+					"command": "localstack.addInstanceView",
+					"when": "false"
+				},
+				{
+					"command": "localstack.editInstanceView",
+					"when": "false"
+				},
+				{
+					"command": "localstack.removeInstanceView",
+					"when": "false"
+				}
+			]
+		},
 		"icons": {
 			"localstack-logo": {
 				"description": "LocalStack logo",
@@ -126,12 +436,10 @@
 			}
 		}
 	},
-	"packageManager": "pnpm@11.0.9+sha512.34ce82e6780233cf9cad8685029a8f81d2e06196c5a9bad98879f7424940c6817c4e4524fb7d38b8553ceed48b9758b8ebaf1abd3600c232c4c8cf7366086f38",
+	"packageManager": "pnpm@11.9.0+sha512.bd682d5d03fe525ef7c9fd6780c6884d1e756ac4c9c9fe00c538782824310dcf90e3ddc4f53835f06dfaebd5085e41855e0bcbb3b60de2ac5bbab89e5036f03b",
 	"scripts": {
 		"vscode:prepublish": "pnpm run package",
-		"compile": "npm-run-all -p compile:extension compile:appinspector-webview",
-		"compile:appinspector-webview": "vite build",
-		"compile:extension": "node --env-file=.env.local --env-file-if-exists=.env build/extension.mjs",
+		"compile": "node --env-file=.env.local --env-file-if-exists=.env build/extension.mjs && vite build",
 		"compile:font": "node build/icon-font.mjs",
 		"dev": "npm-run-all -p dev:extension dev:localstack-web-mock-server dev:appinspector-webview",
 		"dev:appinspector-webview": "vite build --watch --no-clear-screen",
@@ -146,6 +454,25 @@
 		"test": "vscode-test"
 	},
 	"devDependencies": {
+		"@aws-sdk/client-account": "^3.901.0",
+		"@aws-sdk/client-api-gateway": "^3.901.0",
+		"@aws-sdk/client-cloudformation": "^3.901.0",
+		"@aws-sdk/client-cloudwatch-logs": "^3.901.0",
+		"@aws-sdk/client-cognito-identity-provider": "^3.901.0",
+		"@aws-sdk/client-dynamodb": "^3.901.0",
+		"@aws-sdk/client-ecr": "^3.901.0",
+		"@aws-sdk/client-eventbridge": "^3.901.0",
+		"@aws-sdk/client-iam": "^3.901.0",
+		"@aws-sdk/client-kinesis": "^3.901.0",
+		"@aws-sdk/client-kms": "^3.901.0",
+		"@aws-sdk/client-lambda": "^3.901.0",
+		"@aws-sdk/client-s3": "^3.901.0",
+		"@aws-sdk/client-secrets-manager": "^3.901.0",
+		"@aws-sdk/client-sfn": "^3.901.0",
+		"@aws-sdk/client-sns": "^3.901.0",
+		"@aws-sdk/client-sqs": "^3.901.0",
+		"@aws-sdk/client-ssm": "^3.901.0",
+		"@aws-sdk/client-sts": "^3.901.0",
 		"@biomejs/biome": "^2.4.13",
 		"@eslint/compat": "^2.0.5",
 		"@eslint/js": "^9.39.4",
@@ -167,6 +494,7 @@
 		"eslint": "^9.39.4",
 		"eslint-plugin-import": "^2.32.0",
 		"fs-extra": "^11.3.4",
+		"js-ini": "^1.6.0",
 		"ms": "^2.1.3",
 		"npm-run-all": "^4.1.5",
 		"p-min-delay": "^4.2.0",

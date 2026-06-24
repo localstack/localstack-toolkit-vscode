@@ -43,7 +43,7 @@ export default createPlugin(
 						},
 					});
 
-					window.withProgress(
+					void window.withProgress(
 						{
 							location: ProgressLocation.Notification,
 							title: "Setup LocalStack",
@@ -328,25 +328,25 @@ export default createPlugin(
 
 							/////////////////////////////////////////////////////////////////////
 							if (localStackStatusTracker.status() === "running") {
-								window
+								void window
 									.showInformationMessage("LocalStack is running.", {
 										title: "View Logs",
 										command: "localstack.viewLogs",
 									})
 									.then((selection) => {
 										if (selection) {
-											commands.executeCommand(selection.command);
+											void commands.executeCommand(selection.command);
 										}
 									});
 							} else {
-								window
+								void window
 									.showInformationMessage("LocalStack is ready to start.", {
 										title: "Start LocalStack",
 										command: "localstack.start",
 									})
 									.then((selection) => {
 										if (selection) {
-											commands.executeCommand(selection.command);
+											void commands.executeCommand(selection.command);
 										}
 									});
 							}
