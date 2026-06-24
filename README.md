@@ -29,22 +29,6 @@ You can see LocalStack logs in the VS Code Output panel. Simply select LocalStac
 Once the profile is configured you can use it from your favorite AWS tools like the AWS Toolkit VS Code extension, AWS CLI, SDKs, and CDK to deploy to and interact with LocalStack.
 For example, the AWS Toolkit for VS Code includes compatibility with your `localstack` AWS profile and the integration enables Lambda Remote Debugging on LocalStack. Check [AWS Lambda with LocalStack support](https://docs.aws.amazon.com/toolkit-for-vscode/latest/userguide/lambda-localstack.html) and [LocalStack Lambda Remote Debugging](https://docs.localstack.cloud/aws/tooling/lambda-tools/remote-debugging/) for detailed information.
 
-## Browse AWS resources
-
-The LocalStack sidebar provides three tree views for exploring resources:
-
-- **LocalStack** — organizes what you can browse into _LocalStack Instances_ (the running emulator, with its status, the App Inspector, and an `All Resources` selector computed from the emulator state), _Cloud Profiles_ (one entry per AWS profile in your `~/.aws/config`, with its regions, CloudFormation stacks, and your saved filters), and a _Workspace IaC_ placeholder. Selecting any leaf "focus selector" drives the Resources view.
-- **Resources** — shows the profiles, regions, services, resource types, and resources for the active selection. Drill in to discover what exists.
-- **Resource Details** — shows the details of the resource selected in the Resources view, fetched via the AWS SDK against the profile's endpoint (so LocalStack and real AWS behave identically).
-
-You can add regions and define service-scoped filters per profile (managed from the view's right-click actions), and optionally enable multi-select from the view's `...` menu to combine several selectors at once.
-
-### Service coverage
-
-The set of AWS services the toolkit knows about is a static **service manifest** (`resources/service-manifest.json`), generated from LocalStack's published coverage data and committed to the repo — nothing is discovered from a running emulator. Each service has a **curated provider** that declares its resource types, lists live resources, and selects which fields the Resource Details view shows; there is no generic catch-all provider, so a service appears only once it has been curated. Providers are added in batches, so coverage grows over time; a service with no provider yet is simply absent rather than shown broken.
-
-Most providers are authored declaratively (data describing each resource type's list call, identifier, CloudFormation type, and detail fields), executed by a shared engine; the imperative provider class remains available as an escape hatch for services that need it. Two dev-time generators support this: one regenerates the manifest from coverage data, and one produces a first-cut set of detail fields from offline AWS API models for a developer to refine. Neither runs at build time.
-
 ## Changelog
 
 [Read our full changelog](./CHANGELOG.md) to learn about the latest changes in each release.
