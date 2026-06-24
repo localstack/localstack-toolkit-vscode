@@ -7,6 +7,7 @@ import {
 	DeclarativeServiceProvider,
 	formatValue,
 	getByPath,
+	renderDetailField,
 } from "../../platforms/aws/services/declarative/engine.ts";
 import { defineService } from "../../platforms/aws/services/declarative/types.ts";
 import { FieldType } from "../../platforms/aws/services/serviceProvider.ts";
@@ -109,6 +110,57 @@ suite("declarative engine: formatValue", () => {
 	test("renders null/undefined as empty string", () => {
 		assert.strictEqual(formatValue(undefined, FieldType.NAME), "");
 		assert.strictEqual(formatValue(null, FieldType.NAME), "");
+	});
+});
+
+suite("declarative engine: renderDetailField", () => {
+	test("renders a scalar spec as a single row", () => {
+		assert.deepStrictEqual(
+			renderDetailField(
+				{ label: "Name", path: "Name", type: FieldType.NAME },
+				{ Name: "thing" },
+			),
+			[{ field: "Name", value: "thing", type: FieldType.NAME }],
+		);
+	});
+
+	test("expands a list spec into a header plus one indented row per item", () => {
+		const fields = renderDetailField(
+			{
+				kind: "list",
+				label: "Key Schema",
+				path: "KeySchema",
+				itemLabel: "AttributeName",
+				itemValue: "KeyType",
+			},
+			{
+				KeySchema: [
+					{ AttributeName: "id", KeyType: "HASH" },
+					{ AttributeName: "sort", KeyType: "RANGE" },
+				],
+			},
+		);
+		assert.deepStrictEqual(fields, [
+			{ field: "Key Schema", value: "", type: FieldType.NAME },
+			{ field: "    id", value: "HASH", type: FieldType.NAME },
+			{ field: "    sort", value: "RANGE", type: FieldType.NAME },
+		]);
+	});
+
+	test("renders just the header when the array is missing or empty", () => {
+		assert.deepStrictEqual(
+			renderDetailField(
+				{
+					kind: "list",
+					label: "Outputs",
+					path: "Outputs",
+					itemLabel: "OutputKey",
+					itemValue: "OutputValue",
+				},
+				{},
+			),
+			[{ field: "Outputs", value: "", type: FieldType.NAME }],
+		);
 	});
 });
 
