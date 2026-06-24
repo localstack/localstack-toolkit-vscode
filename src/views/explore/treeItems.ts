@@ -3,7 +3,7 @@ import { ThemeIcon, TreeItem, TreeItemCollapsibleState } from "vscode";
 import type { Focus } from "../../models/focus.ts";
 import type { LocalStackStatus } from "../../utils/localstack-status.ts";
 
-import type { SavedFilter } from "./settings.ts";
+import type { SavedView } from "./settings.ts";
 
 /** Capitalize a status word for display, e.g. "stopped" → "Stopped". */
 function capitalizeStatus(status: LocalStackStatus): string {
@@ -111,26 +111,27 @@ export class FocusSelectorTreeItem extends LocalStackTreeItem {
 	}
 }
 
-/** A user-defined filter focus selector (supports Edit/Remove). */
-export class FilterTreeItem extends FocusSelectorTreeItem {
+/** A user-defined cloud-profile view focus selector (supports Edit/Remove). */
+export class ProfileViewTreeItem extends FocusSelectorTreeItem {
 	constructor(
 		public readonly profileName: string,
-		public readonly filter: SavedFilter,
+		public readonly view: SavedView,
 		getFocus: () => Promise<Focus | undefined>,
 	) {
-		super(`View: ${filter.name}`, getFocus);
-		this.contextValue = "localstackFilter";
+		super(`View: ${view.name}`, getFocus);
+		this.contextValue = "localstackProfileView";
 	}
 }
 
 /**
  * A user-defined view for the LocalStack instance (supports Edit/Remove).
- * Distinct from `FilterTreeItem` (cloud-profile views) so its menus and storage
- * stay separate; its focus intersects the live metamodel with the chosen pairs.
+ * Distinct from `ProfileViewTreeItem` (cloud-profile views) so its menus and
+ * storage stay separate; its focus intersects the live metamodel with the
+ * chosen pairs.
  */
 export class InstanceViewTreeItem extends FocusSelectorTreeItem {
 	constructor(
-		public readonly view: SavedFilter,
+		public readonly view: SavedView,
 		getFocus: () => Promise<Focus | undefined>,
 	) {
 		super(`View: ${view.name}`, getFocus);

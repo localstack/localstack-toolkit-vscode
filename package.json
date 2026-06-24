@@ -65,7 +65,7 @@
 						"type": "string"
 					}
 				},
-				"localstack.cloudProfiles.filters": {
+				"localstack.cloudProfiles.views": {
 					"type": "object",
 					"default": {},
 					"markdownDescription": "User-defined resource views per AWS profile. Managed via the view's \"Add View...\" / \"Edit View...\" / \"Remove View\" actions.",
@@ -229,19 +229,19 @@
 				"icon": "$(settings-gear)"
 			},
 			{
-				"command": "localstack.addFilter",
+				"command": "localstack.addProfileView",
 				"title": "Add View...",
 				"category": "LocalStack",
 				"icon": "$(add)"
 			},
 			{
-				"command": "localstack.editFilter",
+				"command": "localstack.editProfileView",
 				"title": "Edit View...",
 				"category": "LocalStack",
 				"icon": "$(settings-gear)"
 			},
 			{
-				"command": "localstack.removeFilter",
+				"command": "localstack.removeProfileView",
 				"title": "Remove View",
 				"category": "LocalStack",
 				"icon": "$(trash)"
@@ -310,12 +310,12 @@
 					"group": "inline"
 				},
 				{
-					"command": "localstack.addFilter",
+					"command": "localstack.addProfileView",
 					"when": "view == localstack.instances && (viewItem == localstackDefaultRegion || viewItem == localstackUserRegion)",
 					"group": "1_region@1"
 				},
 				{
-					"command": "localstack.addFilter",
+					"command": "localstack.addProfileView",
 					"when": "view == localstack.instances && (viewItem == localstackDefaultRegion || viewItem == localstackUserRegion)",
 					"group": "inline@1"
 				},
@@ -330,23 +330,23 @@
 					"group": "inline@2"
 				},
 				{
-					"command": "localstack.editFilter",
-					"when": "view == localstack.instances && viewItem == localstackFilter",
+					"command": "localstack.editProfileView",
+					"when": "view == localstack.instances && viewItem == localstackProfileView",
 					"group": "1_modify@1"
 				},
 				{
-					"command": "localstack.editFilter",
-					"when": "view == localstack.instances && viewItem == localstackFilter",
+					"command": "localstack.editProfileView",
+					"when": "view == localstack.instances && viewItem == localstackProfileView",
 					"group": "inline@1"
 				},
 				{
-					"command": "localstack.removeFilter",
-					"when": "view == localstack.instances && viewItem == localstackFilter",
+					"command": "localstack.removeProfileView",
+					"when": "view == localstack.instances && viewItem == localstackProfileView",
 					"group": "1_modify@2"
 				},
 				{
-					"command": "localstack.removeFilter",
-					"when": "view == localstack.instances && viewItem == localstackFilter",
+					"command": "localstack.removeProfileView",
+					"when": "view == localstack.instances && viewItem == localstackProfileView",
 					"group": "inline@2"
 				},
 				{
@@ -393,15 +393,15 @@
 					"when": "false"
 				},
 				{
-					"command": "localstack.addFilter",
+					"command": "localstack.addProfileView",
 					"when": "false"
 				},
 				{
-					"command": "localstack.editFilter",
+					"command": "localstack.editProfileView",
 					"when": "false"
 				},
 				{
-					"command": "localstack.removeFilter",
+					"command": "localstack.removeProfileView",
 					"when": "false"
 				},
 				{

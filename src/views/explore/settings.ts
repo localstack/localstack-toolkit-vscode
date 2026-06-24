@@ -1,16 +1,16 @@
 /*
  * Read/write helpers for the per-workspace configuration backing the
- * Cloud Profiles section of the LocalStack view: user-added regions and
- * user-defined filters. All state lives in VS Code workspace settings so it is
+ * Cloud Profiles section of the Explore view: user-added regions and
+ * user-defined views. All state lives in VS Code workspace settings so it is
  * visible/editable in settings.json and survives reloads.
  */
 import { ConfigurationTarget, workspace } from "vscode";
 
 const CONFIG_SECTION = "localstack";
 const REGIONS_KEY = "cloudProfiles.regions";
-const FILTERS_KEY = "cloudProfiles.filters";
+const PROFILE_VIEWS_KEY = "cloudProfiles.views";
 const SHOWN_PROFILES_KEY = "cloudProfiles.shown";
-/* Instance views are stored separately from cloud-profile filters so they never
+/* Instance views are stored separately from cloud-profile views so they never
  * collide with the bundled `localstack` cloud profile's region views. */
 const INSTANCE_VIEWS_KEY = "instanceViews";
 
@@ -34,8 +34,8 @@ export function configTarget(): ConfigurationTarget {
 		: ConfigurationTarget.Global;
 }
 
-/** Scope of a saved filter: a single region, or every region of the profile. */
-export type FilterScope = { region: string } | { allRegions: true };
+/** Scope of a saved view: a single region, or every region of the profile. */
+export type ViewScope = { region: string } | { allRegions: true };
 
 /** A service and one of its resource types, the granularity a view filters at. */
 export interface ResourcePair {
@@ -43,14 +43,14 @@ export interface ResourcePair {
 	resourceType: string;
 }
 
-export interface SavedFilter {
+export interface SavedView {
 	name: string;
 	resources: ResourcePair[];
-	scope: FilterScope;
+	scope: ViewScope;
 }
 
 type RegionsMap = Record<string, string[]>;
-type FiltersMap = Record<string, SavedFilter[]>;
+type ProfileViewsMap = Record<string, SavedView[]>;
 
 function regionsMap(): RegionsMap {
 	return (
@@ -59,10 +59,11 @@ function regionsMap(): RegionsMap {
 	);
 }
 
-function filtersMap(): FiltersMap {
+function profileViewsMap(): ProfileViewsMap {
 	return (
-		workspace.getConfiguration(CONFIG_SECTION).get<FiltersMap>(FILTERS_KEY) ??
-		{}
+		workspace
+			.getConfiguration(CONFIG_SECTION)
+			.get<ProfileViewsMap>(PROFILE_VIEWS_KEY) ?? {}
 	);
 }
 
@@ -159,81 +160,81 @@ export function resolveShownProfiles(allProfiles: string[]): string[] {
 	return getShownProfiles() ?? defaultShownProfiles(allProfiles);
 }
 
-/** All filters defined for a profile. */
-export function getFilters(profile: string): SavedFilter[] {
-	return filtersMap()[profile] ?? [];
+/** All views defined for a profile. */
+export function getProfileViews(profile: string): SavedView[] {
+	return profileViewsMap()[profile] ?? [];
 }
 
-/** Filters that apply to a given region: its own plus the profile's all-region filters. */
-export function getFiltersForRegion(
+/** Views that apply to a given region: its own plus the profile's all-region views. */
+export function getProfileViewsForRegion(
 	profile: string,
 	region: string,
-): SavedFilter[] {
-	return getFilters(profile).filter((f) =>
-		"allRegions" in f.scope ? f.scope.allRegions : f.scope.region === region,
+): SavedView[] {
+	return getProfileViews(profile).filter((v) =>
+		"allRegions" in v.scope ? v.scope.allRegions : v.scope.region === region,
 	);
 }
 
 /**
- * Add a new filter or overwrite an existing one. When `originalName` is given
- * (an edit), the filter with that name is replaced; otherwise the filter is
+ * Add a new view or overwrite an existing one. When `originalName` is given
+ * (an edit), the view with that name is replaced; otherwise the view is
  * appended (or replaces one with the same name).
  */
-export async function saveFilter(
+export async function saveProfileView(
 	profile: string,
-	filter: SavedFilter,
+	view: SavedView,
 	originalName?: string,
 ): Promise<void> {
-	const map = cloneJson(filtersMap());
+	const map = cloneJson(profileViewsMap());
 	const list = map[profile] ?? [];
-	const key = originalName ?? filter.name;
-	const index = list.findIndex((f) => f.name === key);
+	const key = originalName ?? view.name;
+	const index = list.findIndex((v) => v.name === key);
 	if (index >= 0) {
-		list[index] = filter;
+		list[index] = view;
 	} else {
-		list.push(filter);
+		list.push(view);
 	}
 	map[profile] = list;
 	await workspace
 		.getConfiguration(CONFIG_SECTION)
-		.update(FILTERS_KEY, map, configTarget());
+		.update(PROFILE_VIEWS_KEY, map, configTarget());
 }
 
-export async function removeFilter(
+export async function removeProfileView(
 	profile: string,
 	name: string,
 ): Promise<void> {
-	const map = cloneJson(filtersMap());
-	map[profile] = (map[profile] ?? []).filter((f) => f.name !== name);
+	const map = cloneJson(profileViewsMap());
+	map[profile] = (map[profile] ?? []).filter((v) => v.name !== name);
 	if (map[profile].length === 0) {
 		delete map[profile];
 	}
 	await workspace
 		.getConfiguration(CONFIG_SECTION)
-		.update(FILTERS_KEY, map, configTarget());
+		.update(PROFILE_VIEWS_KEY, map, configTarget());
 }
 
 /* ── Instance views ───────────────────────────────────────────────────────
- * Saved views for the running LocalStack instance. They reuse the SavedFilter
+ * Saved views for the running LocalStack instance. They reuse the SavedView
  * shape (with a placeholder scope that instance rendering ignores) but live
- * under their own key, separate from cloud-profile filters. */
+ * under their own key, separate from cloud-profile views. */
 
-function instanceViews(): SavedFilter[] {
+function instanceViews(): SavedView[] {
 	return (
 		workspace
 			.getConfiguration(CONFIG_SECTION)
-			.get<SavedFilter[]>(INSTANCE_VIEWS_KEY) ?? []
+			.get<SavedView[]>(INSTANCE_VIEWS_KEY) ?? []
 	);
 }
 
 /** All saved views for the LocalStack instance. */
-export function getInstanceViews(): SavedFilter[] {
+export function getInstanceViews(): SavedView[] {
 	return instanceViews();
 }
 
 /** Add a new instance view, or overwrite one by name (`originalName` on edit). */
 export async function saveInstanceView(
-	view: SavedFilter,
+	view: SavedView,
 	originalName?: string,
 ): Promise<void> {
 	const list = cloneJson(instanceViews());
