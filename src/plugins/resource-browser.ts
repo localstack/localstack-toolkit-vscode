@@ -2,6 +2,7 @@ import { commands, window, workspace } from "vscode";
 
 import { ProviderFactory } from "../platforms/aws/services/providerFactory.ts";
 import { createPlugin } from "../plugins.ts";
+import { clearMemoizedCaches } from "../utils/memoize.ts";
 import { registerLocalStackCommands } from "../views/explore/commands.ts";
 import { LocalStackViewProvider } from "../views/explore/viewProvider.ts";
 import { ResourceDetailsViewProvider } from "../views/resource-details/viewProvider.ts";
@@ -66,9 +67,13 @@ export default createPlugin(
 		);
 
 		context.subscriptions.push(
-			commands.registerCommand("localstack.refreshResources", () =>
-				resourcesProvider.refresh(),
-			),
+			commands.registerCommand("localstack.refreshResources", () => {
+				/* A manual refresh should re-query AWS, not replay cached account
+				 * ids / region lists / clients — drop the caches first so newly
+				 * created resources and re-authenticated credentials are picked up. */
+				clearMemoizedCaches();
+				return resourcesProvider.refresh();
+			}),
 			commands.registerCommand("localstack.refreshResourceDetails", () =>
 				detailsProvider.refresh(),
 			),
