@@ -23,7 +23,9 @@ import { cognitoIdpDefinition } from "../../platforms/aws/services/definitions/c
  */
 
 type Handlers = Record<string, (input: Record<string, unknown>) => unknown>;
-function fakeClient(handlers: Handlers): { send: (command: unknown) => unknown } {
+function fakeClient(handlers: Handlers): {
+	send: (command: unknown) => unknown;
+} {
 	return {
 		send: (command: unknown) => {
 			const name = (command as { constructor: { name: string } }).constructor
@@ -32,7 +34,8 @@ function fakeClient(handlers: Handlers): { send: (command: unknown) => unknown }
 			if (!handler) {
 				throw new Error(`Unexpected SDK command: ${name}`);
 			}
-			const input = (command as { input?: Record<string, unknown> }).input ?? {};
+			const input =
+				(command as { input?: Record<string, unknown> }).input ?? {};
 			return Promise.resolve(handler(input));
 		},
 	};
