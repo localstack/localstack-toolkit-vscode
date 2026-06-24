@@ -1,5 +1,3 @@
-import { InternalError } from "../../../utils/errors.ts";
-
 /*
  * To save an API call (or many), we hard-code these region names.
  * AWS will add more over time and we can update this list as needed.
@@ -22,6 +20,8 @@ const REGION_NAMES: { [key: string]: string } = {
 	"ap-southeast-7": "Asia Pacific (Thailand)",
 	"ca-central-1": "Canada (Central)",
 	"ca-west-1": "Canada West (Calgary)",
+	"cn-north-1": "China (Beijing)",
+	"cn-northwest-1": "China (Ningxia)",
 	"eu-central-1": "Europe (Frankfurt)",
 	"eu-central-2": "Europe (Zurich)",
 	"eu-north-1": "Europe (Stockholm)",
@@ -46,15 +46,14 @@ const REGION_NAMES: { [key: string]: string } = {
 /**
  * Get the long name of an AWS region.
  * @param region The short name of the region (e.g., "us-east-1").
- * @returns The long name of the region (e.g., "US East (N. Virginia)").
+ * @returns The long name of the region (e.g., "US East (N. Virginia)"), or the
+ *   region code itself when it is not in the table. The running emulator can
+ *   report any region in its metamodel (including partitions we have not
+ *   enumerated), so an unknown region must degrade to its code rather than throw
+ *   and break the whole "All Resources" view.
  */
 export function getRegionLongName(region: string): string {
-	if (!REGION_NAMES[region]) {
-		throw new InternalError(
-			`Unknown region: ${region}. The region information might need to be updated.`,
-		);
-	}
-	return REGION_NAMES[region];
+	return REGION_NAMES[region] ?? region;
 }
 
 /**
