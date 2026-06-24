@@ -29,6 +29,11 @@ async function main() {
 		entryPoints: ["src/extension.ts", "src/test/**/*.test.ts"],
 		bundle: true,
 		format: "cjs",
+		/* Preserve original function/class names through bundling (and
+		 * minification). The AWS SDK command classes are dispatched on by
+		 * `constructor.name` (in tests, via a fake client), which esbuild would
+		 * otherwise rename on identifier collisions (e.g. `DescribeKeyCommand2`). */
+		keepNames: true,
 		minify: production,
 		sourcemap: !production,
 		sourcesContent: false,
