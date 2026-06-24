@@ -135,7 +135,7 @@ export class ResourceViewProvider
 			if (!this.focus) {
 				return Promise.resolve([
 					new ResourcePlaceholderTreeItem(
-						"Please select a focus in the Focus view.",
+						"Please select a focus in the Explore view.",
 					),
 				]);
 			} else {

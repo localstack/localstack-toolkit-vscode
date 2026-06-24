@@ -1,7 +1,7 @@
 import assert from "node:assert";
 
 import type { Focus } from "../../models/focus.ts";
-import { intersectMetamodelWithPairs } from "../../views/localstack/viewProvider.ts";
+import { intersectMetamodelWithPairs } from "../../views/explore/viewProvider.ts";
 
 /**
  * An instance view's focus is the live metamodel focus narrowed to the view's

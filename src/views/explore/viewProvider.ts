@@ -21,20 +21,20 @@ import type { LocalStackStatusTracker } from "../../utils/localstack-status.ts";
 
 import {
 	getAddedRegions,
-	getFiltersForRegion,
 	getInstanceViews,
+	getProfileViewsForRegion,
 	resolveShownProfiles,
 } from "./settings.ts";
-import type { ResourcePair, SavedFilter } from "./settings.ts";
+import type { ResourcePair, SavedView } from "./settings.ts";
 import {
 	AppInspectorTreeItem,
 	ErrorTreeItem,
-	FilterTreeItem,
 	FocusSelectorTreeItem,
 	InstanceTreeItem,
 	InstanceViewTreeItem,
 	PlaceholderTreeItem,
 	ProfileTreeItem,
+	ProfileViewTreeItem,
 	RegionTreeItem,
 	SectionTreeItem,
 } from "./treeItems.ts";
@@ -210,18 +210,18 @@ export class LocalStackViewProvider
 			),
 		);
 
-		for (const filter of getFiltersForRegion(profile, region)) {
+		for (const view of getProfileViewsForRegion(profile, region)) {
 			children.push(
-				new FilterTreeItem(profile, filter, () =>
-					/* Resolve the filter live so an edit to the active view is
+				new ProfileViewTreeItem(profile, view, () =>
+					/* Resolve the view live so an edit to the active view is
 					 * reflected on refresh, and a removed view yields no focus
 					 * (clearing the Resources view) rather than stale content. */
 					Promise.resolve(
-						resolveRegionFilterFocus(
+						resolveRegionViewFocus(
 							profile,
 							region,
-							filter.name,
-							getFiltersForRegion(profile, region),
+							view.name,
+							getProfileViewsForRegion(profile, region),
 						),
 					),
 				),
@@ -259,20 +259,20 @@ export class LocalStackViewProvider
 }
 
 /**
- * Resolve a region filter's focus live from the given filter list, by name.
- * Returns `undefined` when no filter with that name exists (e.g. it was removed
+ * Resolve a region view's focus live from the given view list, by name.
+ * Returns `undefined` when no view with that name exists (e.g. it was removed
  * or renamed), so the Resources view clears rather than showing stale content.
- * Pure (the filter list is passed in) so the live-resolution behavior is
- * testable; the caller passes the current `getFiltersForRegion(...)` result.
+ * Pure (the view list is passed in) so the live-resolution behavior is
+ * testable; the caller passes the current `getProfileViewsForRegion(...)` result.
  */
-export function resolveRegionFilterFocus(
+export function resolveRegionViewFocus(
 	profile: string,
 	region: string,
 	name: string,
-	filters: SavedFilter[],
+	views: SavedView[],
 ): Focus | undefined {
-	const live = filters.find((f) => f.name === name);
-	return live ? makeFilterFocus(profile, region, live) : undefined;
+	const live = views.find((v) => v.name === name);
+	return live ? makeProfileViewFocus(profile, region, live) : undefined;
 }
 
 /**
@@ -311,15 +311,15 @@ export function intersectMetamodelWithPairs(
 	};
 }
 
-/** Build a focus for a region scoped to a filter's chosen service/type pairs. */
-function makeFilterFocus(
+/** Build a focus for a region scoped to a view's chosen service/type pairs. */
+function makeProfileViewFocus(
 	profile: string,
 	region: string,
-	filter: SavedFilter,
+	view: SavedView,
 ): Focus {
 	/* Group the flat pair list by service into the focus shape. */
 	const resourceTypesByService = new Map<string, string[]>();
-	for (const { service, resourceType } of filter.resources) {
+	for (const { service, resourceType } of view.resources) {
 		const list = resourceTypesByService.get(service) ?? [];
 		list.push(resourceType);
 		resourceTypesByService.set(service, list);

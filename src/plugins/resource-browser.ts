@@ -2,8 +2,8 @@ import { commands, window, workspace } from "vscode";
 
 import { ProviderFactory } from "../platforms/aws/services/providerFactory.ts";
 import { createPlugin } from "../plugins.ts";
-import { registerLocalStackCommands } from "../views/localstack/commands.ts";
-import { LocalStackViewProvider } from "../views/localstack/viewProvider.ts";
+import { registerLocalStackCommands } from "../views/explore/commands.ts";
+import { LocalStackViewProvider } from "../views/explore/viewProvider.ts";
 import { ResourceDetailsViewProvider } from "../views/resource-details/viewProvider.ts";
 import { ResourceArnTreeItem } from "../views/resources/treeItems.ts";
 import { ResourceViewProvider } from "../views/resources/viewProvider.ts";
