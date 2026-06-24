@@ -27,16 +27,44 @@ export type DescribeContext = {
 };
 
 /**
- * One field shown in the Resource Details view. `path` is a dotted/bracketed
- * path walked over the detail object (e.g. `"Configuration.State"`,
- * `"Tags[0].Value"`). This is the unit the build-time field generator emits and
- * humans hand-edit.
+ * One scalar field shown in the Resource Details view. `path` is a
+ * dotted/bracketed path walked over the detail object (e.g.
+ * `"Configuration.State"`, `"Tags[0].Value"`). This is the unit the build-time
+ * field generator emits and humans hand-edit.
  */
-export type FieldSpec = {
+export type ScalarFieldSpec = {
 	label: string;
 	path: string;
 	type: FieldType;
 };
+
+/**
+ * A variable-length section: a header row followed by one row per element of an
+ * array on the detail object. Use this for resource details whose count is not
+ * known at authoring time, e.g. a DynamoDB table's key schema or a
+ * CloudFormation stack's parameters/outputs. `path` locates the array; for each
+ * element, `itemLabel`/`itemValue` are paths walked over that element to derive
+ * the (indented) field label and its value.
+ */
+export type ListFieldSpec = {
+	kind: "list";
+	/** Section header label, rendered as a row with an empty value. */
+	label: string;
+	/** Path to the array on the detail object. */
+	path: string;
+	/** Path within each element → the field label (rendered indented). */
+	itemLabel: string;
+	/** Path within each element → the field value. */
+	itemValue: string;
+	/** Value type for each element's row. Defaults to `FieldType.NAME`. */
+	itemType?: FieldType;
+};
+
+/**
+ * One entry in a resource type's `detail` list: either a single scalar field or
+ * a variable-length array-expanded section (`kind: "list"`).
+ */
+export type FieldSpec = ScalarFieldSpec | ListFieldSpec;
 
 /**
  * Declarative definition of a single resource type within a service.

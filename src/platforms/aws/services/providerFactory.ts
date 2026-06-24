@@ -1,30 +1,18 @@
 import { InternalError } from "../../../utils/errors.ts";
 
-import { CloudFormationServiceProvider } from "./cloudformation/provider.ts";
 import { DeclarativeServiceProvider } from "./declarative/engine.ts";
 import { serviceDefinitions } from "./definitions/index.ts";
-import { DynamoDBServiceProvider } from "./dynamodb/provider.ts";
-import { IAMServiceProvider } from "./iam/provider.ts";
-import { LambdaServiceProvider } from "./lambda/provider.ts";
 import type { ServiceProvider } from "./serviceProvider.ts";
-import { SnsServiceProvider } from "./sns/provider.ts";
-import { SqsServiceProvider } from "./sqs/provider.ts";
-import { StatesServiceProvider } from "./states/provider.ts";
 
 /**
- * Imperative `ServiceProvider` subclasses (the escape hatch for services that
- * cannot be expressed declaratively). These register identically to declarative
- * providers — both end up as `ServiceProvider` instances in the same map.
+ * Imperative `ServiceProvider` subclasses: the escape hatch for services that
+ * cannot be expressed declaratively. Every service is currently declarative, so
+ * this is empty — but the registration path is kept so a future service that
+ * needs hand-written logic can be added here and register identically to a
+ * declarative provider (both end up as `ServiceProvider` instances in the same
+ * map). New `() => ServiceProvider` constructors go in this array.
  */
-const IMPERATIVE_PROVIDERS = [
-	CloudFormationServiceProvider,
-	DynamoDBServiceProvider,
-	IAMServiceProvider,
-	LambdaServiceProvider,
-	SnsServiceProvider,
-	SqsServiceProvider,
-	StatesServiceProvider,
-];
+const IMPERATIVE_PROVIDERS: (new () => ServiceProvider)[] = [];
 
 /**
  * Mapping of AWS service IDs to their providers.

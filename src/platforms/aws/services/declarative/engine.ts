@@ -62,6 +62,40 @@ function safeToString(value: unknown): string {
 	return "";
 }
 
+/** One rendered Resource Details row. */
+type DetailField = { field: string; value: string; type: FieldType };
+
+/**
+ * Render one detail spec against the detail object into zero or more rows. A
+ * scalar spec yields a single row; a `list` spec yields a header row followed by
+ * one indented row per array element (none if the array is missing/empty).
+ */
+export function renderDetailField(
+	spec: FieldSpec,
+	detailObject: unknown,
+): DetailField[] {
+	if ("kind" in spec) {
+		const itemType = spec.itemType ?? FieldType.NAME;
+		const array = getByPath(detailObject, spec.path);
+		const items = Array.isArray(array) ? array : [];
+		return [
+			{ field: spec.label, value: "", type: FieldType.NAME },
+			...items.map((item) => ({
+				field: `    ${formatValue(getByPath(item, spec.itemLabel), FieldType.NAME)}`,
+				value: formatValue(getByPath(item, spec.itemValue), itemType),
+				type: itemType,
+			})),
+		];
+	}
+	return [
+		{
+			field: spec.label,
+			value: formatValue(getByPath(detailObject, spec.path), spec.type),
+			type: spec.type,
+		},
+	];
+}
+
 /** Render a raw value as the display string for its `FieldType`. */
 export function formatValue(value: unknown, type: FieldType): string {
 	if (value === null || value === undefined) {
@@ -164,11 +198,7 @@ export class DeclarativeServiceProvider<TClient> extends ServiceProvider {
 			}
 		}
 
-		return def.detail.map((spec: FieldSpec) => ({
-			field: spec.label,
-			value: formatValue(getByPath(detailObject, spec.path), spec.type),
-			type: spec.type,
-		}));
+		return def.detail.flatMap((spec) => renderDetailField(spec, detailObject));
 	}
 
 	getArnResourceNameForCloudFormationResource(
