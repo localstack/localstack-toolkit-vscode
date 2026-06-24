@@ -42,6 +42,7 @@ export default createPlugin(
 					const item = e.selection[0];
 					const profile = item.parent.parent.parent.profile.id;
 					detailsProvider.setArn(profile, item.arn);
+					detailsProvider.reveal();
 				}
 			}),
 		);

@@ -1,3 +1,4 @@
+import { commands } from "vscode";
 import type * as vscode from "vscode";
 
 import ARN from "../../platforms/aws/models/arnModel.ts";
@@ -44,7 +45,7 @@ const STYLES = `
 		border-collapse: collapse;
 		width: 100%;
 		/* Fixed layout makes the column widths below hard caps, so a long field
-		 * label wraps within its 33% column instead of stretching it. */
+		 * label wraps within its 20% column instead of stretching it. */
 		table-layout: fixed;
 	}
 	td {
@@ -54,12 +55,12 @@ const STYLES = `
 	}
 	td.field {
 		color: var(--vscode-descriptionForeground);
-		width: 33%;
+		width: 20%;
 		white-space: normal;
 		overflow-wrap: break-word;
 	}
 	td.value {
-		width: 67%;
+		width: 80%;
 		word-break: break-word;
 	}
 	.mono {
@@ -117,6 +118,21 @@ export class ResourceDetailsViewProvider implements vscode.WebviewViewProvider {
 	/** Re-fetch and re-render the currently selected resource (manual refresh). */
 	public refresh(): void {
 		this.render();
+	}
+
+	/**
+	 * Bring the Resource Details panel forward without stealing keyboard focus,
+	 * so the user can keep arrow-key browsing the Resources tree while details
+	 * follow live. Before the panel has ever been opened the view isn't resolved
+	 * yet, so fall back to the auto-generated focus command to open it the first
+	 * time (that one reveal does take focus).
+	 */
+	public reveal(): void {
+		if (this.view) {
+			this.view.show(true); // preserveFocus: keep focus in the Resources tree
+		} else {
+			void commands.executeCommand("localstack.resourceDetails.focus");
+		}
 	}
 
 	/** Render the current state into the webview (no-op until it is resolved). */

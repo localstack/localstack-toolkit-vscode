@@ -137,6 +137,13 @@
 					"title": "LocalStack",
 					"icon": "resources/icons/localstack.svg"
 				}
+			],
+			"panel": [
+				{
+					"id": "localstackPanel",
+					"title": "Resource Details",
+					"icon": "resources/icons/localstack.svg"
+				}
 			]
 		},
 		"views": {
@@ -151,14 +158,15 @@
 					"id": "localstack.resources",
 					"name": "Resources",
 					"icon": "resources/icons/localstack.svg",
-					"size": 2
-				},
+					"size": 1
+				}
+			],
+			"localstackPanel": [
 				{
 					"id": "localstack.resourceDetails",
 					"name": "Resource Details",
 					"icon": "resources/icons/localstack.svg",
-					"type": "webview",
-					"size": 1
+					"type": "webview"
 				}
 			]
 		},
