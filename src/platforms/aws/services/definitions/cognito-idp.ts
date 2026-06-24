@@ -33,6 +33,13 @@ export const cognitoIdpDefinition =
 				singular: "User Pool",
 				plural: "User Pools",
 				cfn: "AWS::Cognito::UserPool",
+				/* CloudFormation's PhysicalResourceId for a user pool is the pool id;
+				 * re-encode it as the `userpool/<id>` token the live `id` uses so a
+				 * stack resource resolves to this type and `describe` can read it. */
+				cfnResourceName: (summary) =>
+					summary.PhysicalResourceId
+						? `userpool/${summary.PhysicalResourceId}`
+						: undefined,
 				matchArn: (identifier) => identifier.arn.includes(":userpool/"),
 				list: async (client): Promise<UserPoolDescriptionType[]> => {
 					const pools: UserPoolDescriptionType[] = [];
@@ -81,7 +88,11 @@ export const cognitoIdpDefinition =
 			userpoolclient: {
 				singular: "User Pool Client",
 				plural: "User Pool Clients",
-				cfn: "AWS::Cognito::UserPoolClient",
+				/* No `cfn` mapping: CloudFormation's PhysicalResourceId for an app
+				 * client is the client id alone, without the user pool id that every
+				 * Cognito API needs to describe it — so a stack-origin client can't be
+				 * resolved. Live resources (which carry the pool id in their ARN) still
+				 * work; CloudFormation app clients are skipped in stack views. */
 				matchArn: (identifier) => identifier.arn.includes(":userpoolclient/"),
 				list: async (client): Promise<UserPoolClientDescription[]> => {
 					const poolIds = await listUserPoolIds(client);
@@ -113,7 +124,9 @@ export const cognitoIdpDefinition =
 			userpoolgroup: {
 				singular: "User Pool Group",
 				plural: "User Pool Groups",
-				cfn: "AWS::Cognito::UserPoolGroup",
+				/* No `cfn` mapping: CloudFormation's PhysicalResourceId for a group is
+				 * the group name alone, without the user pool id needed to describe it.
+				 * Live resources still resolve; CloudFormation groups are skipped. */
 				matchArn: (identifier) => identifier.arn.includes(":userpoolgroup/"),
 				list: async (client): Promise<GroupType[]> => {
 					const poolIds = await listUserPoolIds(client);

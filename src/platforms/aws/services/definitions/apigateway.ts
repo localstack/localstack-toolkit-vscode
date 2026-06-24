@@ -1,9 +1,12 @@
 import {
 	APIGatewayClient,
+	GetApiKeyCommand,
 	GetApiKeysCommand,
 	GetAuthorizersCommand,
+	GetRestApiCommand,
 	GetRestApisCommand,
 	GetStagesCommand,
+	GetUsagePlanCommand,
 	GetUsagePlansCommand,
 } from "@aws-sdk/client-api-gateway";
 import type {
@@ -14,6 +17,7 @@ import type {
 	UsagePlan,
 } from "@aws-sdk/client-api-gateway";
 
+import type ARN from "../../models/arnModel.ts";
 import { defineService } from "../declarative/types.ts";
 import { FieldType } from "../serviceProvider.ts";
 
@@ -39,6 +43,13 @@ export const apiGatewayDefinition = defineService<APIGatewayClient>({
 			plural: "REST APIs",
 			metamodelOp: "getRestApis",
 			cfn: "AWS::ApiGateway::RestApi",
+			/* CloudFormation's PhysicalResourceId is the REST API id; re-encode it as
+			 * the `/restapis/<id>` path the live `id` uses so a stack resource
+			 * resolves to this type and `describe` can read it back. */
+			cfnResourceName: (summary) =>
+				summary.PhysicalResourceId
+					? `/restapis/${summary.PhysicalResourceId}`
+					: undefined,
 			matchArn: (identifier) =>
 				identifier.arn.includes("/restapis/") &&
 				!identifier.arn.includes("/stages/") &&
@@ -55,6 +66,12 @@ export const apiGatewayDefinition = defineService<APIGatewayClient>({
 			},
 			id: (api: RestApi, ctx) =>
 				`arn:aws:apigateway:${ctx.region}::/restapis/${api.id}`,
+			/* Fetch directly by id (works for both live and CloudFormation ARNs)
+			 * rather than re-listing every API. */
+			describe: (client, identifier) =>
+				client.send(
+					new GetRestApiCommand({ restApiId: pathId(identifier, "restapis") }),
+				),
 			detail: [
 				{ label: "Name", path: "name", type: FieldType.NAME },
 				{ label: "ID", path: "id", type: FieldType.NAME },
@@ -72,7 +89,10 @@ export const apiGatewayDefinition = defineService<APIGatewayClient>({
 			singular: "Stage",
 			plural: "Stages",
 			metamodelOp: "getStages",
-			cfn: "AWS::ApiGateway::Stage",
+			/* No `cfn` mapping: CloudFormation's PhysicalResourceId for a stage is the
+			 * stage name alone, without the REST API id needed to fetch it. Live
+			 * stages (whose ARN carries the api id) still resolve; CloudFormation
+			 * stages are skipped in stack views. */
 			matchArn: (identifier) => identifier.arn.includes("/stages/"),
 			list: async (client): Promise<StageWithApi[]> => {
 				const apiIds = await listRestApiIds(client);
@@ -104,6 +124,12 @@ export const apiGatewayDefinition = defineService<APIGatewayClient>({
 			plural: "API Keys",
 			metamodelOp: "getApiKeys",
 			cfn: "AWS::ApiGateway::ApiKey",
+			/* CloudFormation's PhysicalResourceId is the API key id; re-encode it as
+			 * the `/apikeys/<id>` path the live `id` uses. */
+			cfnResourceName: (summary) =>
+				summary.PhysicalResourceId
+					? `/apikeys/${summary.PhysicalResourceId}`
+					: undefined,
 			matchArn: (identifier) => identifier.arn.includes("/apikeys/"),
 			list: async (client): Promise<ApiKey[]> => {
 				const keys: ApiKey[] = [];
@@ -117,6 +143,11 @@ export const apiGatewayDefinition = defineService<APIGatewayClient>({
 			},
 			id: (key: ApiKey, ctx) =>
 				`arn:aws:apigateway:${ctx.region}::/apikeys/${key.id}`,
+			/* Fetch by id (no `includeValue`, so the key secret is never read). */
+			describe: (client, identifier) =>
+				client.send(
+					new GetApiKeyCommand({ apiKey: pathId(identifier, "apikeys") }),
+				),
 			detail: [
 				{ label: "Name", path: "name", type: FieldType.NAME },
 				{ label: "ID", path: "id", type: FieldType.NAME },
@@ -134,6 +165,12 @@ export const apiGatewayDefinition = defineService<APIGatewayClient>({
 			plural: "Usage Plans",
 			metamodelOp: "getUsagePlans",
 			cfn: "AWS::ApiGateway::UsagePlan",
+			/* CloudFormation's PhysicalResourceId is the usage plan id; re-encode it
+			 * as the `/usageplans/<id>` path the live `id` uses. */
+			cfnResourceName: (summary) =>
+				summary.PhysicalResourceId
+					? `/usageplans/${summary.PhysicalResourceId}`
+					: undefined,
 			matchArn: (identifier) => identifier.arn.includes("/usageplans/"),
 			list: async (client): Promise<UsagePlan[]> => {
 				const plans: UsagePlan[] = [];
@@ -147,6 +184,13 @@ export const apiGatewayDefinition = defineService<APIGatewayClient>({
 			},
 			id: (plan: UsagePlan, ctx) =>
 				`arn:aws:apigateway:${ctx.region}::/usageplans/${plan.id}`,
+			/* Fetch directly by id rather than re-listing every usage plan. */
+			describe: (client, identifier) =>
+				client.send(
+					new GetUsagePlanCommand({
+						usagePlanId: pathId(identifier, "usageplans"),
+					}),
+				),
 			detail: [
 				{ label: "Name", path: "name", type: FieldType.NAME },
 				{ label: "ID", path: "id", type: FieldType.NAME },
@@ -162,7 +206,9 @@ export const apiGatewayDefinition = defineService<APIGatewayClient>({
 			singular: "Authorizer",
 			plural: "Authorizers",
 			metamodelOp: "getAuthorizers",
-			cfn: "AWS::ApiGateway::Authorizer",
+			/* No `cfn` mapping: CloudFormation's PhysicalResourceId for an authorizer
+			 * is the authorizer id alone, without the REST API id needed to fetch it.
+			 * Live authorizers still resolve; CloudFormation authorizers are skipped. */
 			matchArn: (identifier) => identifier.arn.includes("/authorizers/"),
 			list: async (client): Promise<AuthorizerWithApi[]> => {
 				const apiIds = await listRestApiIds(client);
@@ -196,6 +242,19 @@ export const apiGatewayDefinition = defineService<APIGatewayClient>({
 		},
 	},
 });
+
+/**
+ * Extract the id following a path collection in an API Gateway ARN, e.g. the
+ * `<id>` in `/restapis/<id>` or `/apikeys/<id>`. Works for both the live
+ * (account-less) ARN and the CloudFormation-synthesized one, since both encode
+ * the same `/collection/<id>` path in the resource portion. Returns `""` when
+ * the collection segment is absent.
+ */
+function pathId(identifier: ARN, collection: string): string {
+	const parts = identifier.resourceId.split("/").filter(Boolean);
+	const index = parts.indexOf(collection);
+	return index >= 0 ? (parts[index + 1] ?? "") : "";
+}
 
 /** Enumerate every REST API id (for resource types scoped to an API). */
 async function listRestApiIds(client: APIGatewayClient): Promise<string[]> {
