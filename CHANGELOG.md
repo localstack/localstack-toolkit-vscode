@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.9.0](https://github.com/localstack/localstack-toolkit-vscode/compare/v1.8.0...v1.9.0) (2026-06-25)
+
+
+### Features
+
+* **deps:** bump localstack/appinspector-ui to 1.0.147 ([#185](https://github.com/localstack/localstack-toolkit-vscode/issues/185)) ([e8495e5](https://github.com/localstack/localstack-toolkit-vscode/commit/e8495e5150f2d52994f98405cce5daf33385ff32))
+
 ## [1.8.0](https://github.com/localstack/localstack-toolkit-vscode/compare/v1.7.0...v1.8.0) (2026-06-25)
 
 
