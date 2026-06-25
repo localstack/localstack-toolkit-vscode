@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.8.0](https://github.com/localstack/localstack-toolkit-vscode/compare/v1.7.0...v1.8.0) (2026-06-25)
+
+
+### Features
+
+* **feat:** [App Inspector](https://docs.localstack.cloud/aws/capabilities/web-app/app-inspector/) now includes text search for spans, so users can search traces by ARN fragments, resource names, payload snippets, and other span text.
+
 ## [1.7.0](https://github.com/localstack/localstack-toolkit-vscode/compare/v1.6.3...v1.7.0) (2026-05-21)
 
 
