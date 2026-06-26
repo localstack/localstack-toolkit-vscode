@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.9.1](https://github.com/localstack/localstack-toolkit-vscode/compare/v1.9.0...v1.9.1) (2026-06-26)
+
+
+### Bug Fixes
+
+* **app-inspector:** remove padding from webview to maximize real estate ([#187](https://github.com/localstack/localstack-toolkit-vscode/issues/187)) ([da8a19b](https://github.com/localstack/localstack-toolkit-vscode/commit/da8a19b9c8d6e249c4294014edc0a48458ef65f5))
+
 ## [1.9.0](https://github.com/localstack/localstack-toolkit-vscode/compare/v1.8.0...v1.9.0) (2026-06-25)
 
 
