@@ -158,7 +158,8 @@
 					"id": "localstack.resources",
 					"name": "Resources",
 					"icon": "resources/icons/localstack.svg",
-					"size": 1
+					"size": 1,
+					"when": "localstack.resourceBrowserEnabled"
 				}
 			],
 			"localstackPanel": [
@@ -166,7 +167,8 @@
 					"id": "localstack.resourceDetails",
 					"name": "Resource Details",
 					"icon": "resources/icons/localstack.svg",
-					"type": "webview"
+					"type": "webview",
+					"when": "localstack.resourceBrowserEnabled"
 				}
 			]
 		},
@@ -283,6 +285,16 @@
 				"title": "Refresh Resource Details",
 				"category": "LocalStack",
 				"icon": "$(refresh)"
+			},
+			{
+				"command": "localstack.enableResourceBrowser",
+				"title": "Enable Resource Browser (Preview)",
+				"category": "LocalStack"
+			},
+			{
+				"command": "localstack.disableResourceBrowser",
+				"title": "Disable Resource Browser (Preview)",
+				"category": "LocalStack"
 			}
 		],
 		"menus": {
@@ -422,6 +434,14 @@
 				},
 				{
 					"command": "localstack.removeInstanceView",
+					"when": "false"
+				},
+				{
+					"command": "localstack.enableResourceBrowser",
+					"when": "false"
+				},
+				{
+					"command": "localstack.disableResourceBrowser",
 					"when": "false"
 				}
 			]

@@ -4,6 +4,11 @@ import { ProviderFactory } from "../platforms/aws/services/providerFactory.ts";
 import { createPlugin } from "../plugins.ts";
 import { clearMemoizedCaches } from "../utils/memoize.ts";
 import { registerLocalStackCommands } from "../views/explore/commands.ts";
+import {
+	isResourceBrowserEnabled,
+	setResourceBrowserEnabled,
+	syncResourceBrowserContext,
+} from "../views/explore/resourceBrowserState.ts";
 import { LocalStackViewProvider } from "../views/explore/viewProvider.ts";
 import { ResourceDetailsViewProvider } from "../views/resource-details/viewProvider.ts";
 import { ResourceArnTreeItem } from "../views/resources/treeItems.ts";
@@ -15,8 +20,14 @@ export default createPlugin(
 		/* Service providers give access to AWS resource information. */
 		ProviderFactory.initialize();
 
+		/* The Resources and Resource Details views are opt-in. Context keys do
+		 * not survive a reload, so restore it from persisted state on activation;
+		 * package.json's `when` clauses gate the two views off of it. */
+		void syncResourceBrowserContext(context);
+
 		const localStackProvider = new LocalStackViewProvider(
 			localStackStatusTracker,
+			() => isResourceBrowserEnabled(context),
 			outputChannel,
 		);
 		const resourcesProvider = new ResourceViewProvider();
@@ -77,6 +88,17 @@ export default createPlugin(
 			}),
 			commands.registerCommand("localstack.refreshResourceDetails", () =>
 				detailsProvider.refresh(),
+			),
+			commands.registerCommand("localstack.enableResourceBrowser", async () => {
+				await setResourceBrowserEnabled(context, true);
+				localStackProvider.refresh();
+			}),
+			commands.registerCommand(
+				"localstack.disableResourceBrowser",
+				async () => {
+					await setResourceBrowserEnabled(context, false);
+					localStackProvider.refresh();
+				},
 			),
 			...registerLocalStackCommands(localStackProvider, () => {
 				void resourcesProvider.refresh();

@@ -32,6 +32,8 @@ import {
 	FocusSelectorTreeItem,
 	InstanceTreeItem,
 	InstanceViewTreeItem,
+	OptInTreeItem,
+	OptOutTreeItem,
 	PlaceholderTreeItem,
 	ProfileTreeItem,
 	ProfileViewTreeItem,
@@ -59,8 +61,13 @@ export class LocalStackViewProvider
 
 	#instanceItem: InstanceTreeItem | undefined;
 
+	/**
+	 * @param isResourceBrowserEnabled Read live (not snapshotted) so a toggle
+	 *   followed by `refresh()` re-reads the current opt-in state.
+	 */
 	constructor(
 		private readonly statusTracker: LocalStackStatusTracker,
+		private readonly isResourceBrowserEnabled: () => boolean,
 		private readonly log?: LogOutputChannel,
 	) {
 		this.statusTracker.onChange((status) => {
@@ -87,10 +94,20 @@ export class LocalStackViewProvider
 		element?: LocalStackTreeItem,
 	): ProviderResult<LocalStackTreeItem[]> {
 		if (!element) {
+			/* Opted out: only the LocalStack Instances section plus an opt-in
+			 * affordance. Cloud Profiles and Workspace IaC are part of the full
+			 * resource-browser experience. */
+			if (!this.isResourceBrowserEnabled()) {
+				return [
+					new SectionTreeItem("instances", "LocalStack Instances"),
+					new OptInTreeItem(),
+				];
+			}
 			return [
 				new SectionTreeItem("instances", "LocalStack Instances"),
 				new SectionTreeItem("profiles", "Cloud Profiles"),
 				new SectionTreeItem("workspace", "Workspace IaC"),
+				new OptOutTreeItem(),
 			];
 		}
 		if (element instanceof SectionTreeItem) {
@@ -144,6 +161,12 @@ export class LocalStackViewProvider
 		/* Children are only meaningful while the emulator is running. */
 		if (this.statusTracker.status() !== "running") {
 			return [];
+		}
+
+		/* Opted out: only the App Inspector. The focus selectors below drive the
+		 * gated-off Resources view, so they would be inert here. */
+		if (!this.isResourceBrowserEnabled()) {
+			return [new AppInspectorTreeItem()];
 		}
 
 		const allResources = new FocusSelectorTreeItem(

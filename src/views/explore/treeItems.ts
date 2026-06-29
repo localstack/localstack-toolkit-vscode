@@ -139,6 +139,43 @@ export class InstanceViewTreeItem extends FocusSelectorTreeItem {
 	}
 }
 
+/**
+ * Opt-in affordance shown at the root while the resource browser is disabled.
+ * Clicking it enables the full experience. Not a focus selector — it never
+ * drives the Resources view.
+ */
+export class OptInTreeItem extends LocalStackTreeItem {
+	constructor() {
+		super("Enable resource browser (preview)", TreeItemCollapsibleState.None);
+		this.contextValue = "localstackOptIn";
+		this.iconPath = new ThemeIcon("sparkle");
+		this.tooltip =
+			"Show the Resources and Resource Details views and the full Explore tree";
+		this.command = {
+			title: "Enable Resource Browser",
+			command: "localstack.enableResourceBrowser",
+		};
+	}
+}
+
+/**
+ * Opt-out affordance shown at the root while the resource browser is enabled.
+ * Clicking it returns to the minimal experience.
+ */
+export class OptOutTreeItem extends LocalStackTreeItem {
+	constructor() {
+		super("Disable resource browser (preview)", TreeItemCollapsibleState.None);
+		this.contextValue = "localstackOptOut";
+		this.iconPath = new ThemeIcon("circle-slash");
+		this.tooltip =
+			"Hide the Resources and Resource Details views and return to the minimal Explore tree";
+		this.command = {
+			title: "Disable Resource Browser",
+			command: "localstack.disableResourceBrowser",
+		};
+	}
+}
+
 /** A non-interactive placeholder (e.g. "Coming soon", "[ No stacks ]"). */
 export class PlaceholderTreeItem extends LocalStackTreeItem {
 	constructor(message: string) {
