@@ -12,7 +12,10 @@ import { execLocalStack } from "./cli.ts";
 const cacheDirectory = () => {
 	switch (platform()) {
 		case "win32":
-			return join(process.env.LOCALAPPDATA!, "cache");
+			return join(
+				process.env.LOCALAPPDATA ?? join(homedir(), "AppData", "Local"),
+				"cache",
+			);
 		case "darwin":
 			return join(homedir(), "Library", "Caches");
 		default:

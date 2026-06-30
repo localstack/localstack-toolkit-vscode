@@ -1,6 +1,10 @@
 .vscode/**
 .vscode-test/**
 .idea/**
+.claude/**
+.codegraph/**
+.rtk/**
+openspec/**
 src/**
 .gitignore
 .github/**

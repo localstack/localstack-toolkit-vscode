@@ -161,7 +161,7 @@ export async function openLicensePage() {
 	const url = new URL("https://app.localstack.cloud/settings/auth-tokens");
 	const openSuccessful = await env.openExternal(Uri.parse(url.toString()));
 	if (!openSuccessful) {
-		window.showErrorMessage(
+		void window.showErrorMessage(
 			`Open LocalStack License page in browser by entering the URL manually: ${url.toString()}`,
 		);
 	}
